@@ -22,15 +22,22 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 # The following folder will be included
 include_directories("src/include")
 
-add_library(handlegraph
+add_library(handlegraph_objs OBJECT
   src/handle.cpp
   src/include/handlegraph/handle.hpp
   src/include/handlegraph/handle_helper.hpp
   src/include/handlegraph/handle_types.hpp
   )
 
+# Build objects position-independent to allow a shared library
+set_property(TARGET handlegraph_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# Make static and shared versions
+add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
+add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
+
 # Set up for installability
-install(TARGETS handlegraph
+install(TARGETS handlegraph_shared handlegraph_static 
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
