@@ -1,4 +1,4 @@
-#include "handle.hpp"
+#include <handlegraph/handle.hpp>
 
 /** \file handle.cpp
  * Implement handle graph utility methods.
