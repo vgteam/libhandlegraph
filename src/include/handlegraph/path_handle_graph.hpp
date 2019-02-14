@@ -153,7 +153,7 @@ bool PathHandleGraph::for_each_occurrence_in_path(const path_handle_t& path, con
     while (has_next_occurrence(here) && keep_going) {
         // Run for all subsequent occurrences on the path
         here = get_next_occurrence(here);
-        keep_going &= iteratee(here);
+        keep_going &= wrapped(here);
     }
     
     return keep_going;
