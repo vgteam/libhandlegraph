@@ -1,7 +1,9 @@
-#include "handlegraph/interface.hpp"
+#include "handlegraph/handle_graph.hpp"
+#include "handlegraph/path_handle_graph.hpp"
+#include "handlegraph/util.hpp"
 
 /** \file handle.cpp
- * Implement handle graph utility methods and default implementations.
+ * Implement handle graph utility methods, oprtators, and default implementations.
  */
 
 namespace handlegraph {
@@ -122,6 +124,36 @@ void PathHandleGraph::for_each_occurrence_in_path(const path_handle_t& path, con
         here = get_next_occurrence(here);
         iteratee(here);
     }
+}
+
+/// Define equality on handles
+bool operator==(const handle_t& a, const handle_t& b) {
+    return as_integer(a) == as_integer(b);
+}
+
+/// Define inequality on handles
+bool operator!=(const handle_t& a, const handle_t& b) {
+    return as_integer(a) != as_integer(b);
+}
+
+/// Define equality on path handles
+bool operator==(const path_handle_t& a, const path_handle_t& b) {
+    return as_integer(a) == as_integer(b);
+}
+
+/// Define inequality on path handles
+bool operator!=(const path_handle_t& a, const path_handle_t& b) {
+    return as_integer(a) != as_integer(b);
+}
+
+/// Define equality on occurrence handles
+bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b) {
+    return as_integers(a)[0] == as_integers(b)[0] && as_integers(a)[1] == as_integers(b)[1];
+}
+
+/// Define inequality on occurrence handles
+bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b) {
+    return !(a == b);
 }
 
 }

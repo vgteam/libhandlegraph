@@ -1,11 +1,11 @@
-#ifndef HANDLEGRAPH_INTERNAL_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
+#ifndef HANDLEGRAPH_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
+#define HANDLEGRAPH_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
 
 /** \file 
  * Defines the MutableHandleGraph interface for graphs that can be added to.
  */
 
-#include "handlegraph/internal/handle_graph.hpp"
+#include "handlegraph/handle_graph.hpp"
 
 #include <functional>
 #include <vector>

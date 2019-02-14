@@ -1,12 +1,12 @@
-#ifndef HANDLEGRAPH_INTERNAL_HANDLE_GRAPH_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_HANDLE_GRAPH_HPP_INCLUDED
+#ifndef HANDLEGRAPH_HANDLE_GRAPH_HPP_INCLUDED
+#define HANDLEGRAPH_HANDLE_GRAPH_HPP_INCLUDED
 
 /** \file 
  * Defines the base HandleGraph interface.
  */
  
-#include "handlegraph/internal/handle_types.hpp"
- 
+#include "handlegraph/types.hpp"
+
 #include <functional>
 #include <string>
 

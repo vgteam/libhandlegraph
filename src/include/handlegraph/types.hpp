@@ -1,5 +1,5 @@
-#ifndef HANDLEGRAPH_INTERNAL_HANDLE_TYPES_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_HANDLE_TYPES_HPP_INCLUDED
+#ifndef HANDLEGRAPH_TYPES_HPP_INCLUDED
+#define HANDLEGRAPH_TYPES_HPP_INCLUDED
 
 /** \file
  * Defines the types used for handles, and user-facing operators to work with them.
@@ -26,6 +26,24 @@ struct path_handle_t { char data[sizeof(int64_t)]; };
 /// An occurrence handle is an opaque reference to an occurrence of an oriented node along a path in a graph
 /// In dg, it refers to [0], a node id/rank/handle, and [1], a rank within the records on that node
 struct occurrence_handle_t { char data[2 * sizeof(int64_t)]; };
+
+/// Define equality on handles
+bool operator==(const handle_t& a, const handle_t& b);
+
+/// Define inequality on handles
+bool operator!=(const handle_t& a, const handle_t& b);
+
+/// Define equality on path handles
+bool operator==(const path_handle_t& a, const path_handle_t& b);
+
+/// Define inequality on path handles
+bool operator!=(const path_handle_t& a, const path_handle_t& b);
+
+/// Define equality on occurrence handles
+bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b);
+
+/// Define inequality on occurrence handles
+bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b);
 
 }
 

@@ -1,11 +1,11 @@
-#ifndef HANDLEGRAPH_INTERNAL_PATH_HANDLE_GRAPH_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_PATH_HANDLE_GRAPH_HPP_INCLUDED
+#ifndef HANDLEGRAPH_PATH_HANDLE_GRAPH_HPP_INCLUDED
+#define HANDLEGRAPH_PATH_HANDLE_GRAPH_HPP_INCLUDED
 
 /** \file 
  * Defines the PathHandleGraph interface for graphs that have embedded paths.
  */
 
-#include "handlegraph/internal/handle_graph.hpp"
+#include "handlegraph/handle_graph.hpp"
 
 #include <vector>
 

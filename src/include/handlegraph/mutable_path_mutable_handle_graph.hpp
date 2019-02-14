@@ -1,12 +1,12 @@
-#ifndef HANDLEGRAPH_INTERNAL_MUTABLE_PATH_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_MUTABLE_PATH_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
+#ifndef HANDLEGRAPH_MUTABLE_PATH_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
+#define HANDLEGRAPH_MUTABLE_PATH_MUTABLE_HANDLE_GRAPH_HPP_INCLUDED
 
 /** \file 
  * Defines the MutablePathMutableHandleGraph interface for graphs that can have paths and graph material changed.
  */
 
-#include "handlegraph/internal/mutable_path_handle_graph.hpp"
-#include "handlegraph/internal/mutable_handle_graph.hpp"
+#include "handlegraph/mutable_path_handle_graph.hpp"
+#include "handlegraph/mutable_handle_graph.hpp"
 
 namespace handlegraph {
 

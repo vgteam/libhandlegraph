@@ -26,18 +26,15 @@ include_directories("src/include")
 
 add_library(handlegraph_objs OBJECT
   src/handle.cpp
-  src/include/handlegraph/interface.hpp
-  src/include/handlegraph/implementation.hpp
-  src/include/handlegraph/internal/handle_graph.hpp
-  src/include/handlegraph/internal/mutable_handle_graph.hpp
-  src/include/handlegraph/internal/deletable_handle_graph.hpp
-  src/include/handlegraph/internal/path_handle_graph.hpp
-  src/include/handlegraph/internal/mutable_path_handle_graph.hpp
-  src/include/handlegraph/internal/mutable_path_mutable_handle_graph.hpp
-  src/include/handlegraph/internal/mutable_path_deletable_handle_graph.hpp
-  src/include/handlegraph/internal/handle_helper.hpp
-  src/include/handlegraph/internal/handle_types.hpp
-  src/include/handlegraph/internal/handle_operators.hpp
+  src/include/handlegraph/handle_graph.hpp
+  src/include/handlegraph/mutable_handle_graph.hpp
+  src/include/handlegraph/deletable_handle_graph.hpp
+  src/include/handlegraph/path_handle_graph.hpp
+  src/include/handlegraph/mutable_path_handle_graph.hpp
+  src/include/handlegraph/mutable_path_mutable_handle_graph.hpp
+  src/include/handlegraph/mutable_path_deletable_handle_graph.hpp
+  src/include/handlegraph/util.hpp
+  src/include/handlegraph/types.hpp
   )
 
 # Build objects position-independent to allow a shared library

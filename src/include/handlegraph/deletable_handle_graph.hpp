@@ -1,11 +1,11 @@
-#ifndef HANDLEGRAPH_INTERNAL_DELETABLE_HANDLE_GRAPH_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_DELETABLE_HANDLE_GRAPH_HPP_INCLUDED
+#ifndef HANDLEGRAPH_DELETABLE_HANDLE_GRAPH_HPP_INCLUDED
+#define HANDLEGRAPH_DELETABLE_HANDLE_GRAPH_HPP_INCLUDED
 
 /** \file 
  * Defines the DeletableHandleGraph interface for graphs that can have material removed.
  */
 
-#include "handlegraph/internal/mutable_handle_graph.hpp"
+#include "handlegraph/mutable_handle_graph.hpp"
 
 namespace handlegraph {
 

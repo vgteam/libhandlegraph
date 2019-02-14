@@ -1,9 +1,11 @@
-#ifndef HANDLEGRAPH_INTERNAL_HANDLE_HELPER_HPP_INCLUDED
-#define HANDLEGRAPH_INTERNAL_HANDLE_HELPER_HPP_INCLUDED
+#ifndef HANDLEGRAPH_UTIL_HPP_INCLUDED
+#define HANDLEGRAPH_UTIL_HPP_INCLUDED
 
 /** \file
  * Tools for handle graph implementers to pack and unpack handles.
  */
+
+#include "handlegraph/types.hpp"
 
 #include <cassert>
 
