@@ -10,10 +10,6 @@ namespace handlegraph {
 
 using namespace std;
 
-//handle_t HandleGraph::get_handle(const Visit& visit) const {
-//    return get_handle(visit.node_id(), visit.backward());
-//}
-
 size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     size_t count = 0;
     follow_edges(handle, go_left, [&](const handle_t& ignored) {
@@ -22,10 +18,6 @@ size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     });
     return count;
 }
-
-//Visit HandleGraph::to_visit(const handle_t& handle) const {
-//  return vg::to_visit(this->get_id(handle), this->get_is_reverse(handle));
-//}
 
 handle_t HandleGraph::forward(const handle_t& handle) const {
     return this->get_is_reverse(handle) ? this->flip(handle) : handle;
@@ -75,7 +67,7 @@ void HandleGraph::for_each_edge(const function<bool(const edge_t&)>& iteratee, b
     for_each_handle([&](const handle_t& handle){
         bool keep_going = true;
         // filter to edges where this node is lower ID or any rightward self-loops
-        follow_edges(handle, false, [&](const handle_t& next) {
+        follow_edges(handle, false, (std::function<bool(const handle_t&)>)[&](const handle_t& next) -> bool {
             if (get_id(handle) <= get_id(next)) {
                 keep_going = iteratee(edge_handle(handle, next));
             }
@@ -84,7 +76,7 @@ void HandleGraph::for_each_edge(const function<bool(const edge_t&)>& iteratee, b
         if (keep_going) {
             // filter to edges where this node is lower ID or leftward reversing
             // self-loop
-            follow_edges(handle, true, [&](const handle_t& prev) {
+            follow_edges(handle, true, (std::function<bool(const handle_t&)>)[&](const handle_t& prev) -> bool {
                 if (get_id(handle) < get_id(prev) ||
                     (get_id(handle) == get_id(prev) && !get_is_reverse(prev))) {
                     keep_going = iteratee(edge_handle(prev, handle));
@@ -92,6 +84,8 @@ void HandleGraph::for_each_edge(const function<bool(const edge_t&)>& iteratee, b
                 return keep_going;
             });
         }
+        
+        return keep_going;
     }, parallel);
 }
     
