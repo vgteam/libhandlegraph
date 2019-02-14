@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <utility>
-
+#include <functional>
 
 namespace handlegraph {
 
@@ -46,5 +46,34 @@ bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b);
 bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b);
 
 }
+
+// Hashes need to be in the std namespace
+namespace std {
+
+/**
+ * Define hashes for handles.
+ */
+template<> struct hash<handlegraph::handle_t> {
+public:
+    inline size_t operator()(const handlegraph::handle_t& handle) const {
+        // TODO: We can't include util.cpp for as_integer because it includes us!
+        // But we need anyone with access to the handle_t to be able to hash it.
+        // So we just convert to integer manually.
+        return std::hash<int64_t>()(reinterpret_cast<const uint64_t&>(handle));
+    }
+};
+
+/**
+ * Define hashes for path handles.
+ */
+template<> struct hash<handlegraph::path_handle_t> {
+public:
+    inline size_t operator()(const handlegraph::path_handle_t& path_handle) const {
+        return std::hash<int64_t>()(reinterpret_cast<const uint64_t&>(path_handle));
+    }
+};
+
+}
+
 
 #endif
