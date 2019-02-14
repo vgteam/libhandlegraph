@@ -59,7 +59,7 @@ public:
     virtual id_t max_node_id() const = 0;
     
     ////////////////////////////////////////////////////////////////////////////
-    // Interface that needs backing protected methods implemented
+    // Stock interface that uses backing virtual methods
     ////////////////////////////////////////////////////////////////////////////
     
     // We can't actually overload on the bool-vs-void-returning lambdas we want
@@ -88,7 +88,7 @@ public:
     
     
     ////////////////////////////////////////////////////////////////////////////
-    // Backing protected virtual methods for interface
+    // Backing protected virtual methods that need to be implemented
     ////////////////////////////////////////////////////////////////////////////
     
 protected:
@@ -135,28 +135,61 @@ public:
     /// outward handle you would arrive at.
     handle_t traverse_edge_handle(const edge_t& edge, const handle_t& left) const;
     
-    /// Loop over all edges in their canonical orientation (as returned by edge_handle) and
-    /// execute an iteratee on each one. Can stop early by returning false from the iteratee.
-    void for_each_edge(const std::function<bool(const edge_t&)>& iteratee, bool parallel = false) const;
+    /// Loop over all edges in their canonical orientation (as returned by
+    /// edge_handle) as edge_t items and execute an iteratee on each one. If
+    /// the iteratee returns bool, and it returns false, stop iteration. Return
+    /// true if the iteration completed and false if it stopped early. If run
+    /// in parallel (parallel = true), stopping early is best-effort.
+    template<typename Iteratee>
+    bool for_each_edge(const Iteratee& iteratee, bool parallel = false) const;
     
 };
 
 
-// Template implementations
-
-// follow_edges
+////////////////////////////////////////////////////////////////////////////
+// Template Implementations
+////////////////////////////////////////////////////////////////////////////
 
 template<typename Iteratee>
 bool HandleGraph::follow_edges(const handle_t& handle, bool go_left, const Iteratee& iteratee) const {
     return follow_edges_impl(handle, go_left, BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee));
 }
 
-// for_each_handle
-
 template<typename Iteratee>
 bool HandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const {
     return for_each_handle_impl(BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee), parallel);
 }
+
+template<typename Iteratee>
+bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
+    // (If we pre-cast our lambda to std::function we won't generate a new
+    // template instantiation for it each time we are instantiated.)
+    return for_each_handle((std::function<bool(const handle_t&)>)[&](const handle_t& handle) -> bool {
+        bool keep_going = true;
+        // Filter to edges where this node is lower ID or any rightward
+        // self-loops. 
+        follow_edges(handle, false, (std::function<bool(const handle_t&)>)[&](const handle_t& next) -> bool {
+            if (get_id(handle) <= get_id(next)) {
+                keep_going = iteratee(edge_handle(handle, next));
+            }
+            return keep_going;
+        });
+        if (keep_going) {
+            // Filter to edges where this node is lower ID or leftward
+            // reversing self-loop.
+            follow_edges(handle, true, (std::function<bool(const handle_t&)>)[&](const handle_t& prev) -> bool {
+                if (get_id(handle) < get_id(prev) ||
+                    (get_id(handle) == get_id(prev) && !get_is_reverse(prev))) {
+                    keep_going = iteratee(edge_handle(prev, handle));
+                }
+                return keep_going;
+            });
+        }
+        
+        return keep_going;
+    }, parallel);
+}
+
 
 }
 

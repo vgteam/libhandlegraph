@@ -59,7 +59,6 @@ struct BoolReturningWrapper<Iteratee, Iterated, bool> {
     }
 };
 
-
 }
 
 #endif

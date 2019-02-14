@@ -37,10 +37,6 @@ public:
     /// Returns the number of paths stored in the graph
     virtual size_t get_path_count() const = 0;
     
-    /// Execute a function on each path in the graph
-    // TODO: allow stopping early?
-    virtual void for_each_path_handle(const std::function<void(const path_handle_t&)>& iteratee) const = 0;
-    
     /// Get a node handle (node ID and orientation) from a handle to an occurrence on a path
     virtual handle_t get_occurrence(const occurrence_handle_t& occurrence_handle) const = 0;
     
@@ -71,6 +67,28 @@ public:
     /// occurrences that match the handle in orientation.
     virtual std::vector<occurrence_handle_t> occurrences_of_handle(const handle_t& handle,
                                                                    bool match_orientation = false) const = 0;
+                                                                   
+    ////////////////////////////////////////////////////////////////////////////
+    // Stock interface that uses backing virtual methods
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /// Execute a function on each path_handle_t in the graph. If it returns bool, and
+    /// it returns false, stop iteration. Returns true if we finished and false if we
+    /// stopped early.
+    template<typename Iteratee>
+    bool for_each_path_handle(const Iteratee& iteratee) const;
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Backing protected virtual methods that need to be implemented
+    ////////////////////////////////////////////////////////////////////////////
+    
+protected:
+    
+    /// Execute a function on each path in the graph. If it returns false, stop
+    /// iteration. Returns true if we finished and false if we stopped early.
+    virtual bool for_each_path_handle_impl(const std::function<bool(const path_handle_t&)>& iteratee) const = 0;
+
+public:
 
     ////////////////////////////////////////////////////////////////////////////
     // Additional optional interface with a default implementation
@@ -83,10 +101,46 @@ public:
     // Concrete utility methods
     ////////////////////////////////////////////////////////////////////////////
 
-    /// Loop over all the occurrences along a path, from first through last
-    void for_each_occurrence_in_path(const path_handle_t& path, const std::function<void(const occurrence_handle_t&)>& iteratee) const;
+    /// Loop over all the occurrences (occurrence_handle_t) along a path, from
+    /// first through last. If the iteratee returns bool, and it returns false,
+    /// stop. Returns true if we finished and false if we stopped early.
+    template<typename Iteratee>
+    bool for_each_occurrence_in_path(const path_handle_t& path, const Iteratee& iteratee) const;
 };
 
+////////////////////////////////////////////////////////////////////////////
+// Template Implementations
+////////////////////////////////////////////////////////////////////////////
+
+template<typename Iteratee>
+bool PathHandleGraph::for_each_path_handle(const Iteratee& iteratee) const {
+    return for_each_path_handle_impl(BoolReturningWrapper<Iteratee, path_handle_t>::wrap(iteratee));
+}
+
+
+template<typename Iteratee>
+bool PathHandleGraph::for_each_occurrence_in_path(const path_handle_t& path, const Iteratee& iteratee) const {
+    if (is_empty(path)) {
+        // Nothing to do!
+        return true;
+    }
+    
+    auto wrapped = BoolReturningWrapper<Iteratee, occurrence_handle_t>::wrap(iteratee);
+    
+    bool keep_going = true;
+    
+    // Otherwise the path is nonempty so it is safe to try and grab a first occurrence
+    auto here = get_first_occurrence(path);
+    // Run for the first occurrence
+    keep_going &= wrapped(here);
+    while (has_next_occurrence(here) && keep_going) {
+        // Run for all subsequent occurrences on the path
+        here = get_next_occurrence(here);
+        keep_going &= iteratee(here);
+    }
+    
+    return keep_going;
+}
 
 }
 
