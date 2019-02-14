@@ -1,10 +1,15 @@
-#ifndef dank_graph_handle_types
-#define dank_graph_handle_types
+#ifndef HANDLEGRAPH_INTERNAL_HANDLE_TYPES_HPP_INCLUDED
+#define HANDLEGRAPH_INTERNAL_HANDLE_TYPES_HPP_INCLUDED
+
+/** \file
+ * Defines the types used for handles, and user-facing operators to work with them.
+ */
+
 #include <cstdint>
 #include <utility>
 
 
-namespace dsgvg {
+namespace handlegraph {
 
 /// represents an id
 typedef int64_t id_t;

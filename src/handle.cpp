@@ -1,10 +1,10 @@
-#include <handlegraph/handle.hpp>
+#include "handlegraph/interface.hpp"
 
 /** \file handle.cpp
- * Implement handle graph utility methods.
+ * Implement handle graph utility methods and default implementations.
  */
 
-namespace dsgvg {
+namespace handlegraph {
 
 using namespace std;
 

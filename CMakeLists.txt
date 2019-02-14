@@ -1,6 +1,8 @@
 # Specify the minimum version for CMake
-
 cmake_minimum_required(VERSION 3.1)
+
+# This defines default install directories like "lib"
+include(GNUInstallDirs)
 
 # Set a default install directory.
 # See https://stackoverflow.com/a/39485990/402891
@@ -24,22 +26,35 @@ include_directories("src/include")
 
 add_library(handlegraph_objs OBJECT
   src/handle.cpp
-  src/include/handlegraph/handle.hpp
-  src/include/handlegraph/handle_helper.hpp
-  src/include/handlegraph/handle_types.hpp
+  src/include/handlegraph/interface.hpp
+  src/include/handlegraph/implementation.hpp
+  src/include/handlegraph/internal/handle_graph.hpp
+  src/include/handlegraph/internal/mutable_handle_graph.hpp
+  src/include/handlegraph/internal/deletable_handle_graph.hpp
+  src/include/handlegraph/internal/path_handle_graph.hpp
+  src/include/handlegraph/internal/mutable_path_handle_graph.hpp
+  src/include/handlegraph/internal/mutable_path_mutable_handle_graph.hpp
+  src/include/handlegraph/internal/mutable_path_deletable_handle_graph.hpp
+  src/include/handlegraph/internal/handle_helper.hpp
+  src/include/handlegraph/internal/handle_types.hpp
+  src/include/handlegraph/internal/handle_operators.hpp
   )
 
 # Build objects position-independent to allow a shared library
 set_property(TARGET handlegraph_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
 
-# Make static and shared versions
+# Make static and shared versions with the same base name
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
+set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
+set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 
 # Set up for installability
 install(TARGETS handlegraph_shared handlegraph_static 
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY src/include/handlegraph
-  DESTINATION include)
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  FILES_MATCHING PATTERN "*.hpp"
+  )

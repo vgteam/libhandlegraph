@@ -1,0 +1,169 @@
+#ifndef HANDLEGRAPH_INTERNAL_HANDLE_GRAPH_HPP_INCLUDED
+#define HANDLEGRAPH_INTERNAL_HANDLE_GRAPH_HPP_INCLUDED
+
+/** \file 
+ * Defines the base HandleGraph interface.
+ */
+ 
+#include "handlegraph/internal/handle_types.hpp"
+ 
+#include <functional>
+#include <string>
+
+namespace handlegraph {
+
+
+/**
+ * This is the interface that a graph that uses handles needs to support.
+ * It is also the interface that users should code against.
+ */
+class HandleGraph {
+public:
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Interface that needs to be implemented
+    ////////////////////////////////////////////////////////////////////////////
+   
+    // Method to check if a node exists by ID
+    virtual bool has_node(id_t node_id) const = 0;
+   
+    /// Look up the handle for the node with the given ID in the given orientation
+    virtual handle_t get_handle(const id_t& node_id, bool is_reverse = false) const = 0;
+    
+    /// Get the ID from a handle
+    virtual id_t get_id(const handle_t& handle) const = 0;
+    
+    /// Get the orientation of a handle
+    virtual bool get_is_reverse(const handle_t& handle) const = 0;
+    
+    /// Invert the orientation of a handle (potentially without getting its ID)
+    virtual handle_t flip(const handle_t& handle) const = 0;
+    
+    /// Get the length of a node
+    virtual size_t get_length(const handle_t& handle) const = 0;
+    
+    /// Get the sequence of a node, presented in the handle's local forward
+    /// orientation.
+    virtual std::string get_sequence(const handle_t& handle) const = 0;
+    
+    /// Loop over all the handles to next/previous (right/left) nodes. Passes
+    /// them to a callback which returns false to stop iterating and true to
+    /// continue. Returns true if we finished and false if we stopped early.
+    virtual bool follow_edges(const handle_t& handle, bool go_left, const std::function<bool(const handle_t&)>& iteratee) const = 0;
+    
+    /// Loop over all the nodes in the graph in their local forward
+    /// orientations, in their internal stored order. Stop if the iteratee
+    /// returns false. Can be told to run in parallel, in which case stopping
+    /// after a false return value is on a best-effort basis and iteration
+    /// order is not defined.
+    virtual void for_each_handle(const std::function<bool(const handle_t&)>& iteratee, bool parallel = false) const = 0;
+    
+    /// Return the number of nodes in the graph
+    /// TODO: can't be node_count because XG has a field named node_count.
+    virtual size_t node_size() const = 0;
+    
+    /// Return the smallest ID in the graph, or some smaller number if the
+    /// smallest ID is unavailable. Return value is unspecified if the graph is empty.
+    virtual id_t min_node_id() const = 0;
+    
+    /// Return the largest ID in the graph, or some larger number if the
+    /// largest ID is unavailable. Return value is unspecified if the graph is empty.
+    virtual id_t max_node_id() const = 0;
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Interface that needs to be using'd
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /// Loop over all the handles to next/previous (right/left) nodes. Works
+    /// with a callback that just takes all the handles and returns void.
+    /// Has to be a template because we can't overload on the types of std::function arguments otherwise.
+    /// MUST be pulled into implementing classes with `using` in order to work!
+    template <typename T>
+    auto follow_edges(const handle_t& handle, bool go_left, T&& iteratee) const
+    -> typename std::enable_if<std::is_void<decltype(iteratee(get_handle(0, false)))>::value>::type {
+        // Implementation only for void-returning iteratees
+        // We ought to just overload on the std::function but that's not allowed until C++14.
+        // See <https://stackoverflow.com/q/13811180>
+        
+        // We also can't use result_of<T(handle_t)>::type to sniff the return
+        // type out because that ::type would not exist (since that's what you
+        // get for a void apparently?) and we couldn't check if it's bool or
+        // void.
+        
+        // So we do this nonsense thing with a trailing return type (to get the
+        // actual arg into scope) and a decltype (which is allowed to resolve to
+        // void) and is_void (which is allowed to take void) and a fake
+        // get_handle call (which is the shortest handle_t-typed expression I
+        // could think of).
+        
+        // Make a wrapper that puts a bool return type on.
+        std::function<bool(const handle_t&)> lambda = [&](const handle_t& found) {
+            iteratee(found);
+            return true;
+        };
+        
+        // Use that
+        follow_edges(handle, go_left, lambda);
+        
+        // During development I managed to get earlier versions of this template to build infinitely recursive functions.
+        static_assert(!std::is_void<decltype(lambda(get_handle(0, false)))>::value, "can't take our own lambda");
+    }
+    
+    
+    /// Loop over all the nodes in the graph in their local forward
+    /// orientations, in their internal stored order. Works with void-returning iteratees.
+    /// MUST be pulled into implementing classes with `using` in order to work!
+    template <typename T>
+    auto for_each_handle(T&& iteratee, bool parallel = false) const
+    -> typename std::enable_if<std::is_void<decltype(iteratee(get_handle(0, false)))>::value>::type {
+        // Make a wrapper that puts a bool return type on.
+        std::function<bool(const handle_t&)> lambda = [&](const handle_t& found) {
+            iteratee(found);
+            return true;
+        };
+        
+        // Use that
+        for_each_handle(lambda, parallel);
+    }
+    
+    /// Get a handle from a Visit Protobuf object.
+    /// Must be using'd to avoid shadowing.
+    //handle_t get_handle(const Visit& visit) const;
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Additional optional interface with a default implementation
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /// Get the number of edges on the right (go_left = false) or left (go_left
+    /// = true) side of the given handle. The default implementation is O(n) in
+    /// the number of edges returned, but graph implementations that track this
+    /// information more efficiently can override this method.
+    virtual size_t get_degree(const handle_t& handle, bool go_left) const;
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Concrete utility methods
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /// Get a Protobuf Visit from a handle.
+    //Visit to_visit(const handle_t& handle) const;
+    
+    /// Get the locally forward version of a handle
+    handle_t forward(const handle_t& handle) const;
+    
+    /// A pair of handles can be used as an edge. When so used, the handles have a
+    /// canonical order and orientation.
+    edge_t edge_handle(const handle_t& left, const handle_t& right) const;
+    
+    /// Such a pair can be viewed from either inward end handle and produce the
+    /// outward handle you would arrive at.
+    handle_t traverse_edge_handle(const edge_t& edge, const handle_t& left) const;
+    
+    /// Loop over all edges in their canonical orientation (as returned by edge_handle) and
+    /// execute an iteratee on each one. Can stop early by returning false from the iteratee.
+    void for_each_edge(const std::function<bool(const edge_t&)>& iteratee, bool parallel = false) const;
+    
+};
+
+}
+
+#endif

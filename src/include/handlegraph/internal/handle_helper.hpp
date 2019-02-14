@@ -1,10 +1,18 @@
-#ifndef dgraph_handle_helper
-#define dgraph_handle_helper
-#include <cstdint>
-#include <cassert>
-#include "handle_types.hpp"
+#ifndef HANDLEGRAPH_INTERNAL_HANDLE_HELPER_HPP_INCLUDED
+#define HANDLEGRAPH_INTERNAL_HANDLE_HELPER_HPP_INCLUDED
 
-namespace dsgvg {
+/** \file
+ * Tools for handle graph implementers to pack and unpack handles.
+ */
+
+#include <cassert>
+
+namespace handlegraph {
+
+//
+// Handles
+//
+
 /// View a handle as an integer
 inline uint64_t& as_integer(handle_t& handle) {
     return reinterpret_cast<uint64_t&>(handle);
@@ -25,17 +33,9 @@ inline const handle_t& as_handle(const uint64_t& value) {
     return reinterpret_cast<const handle_t&>(value);
 }
 
-/// Define equality on handles
-inline bool operator==(const handle_t& a, const handle_t& b) {
-    return as_integer(a) == as_integer(b);
-}
 
-/// Define inequality on handles
-inline bool operator!=(const handle_t& a, const handle_t& b) {
-    return as_integer(a) != as_integer(b);
-}
-
-struct handle_helper{
+/// Define a way to pack an integer and an orientation bit into a handle_t.
+struct number_bool_packing {
 
     /// Extract the packed integer
     inline static uint64_t unpack_number(const handle_t& handle) {
@@ -61,9 +61,9 @@ struct handle_helper{
     }
 };
 
-///
-/// Path handles
-///
+//
+// Path handles
+//
 
 /// View a path handle as an integer
 inline uint64_t& as_integer(path_handle_t& handle) {
@@ -85,19 +85,9 @@ inline const path_handle_t& as_path_handle(const uint64_t& value) {
     return reinterpret_cast<const path_handle_t&>(value);
 }
 
-/// Define equality on path handles
-inline bool operator==(const path_handle_t& a, const path_handle_t& b) {
-    return as_integer(a) == as_integer(b);
-}
-
-/// Define inequality on path handles
-inline bool operator!=(const path_handle_t& a, const path_handle_t& b) {
-    return as_integer(a) != as_integer(b);
-}
-
-///
-/// Occurrence handles
-///
+//
+// Occurrence handles
+//
 
 /// View an occurrence handle as an integer
 inline int64_t* as_integers(occurrence_handle_t& occurrence_handle) {
@@ -109,15 +99,7 @@ inline const int64_t* as_integers(const occurrence_handle_t& occurrence_handle) 
     return reinterpret_cast<const int64_t*>(&occurrence_handle);
 }
 
-/// Define equality on occurrence handles
-inline bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b) {
-    return as_integers(a)[0] == as_integers(b)[0] && as_integers(a)[1] == as_integers(b)[1];
-}
 
-/// Define inequality on occurrence handles
-inline bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b) {
-    return !(a == b);
-}
 
 }
 
