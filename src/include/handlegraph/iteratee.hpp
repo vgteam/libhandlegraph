@@ -28,7 +28,7 @@ namespace handlegraph {
 /// returns a wrapped version that returns the calable's returned bool, or true
 /// for void-returning callables.
 template<typename Iteratee, typename Iterated,
-    typename IterateeReturnType = decltype(std::declval<Iteratee>().operator()(std::declval<handle_t>()))>
+    typename IterateeReturnType = decltype(std::declval<Iteratee>().operator()(std::declval<Iterated>()))>
 struct BoolReturningWrapper {
     static inline std::function<bool(const Iterated&)> wrap(const Iteratee& iteratee);
 };
