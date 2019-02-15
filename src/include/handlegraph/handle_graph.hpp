@@ -26,13 +26,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////
    
     // Method to check if a node exists by ID
-    virtual bool has_node(id_t node_id) const = 0;
+    virtual bool has_node(nid_t node_id) const = 0;
    
     /// Look up the handle for the node with the given ID in the given orientation
-    virtual handle_t get_handle(const id_t& node_id, bool is_reverse = false) const = 0;
+    virtual handle_t get_handle(const nid_t& node_id, bool is_reverse = false) const = 0;
     
     /// Get the ID from a handle
-    virtual id_t get_id(const handle_t& handle) const = 0;
+    virtual nid_t get_id(const handle_t& handle) const = 0;
     
     /// Get the orientation of a handle
     virtual bool get_is_reverse(const handle_t& handle) const = 0;
@@ -52,11 +52,11 @@ public:
     
     /// Return the smallest ID in the graph, or some smaller number if the
     /// smallest ID is unavailable. Return value is unspecified if the graph is empty.
-    virtual id_t min_node_id() const = 0;
+    virtual nid_t min_node_id() const = 0;
     
     /// Return the largest ID in the graph, or some larger number if the
     /// largest ID is unavailable. Return value is unspecified if the graph is empty.
-    virtual id_t max_node_id() const = 0;
+    virtual nid_t max_node_id() const = 0;
     
     ////////////////////////////////////////////////////////////////////////////
     // Stock interface that uses backing virtual methods

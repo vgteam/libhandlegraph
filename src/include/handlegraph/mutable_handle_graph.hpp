@@ -26,7 +26,7 @@ public:
     virtual handle_t create_handle(const std::string& sequence) = 0;
 
     /// Create a new node with the given id and sequence, then return the handle.
-    virtual handle_t create_handle(const std::string& sequence, const id_t& id) = 0;
+    virtual handle_t create_handle(const std::string& sequence, const nid_t& id) = 0;
     
     /// Create an edge connecting the given handles in the given order and orientations.
     /// Ignores existing edges.

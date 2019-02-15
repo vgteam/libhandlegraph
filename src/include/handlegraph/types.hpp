@@ -12,13 +12,15 @@
 namespace handlegraph {
 
 /// represents an id
-typedef int64_t id_t;
+typedef int64_t nid_t;
+[[deprecated("id_t collides with a standard type, use nid_t instead")]]
+typedef nid_t id_t;
 /// represents an offset
 typedef std::size_t off_t;
 /// represents a position
-typedef std::tuple<id_t, bool, off_t> pos_t;
+typedef std::tuple<nid_t, bool, off_t> pos_t;
 /// represents the internal id of a node traversal
-struct handle_t { char data[sizeof(id_t)]; };
+struct handle_t { char data[sizeof(nid_t)]; };
 /// represents an edge in terms of its endpoints
 typedef std::pair<handle_t, handle_t> edge_t;
 /// represents the internal id of a path entity
