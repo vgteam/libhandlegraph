@@ -63,6 +63,15 @@ handle_t HandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& l
     }
 }
 
+bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
+    bool not_seen = true;
+    follow_edges(left, false, [&](const handle_t& next) {
+        not_seen = (next != right);
+        return not_seen;
+    });
+    return !not_seen;
+}
+
 std::vector<occurrence_handle_t> PathHandleGraph::occurrences_of_handle(const handle_t& handle,
                                                                         bool match_orientation) const {
     std::vector<occurrence_handle_t> found;
