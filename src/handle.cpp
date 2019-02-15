@@ -2,6 +2,8 @@
 #include "handlegraph/path_handle_graph.hpp"
 #include "handlegraph/util.hpp"
 
+#include <vector>
+
 /** \file handle.cpp
  * Implement handle graph utility methods, oprtators, and default implementations.
  */
@@ -59,6 +61,21 @@ handle_t HandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& l
             std::to_string(this->get_id(edge.second)) + " " + std::to_string(this->get_is_reverse(edge.second)) +
             " from non-participant " + std::to_string(this->get_id(left)) + " " + std::to_string(this->get_is_reverse(left)));
     }
+}
+
+std::vector<occurrence_handle_t> PathHandleGraph::occurrences_of_handle(const handle_t& handle,
+                                                                        bool match_orientation) const {
+    std::vector<occurrence_handle_t> found;
+    
+    for_each_occurrence_on_handle(handle, [&](const occurrence_handle_t& occ) {
+        // For each handle occurrence
+        if (!match_orientation || get_is_reverse(handle) == get_is_reverse(get_occurrence(occ))) {
+            // If its orientation is acceptable, keep it
+            found.push_back(occ);
+        }
+    });
+    
+    return found;
 }
     
 bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {

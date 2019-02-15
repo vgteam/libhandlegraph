@@ -63,11 +63,6 @@ public:
     /// Returns a handle to the path that an occurrence is on
     virtual path_handle_t get_path_handle_of_occurrence(const occurrence_handle_t& occurrence_handle) const = 0;
     
-    /// Returns a vector of all occurrences of a node on paths. Optionally restricts to
-    /// occurrences that match the handle in orientation.
-    virtual std::vector<occurrence_handle_t> occurrences_of_handle(const handle_t& handle,
-                                                                   bool match_orientation = false) const = 0;
-                                                                   
     ////////////////////////////////////////////////////////////////////////////
     // Stock interface that uses backing virtual methods
     ////////////////////////////////////////////////////////////////////////////
@@ -105,6 +100,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     // Additional optional interface with a default implementation
     ////////////////////////////////////////////////////////////////////////////
+    
+    /// Returns a vector of all occurrences of a node on paths. Optionally restricts to
+    /// occurrences that match the handle in orientation.
+    virtual std::vector<occurrence_handle_t> occurrences_of_handle(const handle_t& handle,
+                                                                   bool match_orientation = false) const;
 
     /// Returns true if the given path is empty, and false otherwise
     virtual bool is_empty(const path_handle_t& path_handle) const;
