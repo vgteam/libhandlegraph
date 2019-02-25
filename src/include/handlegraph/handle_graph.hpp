@@ -189,7 +189,7 @@ bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
             // reversing self-loop.
             follow_edges(handle, true, (std::function<bool(const handle_t&)>)[&](const handle_t& prev) -> bool {
                 if (get_id(handle) < get_id(prev) ||
-                    (get_id(handle) == get_id(prev) && !get_is_reverse(prev))) {
+                    (get_id(handle) == get_id(prev) && get_is_reverse(prev))) {
                     keep_going = iteratee(edge_handle(prev, handle));
                 }
                 return keep_going;
