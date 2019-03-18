@@ -48,7 +48,7 @@ public:
 
     /// Reorder the graph's internal structure to match that given.
     /// Optionally compact the id space of the graph to match the ordering, from 1->|ordering|.
-    void apply_ordering(const std::vector<handle_t>& order, bool compact_ids) = 0;
+    virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids) = 0;
 
     /// Alter the node that the given handle corresponds to so the orientation
     /// indicated by the handle becomes the node's local forward orientation.
