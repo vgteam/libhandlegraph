@@ -36,19 +36,6 @@ public:
     inline void create_edge(const edge_t& edge) {
         create_edge(edge.first, edge.second);
     }
-    
-    /// Swap the nodes corresponding to the given handles, in the ordering used
-    /// by for_each_handle when looping over the graph. Other handles to the
-    /// nodes being swapped must not be invalidated. If a swap is made while
-    /// for_each_handle is running, it affects the order of the handles
-    /// traversed during the current traversal (so swapping an already seen
-    /// handle to a later handle's position will make the seen handle be visited
-    /// again and the later handle not be visited at all).
-    virtual void swap_handles(const handle_t& a, const handle_t& b) = 0;
-
-    /// Reorder the graph's internal structure to match that given.
-    /// Optionally compact the id space of the graph to match the ordering, from 1->|ordering|.
-    virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids) = 0;
 
     /// Alter the node that the given handle corresponds to so the orientation
     /// indicated by the handle becomes the node's local forward orientation.

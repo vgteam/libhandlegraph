@@ -34,7 +34,7 @@ public:
         destroy_edge(edge.first, edge.second);
     }
     
-    /// Remove all nodes and edges. Does not update any stored paths.
+    /// Remove all nodes and edges.
     virtual void clear() = 0;
 };
 

@@ -11,23 +11,29 @@
 
 namespace handlegraph {
 
-/// represents an id
+/// Represents an id
 typedef int64_t nid_t;
+    
 [[deprecated("id_t collides with a standard type, use nid_t instead")]]
 typedef nid_t id_t;
-/// represents an offset
+    
+/// Represents an offset
 typedef std::size_t off_t;
-/// represents a position
+    
+/// Represents a position
 typedef std::tuple<nid_t, bool, off_t> pos_t;
-/// represents the internal id of a node traversal
+    
+/// Represents the internal id of a node traversal
 struct handle_t { char data[sizeof(nid_t)]; };
-/// represents an edge in terms of its endpoints
+    
+/// Represents an edge in terms of its endpoints
 typedef std::pair<handle_t, handle_t> edge_t;
-/// represents the internal id of a path entity
+    
+/// Represents the internal id of a path entity
 struct path_handle_t { char data[sizeof(int64_t)]; };
-/// An occurrence handle is an opaque reference to an occurrence of an oriented node along a path in a graph
-/// In dg, it refers to [0], a node id/rank/handle, and [1], a rank within the records on that node
-struct occurrence_handle_t { char data[2 * sizeof(int64_t)]; };
+    
+/// A step handle is an opaque reference to a single step of an oriented node on a path in a graph
+struct step_handle_t { char data[2 * sizeof(int64_t)]; };
 
 /// Define equality on handles
 bool operator==(const handle_t& a, const handle_t& b);
@@ -41,11 +47,11 @@ bool operator==(const path_handle_t& a, const path_handle_t& b);
 /// Define inequality on path handles
 bool operator!=(const path_handle_t& a, const path_handle_t& b);
 
-/// Define equality on occurrence handles
-bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b);
+/// Define equality on step handles
+bool operator==(const step_handle_t& a, const step_handle_t& b);
 
-/// Define inequality on occurrence handles
-bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b);
+/// Define inequality on step handles
+bool operator!=(const step_handle_t& a, const step_handle_t& b);
 
 }
 
