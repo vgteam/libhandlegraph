@@ -18,9 +18,6 @@ namespace handlegraph {
  */
 class MutableHandleGraph : virtual public HandleGraph {
 public:
-    /*
-     * Note: All operations may invalidate path handles and occurrence handles.
-     */
     
     /// Create a new node with the given sequence and return the handle.
     virtual handle_t create_handle(const std::string& sequence) = 0;

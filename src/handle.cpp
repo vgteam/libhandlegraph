@@ -92,6 +92,45 @@ bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
     // But some implementations may have an expensive length query and a cheaper emptiness one
     return get_step_count(path_handle) == 0;
 }
+    
+PathForEachSocket PathHandleGraph::scan_path(const path_handle_t& path) const {
+    return PathForEachSocket(this, path);
+}
+    
+PathForEachSocket::PathForEachSocket(const PathHandleGraph* graph, const path_handle_t& path) : graph(graph), path(path) {
+    
+}
+    
+PathForEachSocket::iterator PathForEachSocket::begin() const {
+    return iterator(graph->path_begin(path), graph->get_is_circular(path) && !graph->is_empty(path), graph);
+}
+    
+PathForEachSocket::iterator PathForEachSocket::end() const {
+    return iterator(graph->path_end(path), false, graph);
+}
+    
+PathForEachSocket::iterator::iterator(const step_handle_t& step, bool force_unequal,
+                                      const PathHandleGraph* graph) : step(step), force_unequal(force_unequal), graph(graph) {
+    
+}
+    
+PathForEachSocket::iterator& PathForEachSocket::iterator::operator++() {
+    step = graph->get_next_step(step);
+    force_unequal = false;
+    return *this;
+}
+
+step_handle_t PathForEachSocket::iterator::operator*() const {
+    return step;
+}
+
+bool PathForEachSocket::iterator::operator==(const PathForEachSocket::iterator& other) const {
+    return !force_unequal && !other.force_unequal && graph == other.graph && step == other.step;
+}
+
+bool PathForEachSocket::iterator::operator!=(const PathForEachSocket::iterator& other) const {
+    return !(*this == other);
+}
 
 /// Define equality on handles
 bool operator==(const handle_t& a, const handle_t& b) {

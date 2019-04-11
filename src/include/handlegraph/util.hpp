@@ -91,12 +91,12 @@ inline const path_handle_t& as_path_handle(const uint64_t& value) {
 // Step handles
 //
 
-/// View an occurrence handle as an integer array
+/// View a step handle as an integer array
 inline int64_t* as_integers(step_handle_t& step_handle) {
     return reinterpret_cast<int64_t*>(&step_handle);
 }
 
-/// View a const occurrence handle as a const integer array
+/// View a const step handle as a const integer array
 inline const int64_t* as_integers(const step_handle_t& step_handle) {
     return reinterpret_cast<const int64_t*>(&step_handle);
 }
