@@ -127,7 +127,7 @@ public:
 
     /// Returns a class with an STL-style iterator interface that can be used directly
     /// in a for each loop like:
-    /// for (step_handle_t step : graph->scan_path(path)) { }
+    /// for (handle_t handle : graph->scan_path(path)) { }
     PathForEachSocket scan_path(const path_handle_t& path) const;
     
     /// Loop over all the steps (step_handle_t) along a path. In a non-circular
@@ -202,7 +202,7 @@ public:
         iterator(const iterator& other) = default;
         iterator& operator=(const iterator& other) = default;
         iterator& operator++();
-        step_handle_t operator*() const;
+        handle_t operator*() const;
         bool operator==(const iterator& other) const;
         bool operator!=(const iterator& other) const;
         

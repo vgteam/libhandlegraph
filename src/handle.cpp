@@ -120,8 +120,8 @@ PathForEachSocket::iterator& PathForEachSocket::iterator::operator++() {
     return *this;
 }
 
-step_handle_t PathForEachSocket::iterator::operator*() const {
-    return step;
+handle_t PathForEachSocket::iterator::operator*() const {
+    return graph->get_handle_of_step(step);
 }
 
 bool PathForEachSocket::iterator::operator==(const PathForEachSocket::iterator& other) const {
