@@ -16,8 +16,8 @@ namespace handlegraph {
 class MutablePathMutableHandleGraph : virtual public MutablePathHandleGraph, virtual public MutableHandleGraph {
     
     // No extra methods. However, some additional semantics are assumed:
-    // - divide_handle() replaces the occurrence of the original handle with its subsegments
-    //   in all occurrences on all paths
+    // - divide_handle() replaces every occurrence of the original handle with its subsegments
+    //   in all stesps on all paths
     // - apply_orientation() also applies the orientation to all occurrences of the handle
     //   in all paths
     

@@ -72,15 +72,15 @@ bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
     return !not_seen;
 }
 
-std::vector<occurrence_handle_t> PathHandleGraph::occurrences_of_handle(const handle_t& handle,
-                                                                        bool match_orientation) const {
-    std::vector<occurrence_handle_t> found;
+std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& handle,
+                                                            bool match_orientation) const {
+    std::vector<step_handle_t> found;
     
-    for_each_occurrence_on_handle(handle, [&](const occurrence_handle_t& occ) {
-        // For each handle occurrence
-        if (!match_orientation || get_is_reverse(handle) == get_is_reverse(get_occurrence(occ))) {
+    for_each_step_on_handle(handle, [&](const step_handle_t& step) {
+        // For each handle step
+        if (!match_orientation || get_is_reverse(handle) == get_is_reverse(get_handle_of_step(step))) {
             // If its orientation is acceptable, keep it
-            found.push_back(occ);
+            found.push_back(step);
         }
     });
     
@@ -90,7 +90,47 @@ std::vector<occurrence_handle_t> PathHandleGraph::occurrences_of_handle(const ha
 bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
     // By default, we can answer emptiness queries with the length query.
     // But some implementations may have an expensive length query and a cheaper emptiness one
-    return get_occurrence_count(path_handle) == 0;
+    return get_step_count(path_handle) == 0;
+}
+    
+PathForEachSocket PathHandleGraph::scan_path(const path_handle_t& path) const {
+    return PathForEachSocket(this, path);
+}
+    
+PathForEachSocket::PathForEachSocket(const PathHandleGraph* graph, const path_handle_t& path) : graph(graph), path(path) {
+    
+}
+    
+PathForEachSocket::iterator PathForEachSocket::begin() const {
+    return iterator(graph->path_begin(path), graph->get_is_circular(path) && !graph->is_empty(path), graph);
+}
+    
+PathForEachSocket::iterator PathForEachSocket::end() const {
+    // we will end on the beginning step in circular paths
+    return iterator(graph->get_is_circular(path) ? graph->path_begin(path) : graph->path_end(path), false, graph);
+}
+    
+PathForEachSocket::iterator::iterator(const step_handle_t& step, bool force_unequal,
+                                      const PathHandleGraph* graph) : step(step), force_unequal(force_unequal), graph(graph) {
+    
+}
+    
+PathForEachSocket::iterator& PathForEachSocket::iterator::operator++() {
+    step = graph->get_next_step(step);
+    force_unequal = false;
+    return *this;
+}
+
+handle_t PathForEachSocket::iterator::operator*() const {
+    return graph->get_handle_of_step(step);
+}
+
+bool PathForEachSocket::iterator::operator==(const PathForEachSocket::iterator& other) const {
+    return !force_unequal && !other.force_unequal && graph == other.graph && step == other.step;
+}
+
+bool PathForEachSocket::iterator::operator!=(const PathForEachSocket::iterator& other) const {
+    return !(*this == other);
 }
 
 /// Define equality on handles
@@ -113,13 +153,13 @@ bool operator!=(const path_handle_t& a, const path_handle_t& b) {
     return as_integer(a) != as_integer(b);
 }
 
-/// Define equality on occurrence handles
-bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b) {
+/// Define equality on step handles
+bool operator==(const step_handle_t& a, const step_handle_t& b) {
     return as_integers(a)[0] == as_integers(b)[0] && as_integers(a)[1] == as_integers(b)[1];
 }
 
-/// Define inequality on occurrence handles
-bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b) {
+/// Define inequality on step handles
+bool operator!=(const step_handle_t& a, const step_handle_t& b) {
     return !(a == b);
 }
 
