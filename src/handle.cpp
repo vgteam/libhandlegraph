@@ -107,7 +107,7 @@ PathForEachSocket::iterator PathForEachSocket::begin() const {
     
 PathForEachSocket::iterator PathForEachSocket::end() const {
     // we will end on the beginning step in circular paths
-    return iterator(graph->get_is_circular(path) ? graph->path_begin(path) : graph->path_end(path), false, graph);
+    return iterator(graph->get_is_circular(path) && !graph->is_empty(path) ? graph->path_begin(path) : graph->path_end(path), false, graph);
 }
     
 PathForEachSocket::iterator::iterator(const step_handle_t& step, bool force_unequal,
