@@ -62,7 +62,7 @@ public:
      */
     template<class HandleIter>
     virtual std::pair<step_handle_t, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
-                                                                    const step_handle_t& segment_end
+                                                                    const step_handle_t& segment_end,
                                                                     const HandleIter& new_segment_begin,
                                                                     const HandleIter& new_segment_end) = 0;
     
