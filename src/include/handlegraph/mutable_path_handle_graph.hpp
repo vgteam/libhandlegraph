@@ -61,10 +61,10 @@ public:
      * the new segment or, in the case that the new segment is empty, segment_end.
      */
     template<class HandleIter>
-    virtual pair<step_handle, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
-                                                             const step_handle_t& segment_end
-                                                             const HandleIter& new_segment_begin,
-                                                             const HandleIter& new_segment_end) = 0;
+    virtual pair<step_handle_t, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
+                                                               const step_handle_t& segment_end
+                                                               const HandleIter& new_segment_begin,
+                                                               const HandleIter& new_segment_end) = 0;
     
     /**
      * Make a path circular or non-circular. If the path is becoming circular, the
