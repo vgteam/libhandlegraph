@@ -60,7 +60,7 @@ public:
      */
     virtual std::pair<step_handle_t, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
                                                                     const step_handle_t& segment_end,
-                                                                    const vector<handle_t>& new_segment) = 0;
+                                                                    const std::vector<handle_t>& new_segment) = 0;
     
     /**
      * Make a path circular or non-circular. If the path is becoming circular, the
