@@ -54,17 +54,13 @@ public:
     /**
      * Delete a segment of a path and rewrite it as some other sequence of steps. Returns a pair
      * of step_handle_t's that indicate the range of the new segment in the path. The segment to
-     * delete should be designated by the first and the past-the-last step handle. The segment
-     * to replace it can be provided by a range of iterators that implement the STL unidirectional
-     * const iterator interface and return handle_t's when dereferenced. If the step that is
-     * returned by path_begin is deleted, path_begin will now return the first step from the
+     * delete should be designated by the first and the past-the-last step handle.  If the step
+     * that is returned by path_begin is deleted, path_begin will now return the first step from
      * the new segment or, in the case that the new segment is empty, segment_end.
      */
-    template<class HandleIter>
     virtual std::pair<step_handle_t, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
                                                                     const step_handle_t& segment_end,
-                                                                    const HandleIter& new_segment_begin,
-                                                                    const HandleIter& new_segment_end) = 0;
+                                                                    const vector<handle_t>& new_segment) = 0;
     
     /**
      * Make a path circular or non-circular. If the path is becoming circular, the
