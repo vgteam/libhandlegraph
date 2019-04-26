@@ -43,6 +43,30 @@ public:
     virtual step_handle_t append_step(const path_handle_t& path, const handle_t& to_append) = 0;
     
     /**
+     * Prepend a visit to a node to the given path. Returns a handle to the new
+     * first step on the path which is appended. If the path is cirular, the new
+     * step is placed between the steps considered "last" and "first" by the
+     * method path_begin. Handles to later steps on the path, and to other paths,
+     * must remain valid.
+     */
+    virtual step_handle_t prepend_step(const path_handle_t& path, const handle_t& to_prepend) = 0;
+    
+    /**
+     * Delete a segment of a path and rewrite it as some other sequence of steps. Returns a pair
+     * of step_handle_t's that indicate the range of the new segment in the path. The segment to
+     * delete should be designated by the first and the past-the-last step handle. The segment
+     * to replace it can be provided by a range of iterators that implement the STL unidirectional
+     * const iterator interface and return handle_t's when dereferenced. If the step that is
+     * returned by path_begin is deleted, path_begin will now return the first step from the
+     * the new segment or, in the case that the new segment is empty, segment_end.
+     */
+    template<class HandleIter>
+    virtual pair<step_handle, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
+                                                             const step_handle_t& segment_end
+                                                             const HandleIter& new_segment_begin,
+                                                             const HandleIter& new_segment_end) = 0;
+    
+    /**
      * Make a path circular or non-circular. If the path is becoming circular, the
      * last step is joined to the first step. If the path is becoming linear, the
      * step considered "last" is unjoined from the step considered "first" according
