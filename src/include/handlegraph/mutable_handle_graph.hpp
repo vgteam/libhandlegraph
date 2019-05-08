@@ -64,7 +64,7 @@ public:
     /// performance.
     /// Note: Ideally, this method is called one time once there is expected to be
     /// few graph modifications in the future.
-    virtual void optimize(bool allow_id_reassignment = true);
+    virtual void optimize(bool allow_id_reassignment = true) = 0;
 };
 
 }
