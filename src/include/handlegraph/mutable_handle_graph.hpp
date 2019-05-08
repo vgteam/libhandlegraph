@@ -58,6 +58,13 @@ public:
         auto parts = divide_handle(handle, std::vector<size_t>{offset});
         return std::make_pair(parts.front(), parts.back());
     }
+    
+    /// Adjust the representation of the graph in memory to improve performance.
+    /// Optionally, allow the node IDs to be reassigned to further improve
+    /// performance.
+    /// Note: Ideally, this method is called one time once there is expected to be
+    /// few graph modifications in the future.
+    void optimize(bool allow_id_reassignment = true);
 };
 
 }
