@@ -53,11 +53,19 @@ public:
     /// that we consider "first" based on our construction of the path. If the path is empty,
     /// then we implementation must return a magic "path begin" step value.
     virtual step_handle_t path_begin(const path_handle_t& path_handle) const = 0;
+
+    /// Returns the reverse end iterator for the path, which is what we'd get from calling
+    /// get_previous_step on the first step in a non-circular path.
+    virtual step_handle_t path_reverse_end_iterator(const path_handle_t& path_handle) const = 0;
     
     /// Get a handle to a fictitious position past the end of a path. This position is
     /// return by get_next_step for the final step in a path in a non-circular path.
     /// If the path is empty then the implementation must return a magic "path end" step value.
     virtual step_handle_t path_end(const path_handle_t& path_handle) const = 0;
+
+    /// Returns the forward end iterator for the path, which is what we'd get from calling
+    /// get_next_step on the last step in a non-circular path.
+    virtual step_handle_t path_forward_end_iterator(const path_handle_t& path_handle) const = 0;
 
     /// Returns true if the step is not the last step in the path
     virtual bool has_next_step(const step_handle_t& step_handle) const = 0;
@@ -186,7 +194,7 @@ public:
     
     class iterator;
     
-    // Get iterator to the first
+    // Get iterator to the first step in the path
     iterator begin() const;
 
     // Get the end iterator, which we would obtain from get_next_step(path_end(path))
