@@ -1,6 +1,7 @@
 #include "handlegraph/handle_graph.hpp"
 #include "handlegraph/path_handle_graph.hpp"
 #include "handlegraph/util.hpp"
+#include "handlegraph/mpl.hpp"
 
 #include <vector>
 

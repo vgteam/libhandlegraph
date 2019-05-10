@@ -36,6 +36,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
+  src/include/handlegraph/mpl.hpp
   )
 
 # Build objects position-independent to allow a shared library
