@@ -54,9 +54,9 @@ public:
     /**
      * Delete a segment of a path and rewrite it as some other sequence of steps. Returns a pair
      * of step_handle_t's that indicate the range of the new segment in the path. The segment to
-     * delete should be designated by the first and the past-the-last step handle.  If the step
+     * delete should be designated by the first and last step handle.  If the step
      * that is returned by path_begin is deleted, path_begin will now return the first step from
-     * the new segment or, in the case that the new segment is empty, segment_end.
+     * the new segment or, in the case that the new segment is empty, the step past segment_end.
      */
     virtual std::pair<step_handle_t, step_handle_t> rewrite_segment(const step_handle_t& segment_begin,
                                                                     const step_handle_t& segment_end,
