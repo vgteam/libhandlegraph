@@ -58,6 +58,13 @@ public:
         auto parts = divide_handle(handle, std::vector<size_t>{offset});
         return std::make_pair(parts.front(), parts.back());
     }
+
+    /// Reorder the graph's internal structure to match that given.
+    /// This sets the order that is used for iteration in functions like for_each_handle.
+    /// Optionally compact the id space of the graph to match the ordering, from 1->|ordering|.
+    /// This may be a no-op in the case of graph implementations that do not have any mechanism to maintain an ordering.
+    virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids = false) = 0;
+
 };
 
 }
