@@ -5,7 +5,7 @@
  * Defines the MutablePathDeletableeHandleGraph interface for graphs that can have paths changed and graph material deleted.
  */
 
-#include "handlegraph/mutable_path_handle_graph.hpp"
+#include "handlegraph/mutable_path_mutable_handle_graph.hpp"
 #include "handlegraph/deletable_handle_graph.hpp"
 
 namespace handlegraph {

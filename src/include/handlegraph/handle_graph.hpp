@@ -25,7 +25,7 @@ public:
     // Interface that needs to be implemented
     ////////////////////////////////////////////////////////////////////////////
    
-    // Method to check if a node exists by ID
+    /// Method to check if a node exists by ID
     virtual bool has_node(nid_t node_id) const = 0;
    
     /// Look up the handle for the node with the given ID in the given orientation
@@ -129,6 +129,15 @@ public:
     inline bool has_edge(const edge_t& edge) {
         return has_edge(edge.first, edge.second);
     }
+    
+    /// Returns one base of a handle's sequence, in the orientation of the
+    /// handle.
+    virtual char get_base(const handle_t& handle, size_t index) const;
+    
+    /// Returns a substring of a handle's sequence, in the orientation of the
+    /// handle. If the indicated substring would extend beyond the end of the
+    /// handle's sequence, the return value is truncated to the sequence's end.
+    virtual std::string get_subsequence(const handle_t& handle, size_t index, size_t size) const;
     
     ////////////////////////////////////////////////////////////////////////////
     // Concrete utility methods

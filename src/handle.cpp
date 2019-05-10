@@ -72,6 +72,14 @@ bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
     return !not_seen;
 }
 
+char HandleGraph::get_base(const handle_t& handle, size_t index) const {
+    return get_sequence(handle)[index];
+}
+
+std::string HandleGraph::get_subsequence(const handle_t& handle, size_t index, size_t size) const {
+    return get_sequence(handle).substr(index, size);
+}
+
 std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& handle,
                                                             bool match_orientation) const {
     std::vector<step_handle_t> found;
