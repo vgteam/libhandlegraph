@@ -51,26 +51,28 @@ public:
     
     /// Get a handle to the first step, which will be an arbitrary step in a circular path
     /// that we consider "first" based on our construction of the path. If the path is empty,
-    /// then we implementation must return a magic "path begin" step value.
+    /// then the implementation must return the same value as path_end().
     virtual step_handle_t path_begin(const path_handle_t& path_handle) const = 0;
-
-    /// Returns the reverse end iterator for the path, which is what we'd get from calling
-    /// get_previous_step on the first step in a non-circular path.
-    virtual step_handle_t path_reverse_end_iterator(const path_handle_t& path_handle) const = 0;
     
     /// Get a handle to a fictitious position past the end of a path. This position is
-    /// return by get_next_step for the final step in a path in a non-circular path.
-    /// If the path is empty then the implementation must return a magic "path end" step value.
+    /// returned by get_next_step for the final step in a path in a non-circular path.
+    /// Note: get_next_step will *NEVER* return this value for a circular path.
     virtual step_handle_t path_end(const path_handle_t& path_handle) const = 0;
+    
+    /// Get a handle to the last step, which will be an arbitrary step in a circular path that
+    /// we consider "last" based on our construction of the path. If the path is empty
+    /// then the implementation must return the same value as path_rend().
+    virtual step_handle_t path_rbegin(const path_handle_t& path_handle) const = 0;
+    
+    /// Get a handle to a fictitious position before the beginning of a path. This position is
+    /// return by get_previous_step for the first step in a path in a non-circular path.
+    /// Note: get_previous_step will *NEVER* return this value for a circular path.
+    virtual step_handle_t path_rend(const path_handle_t& path_handle) const = 0;
 
-    /// Returns the forward end iterator for the path, which is what we'd get from calling
-    /// get_next_step on the last step in a non-circular path.
-    virtual step_handle_t path_forward_end_iterator(const path_handle_t& path_handle) const = 0;
-
-    /// Returns true if the step is not the last step in the path
+    /// Returns true if the step is not the last step in a non-circular path.
     virtual bool has_next_step(const step_handle_t& step_handle) const = 0;
 
-    /// Returns true if the step is not the first step in the path
+    /// Returns true if the step is not the first step in a non-circular path.
     virtual bool has_previous_step(const step_handle_t& step_handle) const = 0;
     
     /// Returns a handle to the next step on the path. If the given step is the final step
@@ -173,13 +175,18 @@ bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Ite
     // Otherwise the path is nonempty so it is safe to try and grab a first step
     
     // Get the value that the step should be when we are done
-    auto end = path_end(path);
+    auto end = get_is_circular(path) ? path_begin(path) : path_end(path);
+    
+    // We might need to ignore the fact that we meet the ending condition in the first
+    // iteration on non-empty circular paths
+    bool ignore_end = !is_empty(path) && get_is_circular(path);
     
     // Allow the iteratee to set a bail-out condition
     bool keep_going = true;
-    for (auto here = path_begin(path); keep_going; here = get_next_step(here)) {
+    for (auto here = path_begin(path); keep_going && (ignore_end || here != end); here = get_next_step(here)) {
         // Execute the iteratee on this step
-        keep_going &= wrapped(here) && here != end;
+        keep_going &= wrapped(here);
+        
     }
     
     return keep_going;
@@ -197,7 +204,7 @@ public:
     // Get iterator to the first step in the path
     iterator begin() const;
 
-    // Get the end iterator, which we would obtain from get_next_step(path_end(path))
+    // Get the end iterator to the final position
     iterator end() const;
     
     /**
