@@ -147,20 +147,30 @@ struct InheritOne : public feature<n>::type {};
 
 template<int limit, typename... Empty>
 struct InheritAllBelow {
+    using type = Base;
 };
 
 // Zero case does nothing
 template< typename... Empty>
 struct InheritAllBelow<0, Empty...> {
+    using type = Base;
+};
+
+template<typename A, typename B>
+struct InheritBoth : public A, public B {
 };
 
 template<int limit, typename First, typename... Rest>
-struct InheritAllBelow<limit, First, Rest...> : public InheritOne<max_value_below<limit, First, Rest...>::value>, public InheritAllBelow<max_value_below<limit, First, Rest...>::value, First, Rest...> {
+struct InheritAllBelow<limit, First, Rest...> {
+
+    using type = InheritBoth<InheritOne<max_value_below<limit, First, Rest...>::value>, InheritAllBelow<max_value_below<limit, First, Rest...>::value, First, Rest...>>;
+
 };
 
 // Zero case does nothing
 template<typename First, typename... Rest>
 struct InheritAllBelow<0, First, Rest...> {
+    using type = Base;
 };
 
 template<typename... Empty>
