@@ -18,7 +18,7 @@ namespace handlegraph {
  * - apply_orientation() also applies the orientation to all occurrences of the handle
  *   in all paths
  */
-using MutablePathMutableHandleGraph = HandleGraph<MutablePaths, Mutable>;
+using MutablePathMutableHandleGraph = HandleGraphWith<MutablePaths, Mutable>;
 
 };
 

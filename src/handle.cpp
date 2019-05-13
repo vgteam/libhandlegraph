@@ -3,9 +3,12 @@
 #include "handlegraph/util.hpp"
 #include "handlegraph/mpl.hpp"
 
+// Make sure to include all the HPPs so we syntax-check them at library compile time.
 #include "handlegraph/mutable_handle_graph.hpp"
 #include "handlegraph/mutable_path_handle_graph.hpp"
 #include "handlegraph/deletable_handle_graph.hpp"
+#include "handlegraph/mutable_path_mutable_handle_graph.hpp"
+#include "handlegraph/mutable_path_deletable_handle_graph.hpp"
 
 #include <vector>
 
