@@ -11,66 +11,35 @@
 
 namespace handlegraph {
 
-// Define feature flags/things to inherit
-struct Base {};
-struct Mutable {};
-struct Paths {};
-struct MutablePaths {};
-struct Deletable {};
-
-// Map from features to numbers with a trait
-// Also map back
-
-template<typename T> 
-struct feature_number { 
-    static const int value = 0;
+// Define some templates to map feature traits to and from but numbers.
+// These implementations just exist to be specialized.
+template<typename Feature>
+struct feature_number {
 };
-
-template<int N> 
+template<int Bit>
 struct feature {
-    using type = Base;
 };
 
-template<> 
-struct feature_number<Mutable>{ 
-    static const int value = 1; 
+
+// Define a macro to forward-declare a feature trait and map it to and from a bit using templates.
+#define HANDLEGRAPH_TRAIT(Feature, Bit) \
+struct Feature; \
+template<> \
+struct feature_number<Feature>{ \
+    static const int value = Bit; \
+}; \
+template<> \
+struct feature<Bit> { \
+    using type = Feature; \
 };
 
-template<> 
-struct feature<1> {
-    using type = Mutable;
-};
 
-template<> 
-struct feature_number<Paths>{ 
-    static const int value = 2; 
-};
-
-template<> 
-struct feature<2> {
-    using type = Paths;
-};
-
-template<> 
-struct feature_number<MutablePaths>{ 
-    static const int value = 4; 
-};
-
-template<> 
-struct feature<4> {
-    using type = MutablePaths;
-};
-
-template<> 
-struct feature_number<Deletable>{ 
-  static const bool value = 8; 
-};
-
-template<> 
-struct feature<8> {
-    using type = Deletable;
-};
-
+// Invoke it for all the feature traits we have
+HANDLEGRAPH_TRAIT(Mutable, 1);
+HANDLEGRAPH_TRAIT(Deletable, 2);
+HANDLEGRAPH_TRAIT(Path, 4);
+HANDLEGRAPH_TRAIT(MutablePath, 8);
+HANDLEGRAPH_TRAIT(DeletablePath, 16);
 
 // Now we use an int to hold a set of interfaces as a bitmap.
 // We then inherit everything from the set in bit order.
@@ -86,10 +55,9 @@ struct bitmap_of<First, Rest...> {
     static constexpr int value = feature_number<First>::value | bitmap_of<Rest...>::value;
 };
 
-// We have something to get the highest set bit
-
+/// Get the highest set bit, at compile time
 template<int x>
-constexpr int highest_set_bit()
+inline constexpr int highest_set_bit()
 {
     for (int i = 1<<10; i > 0; i = i/2) {
         if (x & i) {
@@ -99,6 +67,7 @@ constexpr int highest_set_bit()
     return 0;
 }
 
+/// Given a bitmap of traits to inherit from, inherit from all of them in a consistent order.
 template<int bitmap>
 struct InheritsFromBits : public feature<highest_set_bit<bitmap>()>, public InheritsFromBits<bitmap ^ highest_set_bit<bitmap>()> {
 };
@@ -107,11 +76,7 @@ template<>
 struct InheritsFromBits<0> {
 };
 
-
-
-
-
-// We provide a type to inherit from that inherits from all the given types in sorted order.
+/// Compute a type that inherits from all of the specified traits.
 template<typename First, typename... Rest>
 struct inherit_all {
     using type = InheritsFromBits<bitmap_of<First, Rest...>::value>;
@@ -119,7 +84,14 @@ struct inherit_all {
 
 // Now we use it
 
-struct PathAndMutable : public inherit_all<Mutable, Paths>::type {
+struct Mutable {};
+struct Path {};
+struct MutablePath {};
+
+struct PathAndMutable : public inherit_all<Mutable, Path>::type {
+};
+
+struct MutablePathAndMutable : public inherit_all<Mutable, Path, MutablePath>::type {
 };
 
 }

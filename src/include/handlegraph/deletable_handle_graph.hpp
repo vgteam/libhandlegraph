@@ -7,13 +7,15 @@
 
 #include "handlegraph/mutable_handle_graph.hpp"
 
+#include "handlegraph/mpl.hpp"
+
 namespace handlegraph {
 
 /**
  * This is the interface for a handle graph that supports both addition of new nodes and edges
  * as well as deletion of nodes and edges.
  */
-class DeletableHandleGraph : virtual public MutableHandleGraph {
+class Deletable : virtual public MutableHandleGraph {
 public:
     
     /// Remove the node belonging to the given handle and all of its edges.
@@ -37,6 +39,9 @@ public:
     /// Remove all nodes and edges.
     virtual void clear() = 0;
 };
+
+/// Define a convenience name for a HandleGraph which has deletable nodes and edges.
+using DeletableHandleGraph = HandleGraph<Deletable>;
 
 }
 
