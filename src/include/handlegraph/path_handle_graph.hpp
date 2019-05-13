@@ -171,21 +171,17 @@ bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Ite
     auto wrapped = BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee);
 
     // We break in the case that the path is empty
-    if (get_step_count(path) == 0) return false;
+    if (get_step_count(path) == 0) return true;
     // Otherwise the path is nonempty so it is safe to try and grab a first step
     
-    // Get the value that the step should be when we are done
-    auto end = get_is_circular(path) ? path_begin(path) : path_end(path);
-    
-    // We might need to ignore the fact that we meet the ending condition in the first
-    // iteration on non-empty circular paths
-    bool ignore_end = !is_empty(path) && get_is_circular(path);
+    // Get the value that the step should be in the final iteration
+    auto end = path_back(path);
     
     // Allow the iteratee to set a bail-out condition
     bool keep_going = true;
-    for (auto here = path_begin(path); keep_going && (ignore_end || here != end); here = get_next_step(here)) {
+    for (auto here = path_begin(path); keep_going; here = get_next_step(here)) {
         // Execute the iteratee on this step
-        keep_going &= wrapped(here);
+        keep_going &= wrapped(here) && here != end;
         
     }
     
