@@ -2,21 +2,30 @@
 #define HANDLEGRAPH_MPL_HPP_INCLUDED
 
 /** \file
- * Defines metaprogramming tools we need so that we can have types that represent a combination of interfaces.
+ * Defines metaprogramming tools we need so that we can have types that
+ * represent a combination of interface "traits" from a closed set.
+ *
+ * Accomplishes this by using templates on bit sets that are the flags for
+ * which traits are implemented.
  */
 
 #include <cstdint>
 #include <utility>
 #include <functional>
+#include <limits>
 
 namespace handlegraph {
+
+// Define the type we will use for our bit flag sets
+// Must have one bit per trait at least.
+using bits_t = uint8_t;
 
 // Define some templates to map feature traits to and from but numbers.
 // These implementations just exist to be specialized.
 template<typename Feature>
 struct feature_number {
 };
-template<int Bit>
+template<bits_t Bit>
 struct feature {
 };
 
@@ -26,7 +35,7 @@ struct feature {
 struct Feature; \
 template<> \
 struct feature_number<Feature>{ \
-    static const int value = Bit; \
+    static const bits_t value = Bit; \
 }; \
 template<> \
 struct feature<Bit> { \
@@ -42,69 +51,93 @@ HANDLEGRAPH_TRAIT(Path, 8);
 HANDLEGRAPH_TRAIT(MutablePath, 16);
 HANDLEGRAPH_TRAIT(DeletablePath, 32);
 
-// Now we use an int to hold a set of interfaces as a bitmap.
+// Now we use a bits_t to hold a set of interfaces as a bitmap.
 // We then inherit everything from the set in bit order.
 
 // We have something to OR together all the flags for a list of interfaces.
 template<typename... Empty>
 struct bitmap_of {
-    static constexpr int value = 0;
+    static constexpr bits_t value = 0;
 };
 
 template<typename First, typename... Rest>
 struct bitmap_of<First, Rest...> {
-    static constexpr int value = feature_number<First>::value | bitmap_of<Rest...>::value;
+    static constexpr bits_t value = feature_number<First>::value | bitmap_of<Rest...>::value;
 };
 
 /// Get the highest set bit, at compile time.
 /// TODO: If we run out of bits, make this use a wider type.
-template<int x>
-inline constexpr int highest_set_bit()
+template<bits_t x>
+inline constexpr bits_t highest_set_bit()
 {
-    for (int i = 1 << 31; i > 0; i = i/2) {
-        if (x & i) {
-            return i;
+    // Loop down from the high non-sign bit.
+    // If we want *all* the bits we need to use a unsigned type.
+    bits_t i = 1 << (std::numeric_limits<bits_t>::digits - 1);
+    for (; i != 0; i = i >> 1) {
+        if ((x & i) != 0) {
+            break;
         }
     }
-    return 0;
+    return i;
 }
 
+// To debug this, pass the result to an incomplete template. See <https://stackoverflow.com/a/2008577>
+
+// Make sure it works
+static_assert(highest_set_bit<0>() == 0);
+static_assert(highest_set_bit<1>() == 1);
+static_assert(highest_set_bit<2>() == 2);
+static_assert(highest_set_bit<4>() == 4);
+static_assert(highest_set_bit<10>() == 8);
+
 /// Given a bitmap of traits to inherit from, inherit from all of them in a consistent order.
-template<int bitmap>
-struct InheritsFromBits : public feature<highest_set_bit<bitmap>()>, public InheritsFromBits<bitmap ^ highest_set_bit<bitmap>()> {
+template<bits_t bitmap>
+struct InheritsFromBits :
+    public virtual feature<highest_set_bit<bitmap>()>,
+    public virtual InheritsFromBits<bitmap ^ highest_set_bit<bitmap>()> {
 };
 
 template<>
 struct InheritsFromBits<0> {
 };
 
-template<int base_bitmap, int to_clear>
-struct InheritsFromBitSubsetsClearingEach;
-
 /// Now we have a class that inherits from itself for all subsets of set bits,
 /// and also from InheritsFromBits for its set bits.
 ///
-/// To accomplish this we do some mutual recursion.
+/// To accomplish this we want to do mutual recursion, but we can't do that,
+/// because a class is always incomplete until the end of its definition, and
+/// you can't inherit from an incomplete class. So we fake it with another
+/// template parameter which tracks if we're the normal version, or the
+/// mutual-recusrion version that exists only to hit the normal version with
+/// the right arguments.
 ///
 /// It can't inherit from any intermediate things, because it's not enough for
 /// the user's requested type and the implementing type to share a common base
 /// class. The requested type must *be* a base class of the implementing type.
-template<int bitmap>
-struct InheritsFromBitSubsets : public virtual InheritsFromBits<bitmap>, public virtual InheritsFromBitSubsetsClearingEach<bitmap, highest_set_bit<bitmap>()> {
+template<bits_t bitmap, bits_t to_clear = 0, bool is_normal = true>
+struct InheritsFromBitSubsets :
+    // Inherit from the actual class that gets us this interface combo
+    public virtual InheritsFromBits<bitmap>,
+    // Drop into the mutually-recursive version that will come back and depend on us with all the bitmap subsets.
+    public virtual InheritsFromBitSubsets<bitmap, highest_set_bit<bitmap>(), false> {
 };
 
+/// Mutually recusring version.
 /// Inherit from InheritsFromBitSubsets with to_clear cleared, and then knock
 /// to_clear down by 1 place (independent of set bits) and recurse ourselves.
-template<int base_bitmap, int to_clear>
-struct InheritsFromBitSubsetsClearingEach :
+template<bits_t base_bitmap, bits_t to_clear>
+struct InheritsFromBitSubsets<base_bitmap, to_clear, false> :
+    // Recurse back to the normal version with the bit cleared
     public virtual InheritsFromBitSubsets<~(~base_bitmap & ~to_clear)>,
-    public virtual InheritsFromBitSubsetsClearingEach<base_bitmap, to_clear/2> {
+    // Recurse on ourselves to clear the next bit.
+    // We ignore whether it is set or not and try to clear it always.
+    public virtual InheritsFromBitSubsets<base_bitmap, to_clear/2, false> {
 };
 
-/// Base case: no more bits left to clear.
+/// Mutualy recursive base case: no more bits left to clear.
 /// Don't need to recurse back because we already hit the full bitmap on entry.
-template<int base_bitmap>
-struct InheritsFromBitSubsetsClearingEach<base_bitmap, 0> {
+template<bits_t base_bitmap>
+struct InheritsFromBitSubsets<base_bitmap, 0, false> {
 };
 
 
