@@ -76,10 +76,28 @@ template<>
 struct InheritsFromBits<0> {
 };
 
-/// Compute a type that inherits from all of the specified traits.
+/// Given a bitmap of traits to inherit from, inherit from all subsets of set
+/// bits in try_in_and_out, always including the set bits in always_include.
+///
+/// We break this up by recursively clearing out bits in try_in_and_out, and
+/// inheriting from versions of ourself where those bits are both in and out of
+/// always_include, but with the remaining set bits of try_in_and_out still in
+/// need of bifurcating on.
+template<int try_in_and_out, int always_include = 0>
+struct InheritFromBitSubsets :
+    public InheritFromBitSubsets<try_in_and_out ^ highest_set_bit<try_in_and_out>(), always_include>,
+    public InheritFromBitSubsets<try_in_and_out ^ highest_set_bit<try_in_and_out>(), always_include | highest_set_bit<try_in_and_out>()> {
+};
+
+/// Base case: all bits have definite values. Go through and inherit set bits in order.
+template<int always_include>
+struct InheritFromBitSubsets<0, always_include> : public InheritsFromBits<always_include> {
+};
+
+/// Compute a type that inherits from all combinations of the specified traits.
 template<typename First, typename... Rest>
 struct inherit_all {
-    using type = InheritsFromBits<bitmap_of<First, Rest...>::value>;
+    using type = InheritFromBitSubsets<bitmap_of<First, Rest...>::value>;
 };
 
 // Now we use it
