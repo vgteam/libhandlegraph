@@ -99,10 +99,12 @@ static_assert(highest_set_bit<2>() == 2);
 static_assert(highest_set_bit<4>() == 4);
 static_assert(highest_set_bit<10>() == 8);
 
+static_assert(std::is_same<feature<1>::type, HandleGraph>::value);
+
 /// Given a bitmap of traits to inherit from, inherit from all of them in a consistent order.
 template<bits_t bitmap>
 struct InheritsFromBits :
-    public virtual feature<highest_set_bit<bitmap>()>,
+    public virtual feature<highest_set_bit<bitmap>()>::type,
     public virtual InheritsFromBits<bitmap ^ highest_set_bit<bitmap>()> {
 };
 

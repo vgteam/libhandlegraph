@@ -170,7 +170,7 @@ public:
 /// as mutability, path support, etc.).
 /// Must be a using so all trait list joining is done before giving anything a real type.
 template<typename... Traits>
-using HandleGraphWith = InheritsAll<HandleGraph, Traits...>;
+using HandleGraphWith = InheritsFromBitSubsets<bitmap_of<HandleGraph, Traits...>::value>;
 
 
 ////////////////////////////////////////////////////////////////////////////

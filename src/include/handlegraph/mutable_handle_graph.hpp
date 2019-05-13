@@ -61,7 +61,7 @@ public:
 };
 
 /// Define a convenience class for a handle graph where all we know about it is that it is mutable.
-using MutableHandleGraph = HandleGraph<Mutable>;
+using MutableHandleGraph = HandleGraphWith<Mutable>;
 
 }
 

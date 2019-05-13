@@ -3,6 +3,9 @@
 #include "handlegraph/util.hpp"
 #include "handlegraph/mpl.hpp"
 
+#include "handlegraph/mutable_handle_graph.hpp"
+#include "handlegraph/mutable_path_handle_graph.hpp"
+
 #include <vector>
 
 /** \file handle.cpp
@@ -191,9 +194,14 @@ bool operator!=(const step_handle_t& a, const step_handle_t& b) {
 }
 
 void break_it() {
-    HandleGraphWith<MutablePaths, Mutable> p;
-    HandleGraphWith<Mutable>* p2 = &p;
-    HandleGraph* p3 = &p;
+    HandleGraphWith<MutablePaths, Mutable>* p = nullptr;
+    HandleGraphWith<Mutable>* p2 = p;
+    HandleGraph* p3 = p;
+    
+    HandleGraphWith<HandleGraph>* p4 = nullptr;
+    HandleGraphWith<>* x = p4;
+    
+    x->get_handle(1, true);
 }
 
 }
