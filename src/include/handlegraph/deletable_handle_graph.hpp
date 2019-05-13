@@ -41,7 +41,7 @@ public:
 };
 
 /// Define a convenience name for a HandleGraph which has deletable nodes and edges.
-using DeletableHandleGraph = HandleGraph<Deletable>;
+using DeletableHandleGraph = HandleGraphWith<Deletable>;
 
 }
 

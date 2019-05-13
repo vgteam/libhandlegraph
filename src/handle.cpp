@@ -5,6 +5,7 @@
 
 #include "handlegraph/mutable_handle_graph.hpp"
 #include "handlegraph/mutable_path_handle_graph.hpp"
+#include "handlegraph/deletable_handle_graph.hpp"
 
 #include <vector>
 
@@ -16,29 +17,15 @@ namespace handlegraph {
 
 // Test the fancy trait system
 
-using PathAndMutable = InheritsAll<Mutable, PathSupport>;
-
-using MutablePathAndMutable = InheritsAll<Mutable, PathSupport, MutablePaths>;
-
-// Make sure it worked
-
-// We need to implement each trait
-static_assert(std::is_base_of<InheritsAll<Mutable>, PathAndMutable>::value);
-static_assert(std::is_base_of<InheritsAll<PathSupport>, PathAndMutable>::value);
-static_assert(std::is_base_of<InheritsAll<PathSupport>, PathAndMutable>::value);
-
-// We need to implement all orders of traits
-static_assert(std::is_base_of<InheritsAll<Mutable, PathSupport>, PathAndMutable>::value);
-static_assert(std::is_base_of<InheritsAll<PathSupport, Mutable>, PathAndMutable>::value);
-
-// We need to implement subsets of traits
-static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
-
 // We need to make sure we have the right subtype relationships in the full interface.
 static_assert(std::is_base_of<HandleGraph, HandleGraphWith<>>::value);
 static_assert(std::is_base_of<HandleGraph, HandleGraphWith<PathSupport>>::value);
 static_assert(std::is_base_of<PathSupport, HandleGraphWith<PathSupport>>::value);
 static_assert(std::is_base_of<HandleGraph, HandleGraphWith<MutablePaths>>::value);
+static_assert(std::is_base_of<HandleGraphWith<Deletable, Mutable>, HandleGraphWith<MutablePaths, Mutable, Deletable>>::value);
+
+// And that HandleGraph and HandleGraphWith<> are the same type, so either can match the other.
+static_assert(std::is_same<HandleGraph, HandleGraphWith<>>::value);
 
 size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     size_t count = 0;
@@ -191,17 +178,6 @@ bool operator==(const step_handle_t& a, const step_handle_t& b) {
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b) {
     return !(a == b);
-}
-
-void break_it() {
-    HandleGraphWith<MutablePaths, Mutable>* p = nullptr;
-    HandleGraphWith<Mutable>* p2 = p;
-    HandleGraph* p3 = p;
-    
-    HandleGraphWith<HandleGraph>* p4 = nullptr;
-    HandleGraphWith<>* x = p4;
-    
-    x->get_handle(1, true);
 }
 
 }

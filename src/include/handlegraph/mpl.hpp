@@ -49,7 +49,6 @@ struct feature<Bit> { \
     using type = Feature; \
 };
 
-
 // Invoke it for all the feature traits we have, and all the traits we know they pull in.
 HANDLEGRAPH_TRAIT(HandleGraph, 1, 0);
 HANDLEGRAPH_TRAIT(Mutable, 2, 0);
@@ -98,8 +97,6 @@ static_assert(highest_set_bit<1>() == 1);
 static_assert(highest_set_bit<2>() == 2);
 static_assert(highest_set_bit<4>() == 4);
 static_assert(highest_set_bit<10>() == 8);
-
-static_assert(std::is_same<feature<1>::type, HandleGraph>::value);
 
 /// Given a bitmap of traits to inherit from, inherit from all of them in a consistent order.
 template<bits_t bitmap>

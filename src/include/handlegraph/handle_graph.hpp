@@ -166,11 +166,26 @@ public:
 
 
 
+// We can't specialize a using, but we want HandleGraphWith<> with no arguments to just be a typedef for HandleGraph.
+// So we have another layer of indirection.
+
+// For no trasits, skip all the indirection.
+template<typename... Empty>
+struct handle_graph_with_impl {
+    using type = HandleGraph;
+};
+
+// If there are any traits, do all the indirection to get all combinations.
+template<typename First, typename... Rest>
+struct handle_graph_with_impl<First, Rest...> {
+    using type = InheritsAll<HandleGraph, First, Rest...>;
+};
+
 /// Interface composing HandleGraph with zero or more feature traits (such
 /// as mutability, path support, etc.).
 /// Must be a using so all trait list joining is done before giving anything a real type.
 template<typename... Traits>
-using HandleGraphWith = InheritsFromBitSubsets<bitmap_of<HandleGraph, Traits...>::value>;
+using HandleGraphWith = typename handle_graph_with_impl<Traits...>::type;
 
 
 ////////////////////////////////////////////////////////////////////////////
