@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <string>
+#include <iostream>
 
 namespace handlegraph {
 
@@ -24,6 +25,15 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     // Interface that needs to be implemented
     ////////////////////////////////////////////////////////////////////////////
+    
+    /// Write the contents of this graph to an ostream.
+    virtual void serialize(ostream& out) const = 0;
+    
+    /// Sets the contents of this graph to the contents of a serialized graph from
+    /// an istream. The serialized graph must be from the same implementation of the
+    /// HandleGraph interface as is calling deserialize(). Can only be called by an
+    /// empty graph.
+    virtual void deserialize(istream& in) = 0;
    
     /// Method to check if a node exists by ID
     virtual bool has_node(nid_t node_id) const = 0;
