@@ -25,15 +25,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     // Interface that needs to be implemented
     ////////////////////////////////////////////////////////////////////////////
-    
-    /// Write the contents of this graph to an ostream.
-    virtual void serialize(std::ostream& out) const = 0;
-    
-    /// Sets the contents of this graph to the contents of a serialized graph from
-    /// an istream. The serialized graph must be from the same implementation of the
-    /// HandleGraph interface as is calling deserialize(). Can only be called by an
-    /// empty graph.
-    virtual void deserialize(std::istream& in) = 0;
    
     /// Method to check if a node exists by ID
     virtual bool has_node(nid_t node_id) const = 0;
@@ -172,6 +163,20 @@ public:
     template<typename Iteratee>
     bool for_each_edge(const Iteratee& iteratee, bool parallel = false) const;
     
+};
+    
+class SerializableHandleGraph {
+    
+public:
+    
+    /// Write the contents of this graph to an ostream.
+    virtual void serialize(std::ostream& out) const = 0;
+    
+    /// Sets the contents of this graph to the contents of a serialized graph from
+    /// an istream. The serialized graph must be from the same implementation of the
+    /// HandleGraph interface as is calling deserialize(). Can only be called by an
+    /// empty graph.
+    virtual void deserialize(std::istream& in) = 0;
 };
 
 
