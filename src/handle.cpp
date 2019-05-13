@@ -31,7 +31,6 @@ static_assert(std::is_base_of<InheritsAll<PathSupport, Mutable>, PathAndMutable>
 // We need to implement subsets of traits
 static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
 
-
 size_t BaseHandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     size_t count = 0;
     follow_edges(handle, go_left, [&](const handle_t& ignored) {

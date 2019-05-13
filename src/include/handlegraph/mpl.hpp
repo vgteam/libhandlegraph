@@ -24,6 +24,9 @@ using bits_t = uint8_t;
 // These implementations just exist to be specialized.
 template<typename Feature>
 struct feature_number {
+    // We have a zero value here, even though we represent an invalid feature.
+    // It will get caught by an informative static assert later.
+    static const bits_t value = 0;
 };
 template<bits_t Bit>
 struct feature {
@@ -66,6 +69,8 @@ struct bitmap_of {
 
 template<typename First, typename... Rest>
 struct bitmap_of<First, Rest...> {
+    // Make sure only defined values go in
+    static_assert(feature_number<First>::value != 0, "Non-trait type passed to HandleGraph<>");
     static constexpr bits_t value = feature_number<First>::value | bitmap_of<Rest...>::value;
 };
 
