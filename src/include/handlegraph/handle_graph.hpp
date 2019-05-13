@@ -7,6 +7,8 @@
  
 #include "handlegraph/types.hpp"
 #include "handlegraph/iteratee.hpp"
+#include "handlegraph/mpl.hpp"
+
 
 #include <functional>
 #include <string>
@@ -17,8 +19,15 @@ namespace handlegraph {
 /**
  * This is the interface that a graph that uses handles needs to support.
  * It is also the interface that users should code against.
+ *
+ * It isn't called HandleGraph because we want HandleGraph to be a template we
+ * can pass other feature traits to.
+ *
+ * Actuall implementations should inherit from (and users should use)
+ * HandleGraph<Mutable, Paths, ...> with all the traits that they
+ * require/provide, or just HandleGraph if they need this basic interface.
  */
-class HandleGraph {
+class BaseHandleGraph {
 public:
 
     ////////////////////////////////////////////////////////////////////////////
@@ -154,6 +163,12 @@ public:
     bool for_each_edge(const Iteratee& iteratee, bool parallel = false) const;
     
 };
+
+/// Interface composing BaseHandleGraph with zero or more feature traits (such
+/// as mutability, path support, etc.).
+/// Must be a using so all trait list joining is done before giving anything a real type.
+template<typename... Traits>
+using HandleGraph = InheritsAll<BaseHandleGraph, Traits...>;
 
 
 ////////////////////////////////////////////////////////////////////////////

@@ -35,11 +35,12 @@ struct feature<Bit> { \
 
 
 // Invoke it for all the feature traits we have
-HANDLEGRAPH_TRAIT(Mutable, 1);
-HANDLEGRAPH_TRAIT(Deletable, 2);
-HANDLEGRAPH_TRAIT(Path, 4);
-HANDLEGRAPH_TRAIT(MutablePath, 8);
-HANDLEGRAPH_TRAIT(DeletablePath, 16);
+HANDLEGRAPH_TRAIT(BaseHandleGraph, 1);
+HANDLEGRAPH_TRAIT(Mutable, 2);
+HANDLEGRAPH_TRAIT(Deletable, 4);
+HANDLEGRAPH_TRAIT(Path, 8);
+HANDLEGRAPH_TRAIT(MutablePath, 16);
+HANDLEGRAPH_TRAIT(DeletablePath, 32);
 
 // Now we use an int to hold a set of interfaces as a bitmap.
 // We then inherit everything from the set in bit order.
@@ -55,11 +56,12 @@ struct bitmap_of<First, Rest...> {
     static constexpr int value = feature_number<First>::value | bitmap_of<Rest...>::value;
 };
 
-/// Get the highest set bit, at compile time
+/// Get the highest set bit, at compile time.
+/// TODO: If we run out of bits, make this use a wider type.
 template<int x>
 inline constexpr int highest_set_bit()
 {
-    for (int i = 1<<10; i > 0; i = i/2) {
+    for (int i = 1 << 31; i > 0; i = i/2) {
         if (x & i) {
             return i;
         }
@@ -76,29 +78,41 @@ template<>
 struct InheritsFromBits<0> {
 };
 
-/// Given a bitmap of traits to inherit from, inherit from all subsets of set
-/// bits in try_in_and_out, always including the set bits in always_include.
+template<int base_bitmap, int to_clear>
+struct InheritsFromBitSubsetsClearingEach;
+
+/// Now we have a class that inherits from itself for all subsets of set bits,
+/// and also from InheritsFromBits for its set bits.
 ///
-/// We break this up by recursively clearing out bits in try_in_and_out, and
-/// inheriting from versions of ourself where those bits are both in and out of
-/// always_include, but with the remaining set bits of try_in_and_out still in
-/// need of bifurcating on.
-template<int try_in_and_out, int always_include = 0>
-struct InheritFromBitSubsets :
-    public InheritFromBitSubsets<try_in_and_out ^ highest_set_bit<try_in_and_out>(), always_include>,
-    public InheritFromBitSubsets<try_in_and_out ^ highest_set_bit<try_in_and_out>(), always_include | highest_set_bit<try_in_and_out>()> {
+/// To accomplish this we do some mutual recursion.
+///
+/// It can't inherit from any intermediate things, because it's not enough for
+/// the user's requested type and the implementing type to share a common base
+/// class. The requested type must *be* a base class of the implementing type.
+template<int bitmap>
+struct InheritsFromBitSubsets : public virtual InheritsFromBits<bitmap>, public virtual InheritsFromBitSubsetsClearingEach<bitmap, highest_set_bit<bitmap>()> {
 };
 
-/// Base case: all bits have definite values. Go through and inherit set bits in order.
-template<int always_include>
-struct InheritFromBitSubsets<0, always_include> : public InheritsFromBits<always_include> {
+/// Inherit from InheritsFromBitSubsets with to_clear cleared, and then knock
+/// to_clear down by 1 place (independent of set bits) and recurse ourselves.
+template<int base_bitmap, int to_clear>
+struct InheritsFromBitSubsetsClearingEach :
+    public virtual InheritsFromBitSubsets<~(~base_bitmap & ~to_clear)>,
+    public virtual InheritsFromBitSubsetsClearingEach<base_bitmap, to_clear/2> {
 };
 
-/// Compute a type that inherits from all combinations of the specified traits.
-template<typename First, typename... Rest>
-struct inherit_all {
-    using type = InheritFromBitSubsets<bitmap_of<First, Rest...>::value>;
+/// Base case: no more bits left to clear.
+/// Don't need to recurse back because we already hit the full bitmap on entry.
+template<int base_bitmap>
+struct InheritsFromBitSubsetsClearingEach<base_bitmap, 0> {
 };
+
+
+/// Class that inherits from all subsets of the given list of traits.
+/// Traits must have bits assigned to them via HANDLEGRAPH_TRAIT.
+/// Must be a using so we can emiminate trait order.
+template<typename... Traits>
+using InheritsAll = InheritsFromBitSubsets<bitmap_of<Traits...>::value>;
 
 // Now we use it
 
@@ -106,11 +120,23 @@ struct Mutable {};
 struct Path {};
 struct MutablePath {};
 
-struct PathAndMutable : public inherit_all<Mutable, Path>::type {
-};
+using PathAndMutable = InheritsAll<Mutable, Path>;
 
-struct MutablePathAndMutable : public inherit_all<Mutable, Path, MutablePath>::type {
-};
+using MutablePathAndMutable = InheritsAll<Mutable, Path, MutablePath>;
+
+// Make sure it worked
+
+// We need to implement each trait
+static_assert(std::is_base_of<InheritsAll<Mutable>, PathAndMutable>::value);
+static_assert(std::is_base_of<InheritsAll<Path>, PathAndMutable>::value);
+static_assert(std::is_base_of<InheritsAll<Path>, PathAndMutable>::value);
+
+// We need to implement all orders of traits
+static_assert(std::is_base_of<InheritsAll<Mutable, Path>, PathAndMutable>::value);
+static_assert(std::is_base_of<InheritsAll<Path, Mutable>, PathAndMutable>::value);
+
+// We need to implement subsets of traits
+static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
 
 }
 
