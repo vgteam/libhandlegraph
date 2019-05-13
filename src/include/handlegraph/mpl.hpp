@@ -114,11 +114,15 @@ struct InheritsFromBits<0> {
 /// It can't inherit from any intermediate things, because it's not enough for
 /// the user's requested type and the implementing type to share a common base
 /// class. The requested type must *be* a base class of the implementing type.
-template<bits_t bitmap, bits_t to_clear = 0, bool is_normal = true>
+///
+/// We also have a stop_now so we can stop, instead of trying to recurse to
+/// unset non-set bits and not making progress.
+/// TODO: this is ugly. Clean it up.
+template<bits_t bitmap, bits_t to_clear = 0, bool is_normal = true, bool stop_now = false>
 struct InheritsFromBitSubsets :
     // Inherit from the actual class that gets us this interface combo
     public virtual InheritsFromBits<bitmap>,
-    // Drop into the mutually-recursive version that will come back and depend on us with all the bitmap subsets.
+    // Drop into the mutually-recursive version that will come back and depend on us with all the bitmap subsets *except* the full one.
     public virtual InheritsFromBitSubsets<bitmap, highest_set_bit<bitmap>(), false> {
 };
 
@@ -126,9 +130,11 @@ struct InheritsFromBitSubsets :
 /// Inherit from InheritsFromBitSubsets with to_clear cleared, and then knock
 /// to_clear down by 1 place (independent of set bits) and recurse ourselves.
 template<bits_t base_bitmap, bits_t to_clear>
-struct InheritsFromBitSubsets<base_bitmap, to_clear, false> :
-    // Recurse back to the normal version with the bit cleared
-    public virtual InheritsFromBitSubsets<~(~base_bitmap & ~to_clear)>,
+struct InheritsFromBitSubsets<base_bitmap, to_clear, false, false> :
+    // Recurse back to the normal version with the bit cleared.
+    // Unless the bit isn't set in which case we wouldn't make progress by clearing it.
+    // In which case we jump to the base case.
+    public virtual InheritsFromBitSubsets<base_bitmap & ~to_clear, 0, true, (base_bitmap & ~to_clear) == base_bitmap>,
     // Recurse on ourselves to clear the next bit.
     // We ignore whether it is set or not and try to clear it always.
     public virtual InheritsFromBitSubsets<base_bitmap, to_clear/2, false> {
@@ -137,7 +143,12 @@ struct InheritsFromBitSubsets<base_bitmap, to_clear, false> :
 /// Mutualy recursive base case: no more bits left to clear.
 /// Don't need to recurse back because we already hit the full bitmap on entry.
 template<bits_t base_bitmap>
-struct InheritsFromBitSubsets<base_bitmap, 0, false> {
+struct InheritsFromBitSubsets<base_bitmap, 0, false, false> {
+};
+
+/// Early stopping base case.
+template<bits_t base_bitmap, bits_t to_clear>
+struct InheritsFromBitSubsets<base_bitmap, to_clear, true, true> {
 };
 
 
