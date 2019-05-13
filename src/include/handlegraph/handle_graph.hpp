@@ -48,7 +48,7 @@ public:
     virtual std::string get_sequence(const handle_t& handle) const = 0;
     
     /// Return the number of nodes in the graph
-    virtual size_t node_size() const = 0;
+    virtual size_t get_node_count() const = 0;
     
     /// Return the smallest ID in the graph, or some smaller number if the
     /// smallest ID is unavailable. Return value is unspecified if the graph is empty.
@@ -88,32 +88,9 @@ public:
     
     
     ////////////////////////////////////////////////////////////////////////////
-    // Backing protected virtual methods that need to be implemented
-    ////////////////////////////////////////////////////////////////////////////
-    
-protected:
-    
-    /// Loop over all the handles to next/previous (right/left) nodes. Passes
-    /// them to a callback which returns false to stop iterating and true to
-    /// continue. Returns true if we finished and false if we stopped early.
-    virtual bool follow_edges_impl(const handle_t& handle, bool go_left, const std::function<bool(const handle_t&)>& iteratee) const = 0;
-    
-    /// Loop over all the nodes in the graph in their local forward
-    /// orientations, in their internal stored order. Stop if the iteratee
-    /// returns false. Can be told to run in parallel, in which case stopping
-    /// after a false return value is on a best-effort basis and iteration
-    /// order is not defined. Returns true if we finished and false if we 
-    /// stopped early.
-    virtual bool for_each_handle_impl(const std::function<bool(const handle_t&)>& iteratee, bool parallel = false) const = 0;
-    
-
-    
-    ////////////////////////////////////////////////////////////////////////////
     // Additional optional interface with a default implementation
     ////////////////////////////////////////////////////////////////////////////
-    
-public:
-    
+        
     /// Get the number of edges on the right (go_left = false) or left (go_left
     /// = true) side of the given handle. The default implementation is O(n) in
     /// the number of edges returned, but graph implementations that track this
@@ -137,6 +114,7 @@ public:
     /// Returns a substring of a handle's sequence, in the orientation of the
     /// handle. If the indicated substring would extend beyond the end of the
     /// handle's sequence, the return value is truncated to the sequence's end.
+    /// By default O(n) in the size of the handle's sequence, but can be overriden.
     virtual std::string get_subsequence(const handle_t& handle, size_t index, size_t size) const;
     
     ////////////////////////////////////////////////////////////////////////////
@@ -161,6 +139,26 @@ public:
     /// in parallel (parallel = true), stopping early is best-effort.
     template<typename Iteratee>
     bool for_each_edge(const Iteratee& iteratee, bool parallel = false) const;
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Backing protected virtual methods that need to be implemented
+    ////////////////////////////////////////////////////////////////////////////
+    
+protected:
+    
+    /// Loop over all the handles to next/previous (right/left) nodes. Passes
+    /// them to a callback which returns false to stop iterating and true to
+    /// continue. Returns true if we finished and false if we stopped early.
+    virtual bool follow_edges_impl(const handle_t& handle, bool go_left, const std::function<bool(const handle_t&)>& iteratee) const = 0;
+    
+    /// Loop over all the nodes in the graph in their local forward
+    /// orientations, in their internal stored order. Stop if the iteratee
+    /// returns false. Can be told to run in parallel, in which case stopping
+    /// after a false return value is on a best-effort basis and iteration
+    /// order is not defined. Returns true if we finished and false if we 
+    /// stopped early.
+    virtual bool for_each_handle_impl(const std::function<bool(const handle_t&)>& iteratee, bool parallel = false) const = 0;
+    
     
 };
 

@@ -61,13 +61,13 @@ public:
     
     /// Get a handle to the last step, which will be an arbitrary step in a circular path that
     /// we consider "last" based on our construction of the path. If the path is empty
-    /// then the implementation must return the same value as path_rend().
-    virtual step_handle_t path_rbegin(const path_handle_t& path_handle) const = 0;
+    /// then the implementation must return the same value as path_front_end().
+    virtual step_handle_t path_back(const path_handle_t& path_handle) const = 0;
     
     /// Get a handle to a fictitious position before the beginning of a path. This position is
     /// return by get_previous_step for the first step in a path in a non-circular path.
     /// Note: get_previous_step will *NEVER* return this value for a circular path.
-    virtual step_handle_t path_rend(const path_handle_t& path_handle) const = 0;
+    virtual step_handle_t path_front_end(const path_handle_t& path_handle) const = 0;
 
     /// Returns true if the step is not the last step in a non-circular path.
     virtual bool has_next_step(const step_handle_t& step_handle) const = 0;
