@@ -16,7 +16,7 @@ namespace handlegraph {
 /**
  * This is the interface for a handle graph that supports addition of new graph material.
  */
-class MutableHandleGraph : virtual public HandleGraph {
+class Mutable : virtual public HandleGraph {
 public:
     
     /// Create a new node with the given sequence and return the handle.
@@ -59,6 +59,9 @@ public:
         return std::make_pair(parts.front(), parts.back());
     }
 };
+
+/// Define a convenience class for a handle graph where all we know about it is that it is mutable.
+using MutableHandleGraph = HandleGraph<Mutable>;
 
 }
 

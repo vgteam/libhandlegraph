@@ -15,7 +15,7 @@ namespace handlegraph {
  * This is the interface for a handle graph that supports both addition of new nodes and edges
  * as well as deletion of nodes and edges.
  */
-class Deletable : virtual public MutableHandleGraph {
+class Deletable : public virtual Mutable {
 public:
     
     /// Remove the node belonging to the given handle and all of its edges.

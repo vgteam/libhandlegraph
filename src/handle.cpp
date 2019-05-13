@@ -11,7 +11,28 @@
 
 namespace handlegraph {
 
-size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
+// Test the fancy trait system
+
+using PathAndMutable = InheritsAll<Mutable, PathSupport>;
+
+using MutablePathAndMutable = InheritsAll<Mutable, PathSupport, MutablePaths>;
+
+// Make sure it worked
+
+// We need to implement each trait
+static_assert(std::is_base_of<InheritsAll<Mutable>, PathAndMutable>::value);
+static_assert(std::is_base_of<InheritsAll<PathSupport>, PathAndMutable>::value);
+static_assert(std::is_base_of<InheritsAll<PathSupport>, PathAndMutable>::value);
+
+// We need to implement all orders of traits
+static_assert(std::is_base_of<InheritsAll<Mutable, PathSupport>, PathAndMutable>::value);
+static_assert(std::is_base_of<InheritsAll<PathSupport, Mutable>, PathAndMutable>::value);
+
+// We need to implement subsets of traits
+static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
+
+
+size_t BaseHandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     size_t count = 0;
     follow_edges(handle, go_left, [&](const handle_t& ignored) {
         // Just manually count every edge we get by looking at the handle in that orientation
@@ -20,11 +41,11 @@ size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     return count;
 }
 
-handle_t HandleGraph::forward(const handle_t& handle) const {
+handle_t BaseHandleGraph::forward(const handle_t& handle) const {
     return this->get_is_reverse(handle) ? this->flip(handle) : handle;
 }
 
-std::pair<handle_t, handle_t> HandleGraph::edge_handle(const handle_t& left, const handle_t& right) const {
+std::pair<handle_t, handle_t> BaseHandleGraph::edge_handle(const handle_t& left, const handle_t& right) const {
     // The degeneracy is between any pair and a pair of the same nodes but reversed in order and orientation.
     // We compare those two pairs and construct the smaller one.
     auto flipped_right = this->flip(right);
@@ -48,7 +69,7 @@ std::pair<handle_t, handle_t> HandleGraph::edge_handle(const handle_t& left, con
     }
 }
 
-handle_t HandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& left) const {
+handle_t BaseHandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& left) const {
     if (left == edge.first) {
         // The cannonical orientation is the one we want
         return edge.second;
@@ -64,7 +85,7 @@ handle_t HandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& l
     }
 }
 
-bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
+bool BaseHandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
     bool not_seen = true;
     follow_edges(left, false, [&](const handle_t& next) {
         not_seen = (next != right);
@@ -73,7 +94,7 @@ bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
     return !not_seen;
 }
 
-std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& handle,
+std::vector<step_handle_t> PathSupport::steps_of_handle(const handle_t& handle,
                                                             bool match_orientation) const {
     std::vector<step_handle_t> found;
     
@@ -88,17 +109,17 @@ std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& hand
     return found;
 }
     
-bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
+bool PathSupport::is_empty(const path_handle_t& path_handle) const {
     // By default, we can answer emptiness queries with the length query.
     // But some implementations may have an expensive length query and a cheaper emptiness one
     return get_step_count(path_handle) == 0;
 }
     
-PathForEachSocket PathHandleGraph::scan_path(const path_handle_t& path) const {
+PathForEachSocket PathSupport::scan_path(const path_handle_t& path) const {
     return PathForEachSocket(this, path);
 }
     
-PathForEachSocket::PathForEachSocket(const PathHandleGraph* graph, const path_handle_t& path) : graph(graph), path(path) {
+PathForEachSocket::PathForEachSocket(const PathSupport* graph, const path_handle_t& path) : graph(graph), path(path) {
     
 }
     
@@ -112,7 +133,7 @@ PathForEachSocket::iterator PathForEachSocket::end() const {
 }
     
 PathForEachSocket::iterator::iterator(const step_handle_t& step, bool force_unequal,
-                                      const PathHandleGraph* graph) : step(step), force_unequal(force_unequal), graph(graph) {
+                                      const PathSupport* graph) : step(step), force_unequal(force_unequal), graph(graph) {
     
 }
     

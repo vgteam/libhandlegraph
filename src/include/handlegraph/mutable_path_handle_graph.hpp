@@ -16,7 +16,7 @@ namespace handlegraph {
  * MutablePathMutableHandleGraph interface.
  * TODO: This is a very limited interface at the moment. It will probably need to be extended.
  */
-class MutablePathHandleGraph : virtual public PathHandleGraph {
+class MutablePaths : virtual public PathSupport {
 public:
     
     /**
@@ -70,6 +70,9 @@ public:
      */
     virtual void set_circularity(const path_handle_t& path, bool circular) = 0;
 };
+
+/// Convenience type for a HandleGraph where all we know si that it has mutable paths
+using MutablePathHandleGraph = HandleGraph<MutablePaths>;
 
 
 }

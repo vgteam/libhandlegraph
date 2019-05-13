@@ -176,17 +176,17 @@ using HandleGraph = InheritsAll<BaseHandleGraph, Traits...>;
 ////////////////////////////////////////////////////////////////////////////
 
 template<typename Iteratee>
-bool HandleGraph::follow_edges(const handle_t& handle, bool go_left, const Iteratee& iteratee) const {
+bool BaseHandleGraph::follow_edges(const handle_t& handle, bool go_left, const Iteratee& iteratee) const {
     return follow_edges_impl(handle, go_left, BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee));
 }
 
 template<typename Iteratee>
-bool HandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const {
+bool BaseHandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const {
     return for_each_handle_impl(BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee), parallel);
 }
 
 template<typename Iteratee>
-bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
+bool BaseHandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
     // (If we pre-cast our lambda to std::function we won't generate a new
     // template instantiation for it each time we are instantiated.)
     return for_each_handle((std::function<bool(const handle_t&)>)[&](const handle_t& handle) -> bool {

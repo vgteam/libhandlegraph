@@ -16,8 +16,16 @@ class PathForEachSocket;
     
 /**
  * This is the interface for a handle graph that stores embedded paths.
+ *
+ * This kind of wants to be called "Path" or "Paths", but both those names
+ * collide with classes in VG.
+ *
+ * Needs to inherit from BaseHandleGraph to implement some of the default
+ * implementations/utility methods.
+ *
+ * TODO: rename this.
  */
-class PathHandleGraph : virtual public HandleGraph {
+class PathSupport : public virtual BaseHandleGraph {
 public:
     
     ////////////////////////////////////////////////////////////////////////////
@@ -139,23 +147,26 @@ public:
     bool for_each_step_in_path(const path_handle_t& path, const Iteratee& iteratee) const;
 };
 
+/// Define a convenience name for a HandleGraph that provides paths.
+using PathHandleGraph = HandleGraph<PathSupport>;
+
 ////////////////////////////////////////////////////////////////////////////
 // Template Implementations
 ////////////////////////////////////////////////////////////////////////////
 
 template<typename Iteratee>
-bool PathHandleGraph::for_each_path_handle(const Iteratee& iteratee) const {
+bool PathSupport::for_each_path_handle(const Iteratee& iteratee) const {
     return for_each_path_handle_impl(BoolReturningWrapper<Iteratee, path_handle_t>::wrap(iteratee));
 }
 
 template<typename Iteratee>
-bool PathHandleGraph::for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
+bool PathSupport::for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
     return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee));
 }
 
 
 template<typename Iteratee>
-bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Iteratee& iteratee) const {
+bool PathSupport::for_each_step_in_path(const path_handle_t& path, const Iteratee& iteratee) const {
 
     auto wrapped = BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee);
     // Otherwise the path is nonempty so it is safe to try and grab a first step
@@ -179,7 +190,7 @@ bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Ite
     
 /**
  * An auxilliary class that enables for each loops over paths. Not intended to
- * constructed directly. Instead, use the PathHandleGraph's scan_path method.
+ * constructed directly. Instead, use the PathSupport's scan_path method.
  */
 class PathForEachSocket {
 public:
@@ -214,7 +225,7 @@ public:
         // we make this private so that it's only visible from inside
         // the friend class, PathForEachSocket
         iterator(const step_handle_t& step, bool force_unequal,
-                 const PathHandleGraph* graph);
+                 const PathSupport* graph);
         
         /// the step that this iterator points to
         step_handle_t step;
@@ -224,7 +235,7 @@ public:
         bool force_unequal;
         
         /// the graph that contains the path
-        const PathHandleGraph* graph;
+        const PathSupport* graph;
         
         friend class PathForEachSocket;
     };
@@ -236,14 +247,14 @@ private:
     PathForEachSocket() = delete;
     // we make this private so that it's only visible from inside the
     // friend class, PathHandleGraph
-    PathForEachSocket(const PathHandleGraph* graph, const path_handle_t& path);
+    PathForEachSocket(const PathSupport* graph, const path_handle_t& path);
     
     /// The graph that contains the path
-    const PathHandleGraph* graph;
+    const PathSupport* graph;
     /// The path we're iterating over
     const path_handle_t path;
     
-    friend class PathHandleGraph;
+    friend class PathSupport;
 };
     
 

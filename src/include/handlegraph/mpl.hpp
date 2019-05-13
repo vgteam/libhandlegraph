@@ -30,12 +30,16 @@ struct feature {
 };
 
 
-// Define a macro to forward-declare a feature trait and map it to and from a bit using templates.
-#define HANDLEGRAPH_TRAIT(Feature, Bit) \
+/// Define a macro to forward-declare a feature trait and map it to and from a
+/// bit using templates.
+///
+/// Each trait can imply other traits; we make sure to inherit the right classes
+/// to match when just those traits are requested.
+#define HANDLEGRAPH_TRAIT(Feature, Bit, Implied) \
 struct Feature; \
 template<> \
 struct feature_number<Feature>{ \
-    static const bits_t value = Bit; \
+    static const bits_t value = (Bit) | (Implied); \
 }; \
 template<> \
 struct feature<Bit> { \
@@ -43,13 +47,13 @@ struct feature<Bit> { \
 };
 
 
-// Invoke it for all the feature traits we have
-HANDLEGRAPH_TRAIT(BaseHandleGraph, 1);
-HANDLEGRAPH_TRAIT(Mutable, 2);
-HANDLEGRAPH_TRAIT(Deletable, 4);
-HANDLEGRAPH_TRAIT(Path, 8);
-HANDLEGRAPH_TRAIT(MutablePath, 16);
-HANDLEGRAPH_TRAIT(DeletablePath, 32);
+// Invoke it for all the feature traits we have, and all the traits we know they pull in.
+HANDLEGRAPH_TRAIT(BaseHandleGraph, 1, 0);
+HANDLEGRAPH_TRAIT(Mutable, 2, 0);
+HANDLEGRAPH_TRAIT(Deletable, 4, 2);
+HANDLEGRAPH_TRAIT(PathSupport, 8, 0);
+HANDLEGRAPH_TRAIT(MutablePaths, 16, 8);
+HANDLEGRAPH_TRAIT(DeletablePaths, 32, 16 | 8);
 
 // Now we use a bits_t to hold a set of interfaces as a bitmap.
 // We then inherit everything from the set in bit order.
@@ -158,29 +162,6 @@ struct InheritsFromBitSubsets<base_bitmap, to_clear, true, true> {
 template<typename... Traits>
 using InheritsAll = InheritsFromBitSubsets<bitmap_of<Traits...>::value>;
 
-// Now we use it
-
-struct Mutable {};
-struct Path {};
-struct MutablePath {};
-
-using PathAndMutable = InheritsAll<Mutable, Path>;
-
-using MutablePathAndMutable = InheritsAll<Mutable, Path, MutablePath>;
-
-// Make sure it worked
-
-// We need to implement each trait
-static_assert(std::is_base_of<InheritsAll<Mutable>, PathAndMutable>::value);
-static_assert(std::is_base_of<InheritsAll<Path>, PathAndMutable>::value);
-static_assert(std::is_base_of<InheritsAll<Path>, PathAndMutable>::value);
-
-// We need to implement all orders of traits
-static_assert(std::is_base_of<InheritsAll<Mutable, Path>, PathAndMutable>::value);
-static_assert(std::is_base_of<InheritsAll<Path, Mutable>, PathAndMutable>::value);
-
-// We need to implement subsets of traits
-static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
 
 }
 
