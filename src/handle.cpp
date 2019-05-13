@@ -31,6 +31,12 @@ static_assert(std::is_base_of<InheritsAll<PathSupport, Mutable>, PathAndMutable>
 // We need to implement subsets of traits
 static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
 
+// We need to make sure we have the right subtype relationships in the full interface.
+static_assert(std::is_base_of<HandleGraph, HandleGraphWith<>>::value);
+static_assert(std::is_base_of<HandleGraph, HandleGraphWith<PathSupport>>::value);
+static_assert(std::is_base_of<PathSupport, HandleGraphWith<PathSupport>>::value);
+static_assert(std::is_base_of<HandleGraph, HandleGraphWith<MutablePaths>>::value);
+
 size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     size_t count = 0;
     follow_edges(handle, go_left, [&](const handle_t& ignored) {
@@ -182,6 +188,12 @@ bool operator==(const step_handle_t& a, const step_handle_t& b) {
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b) {
     return !(a == b);
+}
+
+void break_it() {
+    HandleGraphWith<MutablePaths, Mutable> p;
+    HandleGraphWith<Mutable>* p2 = &p;
+    HandleGraph* p3 = &p;
 }
 
 }
