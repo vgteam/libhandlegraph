@@ -91,13 +91,6 @@ inline constexpr bits_t highest_set_bit()
 
 // To debug this, pass the result to an incomplete template. See <https://stackoverflow.com/a/2008577>
 
-// Make sure it works
-static_assert(highest_set_bit<0>() == 0);
-static_assert(highest_set_bit<1>() == 1);
-static_assert(highest_set_bit<2>() == 2);
-static_assert(highest_set_bit<4>() == 4);
-static_assert(highest_set_bit<10>() == 8);
-
 /// Given a bitmap of traits to inherit from, inherit from all of them in a consistent order.
 template<bits_t bitmap>
 struct InheritsFromBits :

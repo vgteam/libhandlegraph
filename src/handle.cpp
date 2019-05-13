@@ -15,7 +15,14 @@
 
 namespace handlegraph {
 
-// Test the fancy trait system
+// Test the fancy trait system at compile time
+
+// Make sure highest_set_bit works
+static_assert(highest_set_bit<0>() == 0);
+static_assert(highest_set_bit<1>() == 1);
+static_assert(highest_set_bit<2>() == 2);
+static_assert(highest_set_bit<4>() == 4);
+static_assert(highest_set_bit<10>() == 8);
 
 // We need to make sure we have the right subtype relationships in the full interface.
 static_assert(std::is_base_of<HandleGraph, HandleGraphWith<>>::value);
