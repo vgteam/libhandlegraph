@@ -19,8 +19,6 @@ namespace handlegraph {
  */
 using MutablePathDeletableHandleGraph = HandleGraphWith<MutablePaths, Deletable>;
 
-};
-
 }
 
 #endif

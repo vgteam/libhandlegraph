@@ -20,8 +20,6 @@ namespace handlegraph {
  */
 using MutablePathMutableHandleGraph = HandleGraphWith<MutablePaths, Mutable>;
 
-};
-
 }
 
 #endif
