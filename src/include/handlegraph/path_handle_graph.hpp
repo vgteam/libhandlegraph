@@ -20,12 +20,12 @@ class PathForEachSocket;
  * This kind of wants to be called "Path" or "Paths", but both those names
  * collide with classes in VG.
  *
- * Needs to inherit from BaseHandleGraph to implement some of the default
+ * Needs to inherit from HandleGraph to implement some of the default
  * implementations/utility methods.
  *
  * TODO: rename this.
  */
-class PathSupport : public virtual BaseHandleGraph {
+class PathSupport : public virtual HandleGraph {
 public:
     
     ////////////////////////////////////////////////////////////////////////////
@@ -148,7 +148,7 @@ public:
 };
 
 /// Define a convenience name for a HandleGraph that provides paths.
-using PathHandleGraph = HandleGraph<PathSupport>;
+using PathHandleGraph = HandleGraphWith<PathSupport>;
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Implementations

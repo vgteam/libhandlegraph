@@ -51,7 +51,7 @@ struct feature<Bit> { \
 
 
 // Invoke it for all the feature traits we have, and all the traits we know they pull in.
-HANDLEGRAPH_TRAIT(BaseHandleGraph, 1, 0);
+HANDLEGRAPH_TRAIT(HandleGraph, 1, 0);
 HANDLEGRAPH_TRAIT(Mutable, 2, 0);
 HANDLEGRAPH_TRAIT(Deletable, 4, 2);
 HANDLEGRAPH_TRAIT(PathSupport, 8, 0);
@@ -70,7 +70,7 @@ struct bitmap_of {
 template<typename First, typename... Rest>
 struct bitmap_of<First, Rest...> {
     // Make sure only defined values go in
-    static_assert(feature_number<First>::value != 0, "Non-trait type passed to HandleGraph<>");
+    static_assert(feature_number<First>::value != 0, "Non-trait type passed to HandleGraphWith<>");
     static constexpr bits_t value = feature_number<First>::value | bitmap_of<Rest...>::value;
 };
 

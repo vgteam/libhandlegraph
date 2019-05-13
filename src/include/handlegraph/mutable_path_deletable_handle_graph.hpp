@@ -17,7 +17,7 @@ namespace handlegraph {
  * Deleting a node or edge that is contained in a path is undefined behavior.
  * The method clear() is now assumed to delete paths as well as nodes and edges.
  */
-using MutablePathDeletableHandleGraph = HandleGraph<MutablePaths, Deletable>;
+using MutablePathDeletableHandleGraph = HandleGraphWith<MutablePaths, Deletable>;
 
 };
 

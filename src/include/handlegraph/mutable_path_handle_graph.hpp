@@ -72,7 +72,7 @@ public:
 };
 
 /// Convenience type for a HandleGraph where all we know si that it has mutable paths
-using MutablePathHandleGraph = HandleGraph<MutablePaths>;
+using MutablePathHandleGraph = HandleGraphWith<MutablePaths>;
 
 
 }

@@ -23,11 +23,11 @@ namespace handlegraph {
  * It isn't called HandleGraph because we want HandleGraph to be a template we
  * can pass other feature traits to.
  *
- * Actuall implementations should inherit from (and users should use)
- * HandleGraph<Mutable, Paths, ...> with all the traits that they
- * require/provide, or just HandleGraph if they need this basic interface.
+ * Actual implementations should inherit from (and users should use)
+ * HandleGraphWith<Mutable, Paths, ...> with all the traits that they
+ * provide.
  */
-class BaseHandleGraph {
+class HandleGraph {
 public:
 
     ////////////////////////////////////////////////////////////////////////////
@@ -164,11 +164,28 @@ public:
     
 };
 
-/// Interface composing BaseHandleGraph with zero or more feature traits (such
+
+
+// We can't specialize a using, but we want HandleGraphWith<> with no arguments to just be a typedef for HandleGraph.
+// So we have another layer of indirection.
+
+// For no trasits, skip all the indirection.
+template<typename... Empty>
+struct handle_graph_with_impl {
+    using type = HandleGraph;
+};
+
+// If there are any traits, do all the indirection to get all combinations.
+template<typename First, typename... Rest>
+struct handle_graph_with_impl<First, Rest...> {
+    using type = InheritsAll<HandleGraph, First, Rest...>;
+};
+
+/// Interface composing HandleGraph with zero or more feature traits (such
 /// as mutability, path support, etc.).
 /// Must be a using so all trait list joining is done before giving anything a real type.
 template<typename... Traits>
-using HandleGraph = InheritsAll<BaseHandleGraph, Traits...>;
+using HandleGraphWith = typename handle_graph_with_impl<Traits...>::type;
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -176,17 +193,17 @@ using HandleGraph = InheritsAll<BaseHandleGraph, Traits...>;
 ////////////////////////////////////////////////////////////////////////////
 
 template<typename Iteratee>
-bool BaseHandleGraph::follow_edges(const handle_t& handle, bool go_left, const Iteratee& iteratee) const {
+bool HandleGraph::follow_edges(const handle_t& handle, bool go_left, const Iteratee& iteratee) const {
     return follow_edges_impl(handle, go_left, BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee));
 }
 
 template<typename Iteratee>
-bool BaseHandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const {
+bool HandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const {
     return for_each_handle_impl(BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee), parallel);
 }
 
 template<typename Iteratee>
-bool BaseHandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
+bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
     // (If we pre-cast our lambda to std::function we won't generate a new
     // template instantiation for it each time we are instantiated.)
     return for_each_handle((std::function<bool(const handle_t&)>)[&](const handle_t& handle) -> bool {

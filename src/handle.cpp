@@ -31,7 +31,7 @@ static_assert(std::is_base_of<InheritsAll<PathSupport, Mutable>, PathAndMutable>
 // We need to implement subsets of traits
 static_assert(std::is_base_of<PathAndMutable, MutablePathAndMutable>::value);
 
-size_t BaseHandleGraph::get_degree(const handle_t& handle, bool go_left) const {
+size_t HandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     size_t count = 0;
     follow_edges(handle, go_left, [&](const handle_t& ignored) {
         // Just manually count every edge we get by looking at the handle in that orientation
@@ -40,11 +40,11 @@ size_t BaseHandleGraph::get_degree(const handle_t& handle, bool go_left) const {
     return count;
 }
 
-handle_t BaseHandleGraph::forward(const handle_t& handle) const {
+handle_t HandleGraph::forward(const handle_t& handle) const {
     return this->get_is_reverse(handle) ? this->flip(handle) : handle;
 }
 
-std::pair<handle_t, handle_t> BaseHandleGraph::edge_handle(const handle_t& left, const handle_t& right) const {
+std::pair<handle_t, handle_t> HandleGraph::edge_handle(const handle_t& left, const handle_t& right) const {
     // The degeneracy is between any pair and a pair of the same nodes but reversed in order and orientation.
     // We compare those two pairs and construct the smaller one.
     auto flipped_right = this->flip(right);
@@ -68,7 +68,7 @@ std::pair<handle_t, handle_t> BaseHandleGraph::edge_handle(const handle_t& left,
     }
 }
 
-handle_t BaseHandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& left) const {
+handle_t HandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& left) const {
     if (left == edge.first) {
         // The cannonical orientation is the one we want
         return edge.second;
@@ -84,7 +84,7 @@ handle_t BaseHandleGraph::traverse_edge_handle(const edge_t& edge, const handle_
     }
 }
 
-bool BaseHandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
+bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
     bool not_seen = true;
     follow_edges(left, false, [&](const handle_t& next) {
         not_seen = (next != right);
