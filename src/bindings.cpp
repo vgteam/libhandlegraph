@@ -1,6 +1,4 @@
-/* File: example.c */
-
-#include "handlegraph/example.h"
+#include "handlegraph/handle_graph.hpp"
 
 int fact(int n) {
     if (n < 0){ /* This should probably return an error, but this is simpler */

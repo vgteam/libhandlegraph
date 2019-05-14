@@ -50,8 +50,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
-  src/example.c
-  src/include/handlegraph/example.h
+  src/bindings.cpp
   )
 
 # Build objects position-independent to allow a shared library
@@ -60,11 +59,11 @@ set_property(TARGET handlegraph_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
 # Set up SWIG
 SET(CMAKE_SWIG_FLAGS "")
 
-#set_source_files_properties(src/example.i PROPERTIES CPLUSPLUS ON)
-set_source_files_properties(src/example.i PROPERTIES SWIG_FLAGS "-includeall")
-set_property(SOURCE src/example.i PROPERTY SWIG_MODULE_NAME example)
-swig_add_module(example python src/example.i src/example.c)
-swig_link_libraries(example ${PYTHON_LIBRARIES})
+set_source_files_properties(src/bindings.i PROPERTIES CPLUSPLUS ON)
+set_source_files_properties(src/bindings.i PROPERTIES SWIG_FLAGS "-includeall")
+set_property(SOURCE src/bindings.i PROPERTY SWIG_MODULE_NAME handlegraph)
+swig_add_module(handlegraph python src/bindings.i src/bindings.cpp)
+swig_link_libraries(handlegraph ${PYTHON_LIBRARIES})
 
 # Make static and shared versions with the same base name
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)

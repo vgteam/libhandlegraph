@@ -11,6 +11,8 @@
 #include <functional>
 #include <string>
 
+int fact(int n);
+
 namespace handlegraph {
 
 
