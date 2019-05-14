@@ -1,6 +1,12 @@
 # Specify the minimum version for CMake
 cmake_minimum_required(VERSION 3.1)
 
+# Demand old SWIG target naming behavior. New behavior is only available on
+# CMake 3.13+, so we can't use it.
+cmake_policy(SET CMP0078 OLD)
+# And this one starts happening on CMake 3.14
+cmake_policy(SET CMP0086 OLD)
+
 # This defines default install directories like "lib"
 include(GNUInstallDirs)
 
@@ -14,6 +20,14 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 project(libhandlegraph)
 # We build using c++14
 set(CMAKE_CXX_STANDARD 14)
+
+# Set up to use SWIG to generate Python bindings
+find_package(SWIG REQUIRED)
+include(${SWIG_USE_FILE})
+
+# Find the Python development files
+find_package(PythonLibs)
+include_directories(${PYTHON_INCLUDE_PATH})
 
 # Use all standard-compliant optimizations
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
@@ -36,10 +50,21 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
+  src/example.c
+  src/include/handlegraph/example.h
   )
 
 # Build objects position-independent to allow a shared library
 set_property(TARGET handlegraph_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# Set up SWIG
+SET(CMAKE_SWIG_FLAGS "")
+
+#set_source_files_properties(src/example.i PROPERTIES CPLUSPLUS ON)
+set_source_files_properties(src/example.i PROPERTIES SWIG_FLAGS "-includeall")
+set_property(SOURCE src/example.i PROPERTY SWIG_MODULE_NAME example)
+swig_add_module(example python src/example.i src/example.c)
+swig_link_libraries(example ${PYTHON_LIBRARIES})
 
 # Make static and shared versions with the same base name
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
