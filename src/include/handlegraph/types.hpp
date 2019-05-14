@@ -15,7 +15,8 @@ namespace handlegraph {
 typedef int64_t nid_t;
 
 #ifndef SWIG
-// Attributes cannot be parsed by SWIG 2.x
+// Attributes like this cannot be parsed even by SWIG 4.0. So we only apply
+// this under a real C++ compiler.
 [[deprecated("id_t collides with a standard type, use nid_t instead")]]
 #endif
 typedef nid_t id_t;
@@ -58,6 +59,12 @@ bool operator!=(const step_handle_t& a, const step_handle_t& b);
 
 }
 
+// We also define STL hash functions for handles.
+
+#ifndef SWIG
+// These are not important under SWIG, and produce warnings due to SWIG not
+// knowing about the std::hash template.
+
 // Hashes need to be in the std namespace
 namespace std {
 
@@ -85,6 +92,8 @@ public:
 };
 
 }
+
+#endif
 
 
 #endif

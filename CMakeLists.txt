@@ -22,11 +22,13 @@ project(libhandlegraph)
 set(CMAKE_CXX_STANDARD 14)
 
 # Set up to use SWIG to generate Python bindings
-find_package(SWIG REQUIRED)
+# We need version 3 in order to read C++11.
+find_package(SWIG 3.0 REQUIRED)
 include(${SWIG_USE_FILE})
 
 # Find the Python development files
-find_package(PythonLibs)
+# It doesn't make sense to support Python older than 3.5.
+find_package(PythonLibs 3.5 REQUIRED)
 include_directories(${PYTHON_INCLUDE_PATH})
 
 # Use all standard-compliant optimizations
@@ -53,6 +55,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
   src/include/handlegraph/path_handle_graph.hpp
+  src/include/handlegraph/path_for_each_socket.hpp
   src/include/handlegraph/mutable_path_handle_graph.hpp
   src/include/handlegraph/mutable_path_mutable_handle_graph.hpp
   src/include/handlegraph/mutable_path_deletable_handle_graph.hpp
