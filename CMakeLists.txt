@@ -38,8 +38,17 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 # The following folder will be included
 include_directories("src/include")
 
+# List all the .cpp files, which need to go into the normal libraries and the
+# SWIG library
+set(SRCS
+  src/types.cpp
+  src/handle_graph.cpp
+  src/path_handle_graph.cpp
+  src/empty_handle_graph.cpp
+  )
+
 add_library(handlegraph_objs OBJECT
-  src/handle.cpp
+  ${SRCS}
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
@@ -50,7 +59,6 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
-  src/bindings.cpp
   )
 
 # Build objects position-independent to allow a shared library
@@ -60,9 +68,11 @@ set_property(TARGET handlegraph_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
 SET(CMAKE_SWIG_FLAGS "")
 
 set_source_files_properties(src/bindings.i PROPERTIES CPLUSPLUS ON)
-set_source_files_properties(src/bindings.i PROPERTIES SWIG_FLAGS "-includeall")
 set_property(SOURCE src/bindings.i PROPERTY SWIG_MODULE_NAME handlegraph)
-swig_add_module(handlegraph python src/bindings.i src/bindings.cpp)
+swig_add_module(handlegraph python
+  src/bindings.i
+  ${SRCS}
+  )
 swig_link_libraries(handlegraph ${PYTHON_LIBRARIES})
 
 # Make static and shared versions with the same base name

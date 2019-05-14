@@ -2,8 +2,12 @@
 
 %{
 #define SWIG_FILE_WITH_INIT
-#include "handlegraph/handle_graph.hpp"
+#include "handlegraph/empty_handle_graph.hpp"
+// SWIG has no idea how to do namespaces itself
+using namespace handlegraph;
 %}
 
-int fact(int n);
+%include "handlegraph/empty_handle_graph.hpp"
+
+
 
