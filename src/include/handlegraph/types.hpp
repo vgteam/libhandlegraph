@@ -13,8 +13,11 @@ namespace handlegraph {
 
 /// Represents an id
 typedef int64_t nid_t;
-    
+
+#ifndef SWIG
+// Attributes cannot be parsed by SWIG 2.x
 [[deprecated("id_t collides with a standard type, use nid_t instead")]]
+#endif
 typedef nid_t id_t;
     
 /// Represents an offset

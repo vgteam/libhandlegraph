@@ -7,7 +7,12 @@
 using namespace handlegraph;
 %}
 
+// Make sure SWIG knows about the C++ integer types
+%include "stdint.i"
+
+%include "handlegraph/types.hpp"
 %include "handlegraph/empty_handle_graph.hpp"
+
 
 
 
