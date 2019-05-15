@@ -83,12 +83,37 @@ set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 
-# Set up for installability
+# Set up for installability for the libraries
 install(TARGETS handlegraph_shared handlegraph_static 
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+# And the headers
 install(DIRECTORY src/include/handlegraph
   DESTINATION ${CMAKE_INSTALL_LIBDIR}
   FILES_MATCHING PATTERN "*.hpp"
   )
+  
+# And magically work out where to install the Python extension, as seen in
+# https://stackoverflow.com/a/40006251
+#
+# TODO: upgrade to CMake 3.12 FindPython <https://stackoverflow.com/a/52386094>
+#
+# TODO: We just paste our install prefix (probably /usr/local) onto the
+# relative Python module path (which is probably really under /usr). Python
+# does not necessarily search in the resulting path. But the alternative is to
+# write files outside our prefix if Python tells us to. 
+execute_process(
+  COMMAND python3 -c "if True:
+    from distutils import sysconfig as sc
+    print(sc.get_python_lib(prefix='', plat_specific=True))"
+  OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+install(TARGETS ${SWIG_MODULE_handlegraph_REAL_NAME}
+  LIBRARY DESTINATION ${PYTHON_SITE_PACKAGES}
+  )
+install(FILES ${CMAKE_BINARY_DIR}/handlegraph.py
+  DESTINATION ${PYTHON_SITE_PACKAGES}
+  )
+  
