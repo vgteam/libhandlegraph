@@ -13,7 +13,7 @@ assert(graph.has_node(123) == False)
 assert(isinstance(graph, handlegraph.HandleGraph))
 
 count = 0
-def handle_hendle(handle):
+def handle_handle(handle):
     count += 1
 graph.for_each_handle(handle_handle)
 assert(count == 0)
