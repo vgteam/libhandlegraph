@@ -74,9 +74,8 @@ set_source_files_properties(src/bindings.i PROPERTIES CPLUSPLUS ON)
 set_property(SOURCE src/bindings.i PROPERTY SWIG_MODULE_NAME handlegraph)
 swig_add_module(handlegraph python
   src/bindings.i
-  ${SRCS}
   )
-swig_link_libraries(handlegraph ${PYTHON_LIBRARIES})
+swig_link_libraries(handlegraph ${PYTHON_LIBRARIES} handlegraph_shared)
 
 # Make static and shared versions with the same base name
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
