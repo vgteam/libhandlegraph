@@ -15,7 +15,10 @@ assert(isinstance(graph, handlegraph.HandleGraph))
 count = 0
 def handle_handle(handle):
     count += 1
+    graph.follow_edges(handle, lambda x: True)
 graph.for_each_handle(handle_handle)
 assert(count == 0)
+
+
 
 print("Python bindings are working correctly")

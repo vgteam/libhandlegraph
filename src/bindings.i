@@ -62,8 +62,12 @@ public:
 
 // So extend with a manual implementation instead
 %extend handlegraph::HandleGraph {
-  void for_each_handle(PyObject *callback) {
-    $self->for_each_handle(PyCallback(callback));
+  bool for_each_handle(PyObject *callback) {
+    return $self->for_each_handle(PyCallback(callback));
+  }
+  
+  bool follow_edges(const handle_t& source, bool left, PyObject *callback) {
+    return $self->follow_edges(source, left, PyCallback(callback));
   }
 }
 
