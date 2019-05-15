@@ -12,4 +12,10 @@ assert(graph.has_node(123) == False)
 
 assert(isinstance(graph, handlegraph.HandleGraph))
 
+count = 0
+def handle_hendle(handle):
+    count += 1
+graph.for_each_handle(handle_handle)
+assert(count == 0)
+
 print("Python bindings are working correctly")
