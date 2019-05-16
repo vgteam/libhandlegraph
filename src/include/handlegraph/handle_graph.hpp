@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <string>
+#include <iostream>
 
 namespace handlegraph {
 
@@ -160,6 +161,20 @@ protected:
     virtual bool for_each_handle_impl(const std::function<bool(const handle_t&)>& iteratee, bool parallel = false) const = 0;
     
     
+};
+    
+class SerializableHandleGraph {
+    
+public:
+    
+    /// Write the contents of this graph to an ostream.
+    virtual void serialize(std::ostream& out) const = 0;
+    
+    /// Sets the contents of this graph to the contents of a serialized graph from
+    /// an istream. The serialized graph must be from the same implementation of the
+    /// HandleGraph interface as is calling deserialize(). Can only be called by an
+    /// empty graph.
+    virtual void deserialize(std::istream& in) = 0;
 };
 
 
