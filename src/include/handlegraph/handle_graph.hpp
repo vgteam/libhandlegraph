@@ -198,7 +198,7 @@ bool HandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const
 
 template<typename Iteratee>
 bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
-    BoolReturningWrapper<Iteratee, edge_t> wrapped_iteratee(iteratee);
+    auto wrapped_iteratee = BoolReturningWrapper<Iteratee, edge_t>::wrap(iteratee);
     // (If we pre-cast our lambda to std::function we won't generate a new
     // template instantiation for it each time we are instantiated.)
     return for_each_handle((std::function<bool(const handle_t&)>)[&](const handle_t& handle) -> bool {
