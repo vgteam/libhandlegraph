@@ -162,7 +162,11 @@ protected:
     
     
 };
-    
+
+/*
+ * Defines an interface for serialization and deserialization for handle graph,
+ * which can be co-inherited alongside HandleGraph.
+ */
 class SerializableHandleGraph {
     
 public:
@@ -194,6 +198,7 @@ bool HandleGraph::for_each_handle(const Iteratee& iteratee, bool parallel) const
 
 template<typename Iteratee>
 bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
+    BoolReturningWrapper<Iteratee, edge_t> wrapped_iteratee(iteratee);
     // (If we pre-cast our lambda to std::function we won't generate a new
     // template instantiation for it each time we are instantiated.)
     return for_each_handle((std::function<bool(const handle_t&)>)[&](const handle_t& handle) -> bool {
@@ -202,7 +207,7 @@ bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
         // self-loops. 
         follow_edges(handle, false, (std::function<bool(const handle_t&)>)[&](const handle_t& next) -> bool {
             if (get_id(handle) <= get_id(next)) {
-                keep_going = iteratee(edge_handle(handle, next));
+                keep_going = wrapped_iteratee(edge_handle(handle, next));
             }
             return keep_going;
         });
@@ -212,7 +217,7 @@ bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
             follow_edges(handle, true, (std::function<bool(const handle_t&)>)[&](const handle_t& prev) -> bool {
                 if (get_id(handle) < get_id(prev) ||
                     (get_id(handle) == get_id(prev) && get_is_reverse(prev))) {
-                    keep_going = iteratee(edge_handle(prev, handle));
+                    keep_going = wrapped_iteratee(edge_handle(prev, handle));
                 }
                 return keep_going;
             });
