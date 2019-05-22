@@ -33,6 +33,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/mutable_path_handle_graph.hpp
   src/include/handlegraph/mutable_path_mutable_handle_graph.hpp
   src/include/handlegraph/mutable_path_deletable_handle_graph.hpp
+  src/include/handlegraph/expanding_overlay_graph.hpp
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
@@ -53,6 +54,6 @@ install(TARGETS handlegraph_shared handlegraph_static
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY src/include/handlegraph
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FILES_MATCHING PATTERN "*.hpp"
   )
