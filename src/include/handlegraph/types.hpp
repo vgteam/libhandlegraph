@@ -47,6 +47,9 @@ bool operator==(const occurrence_handle_t& a, const occurrence_handle_t& b);
 /// Define inequality on occurrence handles
 bool operator!=(const occurrence_handle_t& a, const occurrence_handle_t& b);
 
+/// represents a null handle
+extern const handle_t null_handle;
+
 }
 
 // Hashes need to be in the std namespace
