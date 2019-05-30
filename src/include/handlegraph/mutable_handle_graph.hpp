@@ -72,9 +72,6 @@ public:
     /// This may be a no-op in the case of graph implementations that do not have any mechanism to maintain an ordering.
     virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids = false) = 0;
 
-    /// Copy over another graph.  Only valid if *this is an empty graph
-    virtual void copy(const HandleGraph* other);
-
 };
 
 }

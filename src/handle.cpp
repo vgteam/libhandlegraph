@@ -1,7 +1,5 @@
 #include "handlegraph/handle_graph.hpp"
 #include "handlegraph/path_handle_graph.hpp"
-#include "handlegraph/deletable_handle_graph.hpp"
-#include "handlegraph/mutable_path_deletable_handle_graph.hpp"
 #include "handlegraph/util.hpp"
 
 #include <vector>
@@ -171,46 +169,6 @@ bool operator==(const step_handle_t& a, const step_handle_t& b) {
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b) {
     return !(a == b);
-}
-
-/// Copy a Handle Graph into a Mutable Handle Graph
-void MutableHandleGraph::copy(const HandleGraph* other) {
-    assert(get_node_count() == 0);
-
-    other->for_each_handle([&](const handle_t& handle) {
-            create_handle(other->get_sequence(handle), other->get_id(handle));
-        });
-
-    other->for_each_edge([&](const edge_t& edge) {
-            create_edge(edge.first, edge.second);
-        });
-}
-
-/// Copy Handle Graph into a Deletable Handle Graph
-void DeletableHandleGraph::copy(const HandleGraph* other) {
-    clear();
-    MutableHandleGraph::copy(other);
-}
-
-/// Copy a Path Handle Graph into a Mutable Path Handle Graph
-void MutablePathMutableHandleGraph::copy(const PathHandleGraph* other) {
-    assert(get_path_count() == 0);
-
-    MutableHandleGraph::copy(other);
-    
-    other->for_each_path_handle([&](const path_handle_t& path_handle) {
-            path_handle_t new_path_handle = create_path_handle(other->get_path_name(path_handle),
-                                                               other->get_is_circular(path_handle));
-            other->for_each_step_in_path(path_handle, [&](const step_handle_t& step_handle) {
-                    append_step(new_path_handle, other->get_handle_of_step(step_handle));
-                });
-        });
-}
-
-/// Copy a Path Handle Graph into a Deletable Path Handle Graph
-void MutablePathDeletableHandleGraph::copy(const PathHandleGraph* other) {
-    clear();
-    MutablePathMutableHandleGraph::copy(other);
 }
 
 }

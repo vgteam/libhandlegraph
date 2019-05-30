@@ -16,13 +16,8 @@ namespace handlegraph {
  */
 class MutablePathDeletableHandleGraph : virtual public MutablePathMutableHandleGraph, virtual public DeletableHandleGraph {
     
-    // Few extra methods. Deleting a node or edge that is contained in a path is undefined behavior.
+    // No extra methods. Deleting a node or edge that is contained in a path is undefined behavior.
     // The method clear() is now assumed to delete paths as well as nodes and edges.
-
-public:
-
-    /// Copy over another graph.  Only valid if *this is an empty graph
-    virtual void copy(const PathHandleGraph* other);
 };
 
 }

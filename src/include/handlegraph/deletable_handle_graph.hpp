@@ -36,10 +36,6 @@ public:
     
     /// Remove all nodes and edges.
     virtual void clear() = 0;
-
-    /// Copy over another graph.  Only valid if *this* is an empty graph
-    virtual void copy(const HandleGraph* other);
-
 };
 
 }
