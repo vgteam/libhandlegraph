@@ -11,12 +11,9 @@ namespace handlegraph {
 
 /**
  * This is the interface for a handle graph with embedded paths where the paths can be modified.
- * Note that if the *graph* can also be modified, the implementation will also
- * need to inherit from MutableHandleGraph, via the combination
- * MutablePathMutableHandleGraph interface.
- * TODO: This is a very limited interface at the moment. It will probably need to be extended.
+ * The graph itself can also be modified, as it inherits MutableHandleGraph
  */
-class MutablePathHandleGraph : virtual public PathHandleGraph {
+class MutablePathHandleGraph : virtual public PathHandleGraph, virtual public MutableHandleGraph {
 public:
     
     /**
