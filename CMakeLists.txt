@@ -30,6 +30,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
   src/include/handlegraph/path_handle_graph.hpp
+  src/include/handlegraph/path_position_handle_graph.hpp
   src/include/handlegraph/mutable_path_handle_graph.hpp
   src/include/handlegraph/mutable_path_mutable_handle_graph.hpp
   src/include/handlegraph/mutable_path_deletable_handle_graph.hpp
