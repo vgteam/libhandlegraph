@@ -1,5 +1,6 @@
 #include "handlegraph/handle_graph.hpp"
 #include "handlegraph/path_handle_graph.hpp"
+#include "handlegraph/path_position_handle_graph.hpp"
 #include "handlegraph/util.hpp"
 
 #include <vector>
@@ -99,6 +100,14 @@ bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
     // By default, we can answer emptiness queries with the length query.
     // But some implementations may have an expensive length query and a cheaper emptiness one
     return get_step_count(path_handle) == 0;
+}
+    
+bool PathPositionHandleGraph::for_each_step_position_on_handle_impl(const handle_t& handle,
+                                                                    const std::function<bool(const step_handle_t&, const bool&, const size_t&)>& iteratee) const {
+    return for_each_step_on_handle_impl(handle, [&](const step_handle_t& step) {
+        return iteratee(step, get_is_reverse(get_handle_of_step(step)) != get_is_reverse(handle),
+                        get_position_of_step(step));
+    });
 }
     
 PathForEachSocket PathHandleGraph::scan_path(const path_handle_t& path) const {
