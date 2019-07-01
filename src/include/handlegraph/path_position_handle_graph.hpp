@@ -17,7 +17,7 @@ class PathPositionHandleGraph : virtual public PathHandleGraph {
 public:
 
     /// Returns the length of a path measured in bases of sequence.
-    virtual size_t path_length(const path_handle_t& path_handle) const = 0;
+    virtual size_t get_path_length(const path_handle_t& path_handle) const = 0;
     
     /// Returns the position along the path of the beginning of this step measured in
     /// bases of sequence. In a circular path, positions start at the step returned by
