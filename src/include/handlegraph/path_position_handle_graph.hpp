@@ -16,6 +16,8 @@ namespace handlegraph {
 class PathPositionHandleGraph : virtual public PathHandleGraph {
 public:
 
+    /// Returns the length of a path measured in bases of sequence.
+    virtual size_t path_length(const path_handle_t& path_handle) const = 0;
     
     /// Returns the position along the path of the beginning of this step measured in
     /// bases of sequence. In a circular path, positions start at the step returned by
@@ -27,12 +29,14 @@ public:
     /// path, returns path_end().
     virtual step_handle_t get_step_at_position(const size_t& position) const = 0;
     
-    /// Execute an itteratee on each step and its path relative position and orientation
-    /// on a handle in any path. The iteratee accept the following arguments:
+    /// Execute an iteratee on each step on a path, along with its orientation relative to
+    /// the path (true if it is reverse the orientation of the handle on the path), and its
+    /// position measured in bases of sequence along the path. Positions are always measured
+    /// on the forward strand. The iteratee should accept arguments in the form:
     /// (const step_handle_t&, const bool&, const size_t&).
     /// The iteratee may return void or a bool, in which case iteration will stop early
     /// if the iteratee returns false. This method returns false if iteration was stopped
-    /// early, else true.
+    /// early, else true
     template<typename Iteratee>
     bool for_each_step_position_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
     
