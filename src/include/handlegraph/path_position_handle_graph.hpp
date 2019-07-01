@@ -27,7 +27,8 @@ public:
     /// Returns the step at this position, measured in bases of sequence starting at
     /// the step returned by path_begin(). If the position is past the end of the
     /// path, returns path_end().
-    virtual step_handle_t get_step_at_position(const size_t& position) const = 0;
+    virtual step_handle_t get_step_at_position(const path_handle_t& path,
+                                               const size_t& position) const = 0;
     
     /// Execute an iteratee on each step on a path, along with its orientation relative to
     /// the path (true if it is reverse the orientation of the handle on the path), and its
