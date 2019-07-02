@@ -63,7 +63,7 @@ protected:
     template<typename Iteratee>
     bool PathPositionHandleGraph::for_each_step_position_on_handle(const handle_t& handle,
                                                                    const Iteratee& iteratee) const {
-        return for_each_step_position_on_handle_impl(BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee));
+        return for_each_step_position_on_handle_impl(handle, BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee));
     }
     
     
