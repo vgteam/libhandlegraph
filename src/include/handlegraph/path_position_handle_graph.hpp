@@ -33,13 +33,12 @@ public:
     /// Execute an iteratee on each step on a path, along with its orientation relative to
     /// the path (true if it is reverse the orientation of the handle on the path), and its
     /// position measured in bases of sequence along the path. Positions are always measured
-    /// on the forward strand. The iteratee should accept arguments in the form:
-    /// (const step_handle_t&, const bool&, const size_t&).
-    /// The iteratee may return void or a bool, in which case iteration will stop early
-    /// if the iteratee returns false. This method returns false if iteration was stopped
-    /// early, else true
-    template<typename Iteratee>
-    bool for_each_step_position_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
+    /// on the forward strand.
+    ///
+    /// Iteration will stop early if the iteratee returns false. This method returns false if
+    /// iteration was stopped early, else true
+    bool for_each_step_position_on_handle(const handle_t& handle,
+                                          const std::function<bool(const step_handle_t&, const bool&, const size_t&)>& iteratee) const;
     
     
     
@@ -55,18 +54,6 @@ protected:
     virtual bool for_each_step_position_on_handle_impl(const handle_t& handle,
                                                        const std::function<bool(const step_handle_t&, const bool&, const size_t&)>& iteratee) const;
 };
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Template Implementation
-    ////////////////////////////////////////////////////////////////////////////
-    
-    template<typename Iteratee>
-    bool PathPositionHandleGraph::for_each_step_position_on_handle(const handle_t& handle,
-                                                                   const Iteratee& iteratee) const {
-        return for_each_step_position_on_handle_impl(handle, BoolReturningWrapper<Iteratee, handle_t>::wrap(iteratee));
-    }
-    
-    
     
 
 }
