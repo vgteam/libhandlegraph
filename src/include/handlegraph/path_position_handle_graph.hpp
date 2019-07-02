@@ -41,18 +41,6 @@ public:
                                           const std::function<bool(const step_handle_t&, const bool&, const size_t&)>& iteratee) const;
     
     
-    
-    ////////////////////////////////////////////////////////////////////////////
-    // Backing protected virtual method, which can be overridden
-    ////////////////////////////////////////////////////////////////////////////
-    
-protected:
-
-    /// Execute an itteratee on each step and its path relative position and orientation
-    /// on a handle in any path. Iteration will stop early if the iteratee returns false.
-    /// This method returns false if iteration was stopped early, else true.
-    virtual bool for_each_step_position_on_handle_impl(const handle_t& handle,
-                                                       const std::function<bool(const step_handle_t&, const bool&, const size_t&)>& iteratee) const;
 };
     
 
