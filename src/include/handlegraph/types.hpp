@@ -80,6 +80,19 @@ public:
         return std::hash<int64_t>()(reinterpret_cast<const uint64_t&>(path_handle));
     }
 };
+    
+/**
+ * Define hashes for step handles.
+ */
+template<> struct hash<handlegraph::step_handle_t> {
+public:
+    inline size_t operator()(const handlegraph::step_handle_t& step_handle) const {
+        size_t hsh1 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&step_handle)[0]);
+        size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&step_handle)[1]);
+        // Boost combine for hash values
+        return hsh1 ^ (hsh2 + 0x9e3779b9 + (hsh1<<6) + (hsh1>>2));
+    }
+};
 
 }
 
