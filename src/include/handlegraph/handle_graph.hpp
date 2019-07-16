@@ -181,6 +181,24 @@ public:
     virtual void deserialize(std::istream& in) = 0;
 };
 
+/*
+ * Defines an interface providing a vectorization of the graph nodes and edges,
+ * which can be co-inherited alongside HandleGraph.
+ */
+class VectorizableHandleGraph {
+
+public:
+
+    /// Return the start position of the node in a (possibly implict) sorted array
+    /// constructed from the concatenation of the node sequences
+    virtual size_t node_vector_offset(const nid_t& node_id) const = 0;
+
+    /// Return the node overlapping the given offset in the implicit node vector
+    virtual nid_t node_at_vector_offset(const size_t& offset) const = 0;
+
+    /// Return a unique index among edges in the graph
+    virtual size_t edge_index(const edge_t& edge) const = 0;
+};
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Implementations
