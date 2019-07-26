@@ -165,9 +165,9 @@ protected:
 
 /*
  * Defines an interface for serialization and deserialization for handle graph,
- * which can be co-inherited alongside other inheritors of  HandleGraph.
+ * which can be co-inherited alongside HandleGraph.
  */
-class SerializableHandleGraph : virtual public HandleGraph {
+class SerializableHandleGraph {
     
 public:
     
@@ -183,9 +183,9 @@ public:
 
 /*
  * Defines an interface providing a vectorization of the graph nodes and edges,
- * which can be co-inherited alongside other inheritors of HandleGraph.
+ * which can be co-inherited alongside HandleGraph.
  */
-class VectorizableHandleGraph : virtual public HandleGraph {
+class VectorizableHandleGraph {
 
 public:
 
