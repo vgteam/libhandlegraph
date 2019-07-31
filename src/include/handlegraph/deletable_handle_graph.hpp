@@ -16,6 +16,8 @@ namespace handlegraph {
 class DeletableHandleGraph : virtual public MutableHandleGraph {
 public:
     
+    virtual ~DeletableHandleGraph() = default;
+    
     /// Remove the node belonging to the given handle and all of its edges.
     /// Does not update any stored paths.
     /// Invalidates the destroyed handle.

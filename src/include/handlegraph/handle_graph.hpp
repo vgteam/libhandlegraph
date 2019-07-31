@@ -21,6 +21,8 @@ namespace handlegraph {
  */
 class HandleGraph {
 public:
+    
+    virtual ~HandleGraph() = default;
 
     ////////////////////////////////////////////////////////////////////////////
     // Interface that needs to be implemented

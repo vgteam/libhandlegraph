@@ -19,6 +19,8 @@ namespace handlegraph {
 class MutablePathHandleGraph : virtual public PathHandleGraph {
 public:
     
+    virtual ~MutablePathHandleGraph() = default;
+    
     /**
      * Destroy the given path. Invalidates handles to the path and its steps.
      */

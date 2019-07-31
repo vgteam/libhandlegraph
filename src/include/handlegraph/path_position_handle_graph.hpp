@@ -16,6 +16,8 @@ namespace handlegraph {
 class PathPositionHandleGraph : virtual public PathHandleGraph {
 public:
     
+    virtual ~PathPositionHandleGraph() = default;
+    
     ////////////////////////////////////////////////////////////////////////////
     // Interface that needs to be implemented
     ////////////////////////////////////////////////////////////////////////////
