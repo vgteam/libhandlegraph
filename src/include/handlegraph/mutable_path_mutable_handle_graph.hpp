@@ -14,6 +14,9 @@ namespace handlegraph {
  * This is the interface for a graph which is mutable and which has paths which are also mutable.
  */
 class MutablePathMutableHandleGraph : virtual public MutablePathHandleGraph, virtual public MutableHandleGraph {
+public:
+    
+    virtual ~MutablePathMutableHandleGraph() = default;
     
     // No extra methods. However, some additional semantics are assumed:
     // - divide_handle() replaces every occurrence of the original handle with its subsegments

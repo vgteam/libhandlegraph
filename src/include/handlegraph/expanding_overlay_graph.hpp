@@ -18,6 +18,8 @@ class ExpandingOverlayGraph : public HandleGraph {
 
 public:
     
+    virtual ~ExpandingOverlayGraph() = default;
+    
     /**
      * Returns the handle in the underlying graph that corresponds to a handle in the
      * overlay
