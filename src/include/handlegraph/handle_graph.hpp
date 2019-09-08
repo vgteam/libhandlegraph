@@ -106,7 +106,7 @@ public:
     virtual bool has_edge(const handle_t& left, const handle_t& right) const;
     
     /// Convenient wrapper of has_edge for edge_t argument.
-    inline bool has_edge(const edge_t& edge) {
+    inline bool has_edge(const edge_t& edge) const {
         return has_edge(edge.first, edge.second);
     }
     
