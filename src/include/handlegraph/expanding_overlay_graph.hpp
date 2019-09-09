@@ -14,7 +14,7 @@ namespace handlegraph {
  * HandleGraph where every node in the overlay corresponds to a node in the underlying
  * graph, but where more than one node in the overlay can map to the same underlying node.
  */
-class ExpandingOverlayGraph : public HandleGraph {
+class ExpandingOverlayGraph : virtual public HandleGraph {
 
 public:
     
