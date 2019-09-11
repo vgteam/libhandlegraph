@@ -172,6 +172,8 @@ protected:
 class SerializableHandleGraph {
     
 public:
+
+    virtual ~SerializableHandleGraph() = default;
     
     /// Write the contents of this graph to an ostream.
     virtual void serialize(std::ostream& out) const = 0;
@@ -190,6 +192,8 @@ public:
 class VectorizableHandleGraph {
 
 public:
+
+    virtual ~VectorizableHandleGraph() = default;
 
     /// Return the start position of the node in a (possibly implict) sorted array
     /// constructed from the concatenation of the node sequences
