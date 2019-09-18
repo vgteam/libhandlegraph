@@ -60,6 +60,10 @@ public:
     /// Return the largest ID in the graph, or some larger number if the
     /// largest ID is unavailable. Return value is unspecified if the graph is empty.
     virtual nid_t max_node_id() const = 0;
+
+    /// Set a minimum id to increment the id space by, used as a hint during construction.
+    /// May have no effect on a backing implementation.
+    virtual void set_id_increment(const nid_t& min_id) = 0;
     
     ////////////////////////////////////////////////////////////////////////////
     // Stock interface that uses backing virtual methods
