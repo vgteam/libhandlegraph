@@ -35,6 +35,10 @@ inline const handle_t& as_handle(const uint64_t& value) {
     return reinterpret_cast<const handle_t&>(value);
 }
 
+/// It's convenient to be able to sort handles
+inline bool operator<(const handle_t& a, const handle_t& b) {
+  return (as_integer(a) < as_integer(b));
+}
 
 /// Define a way to pack an integer and an orientation bit into a handle_t.
 struct number_bool_packing {
@@ -87,6 +91,11 @@ inline const path_handle_t& as_path_handle(const uint64_t& value) {
     return reinterpret_cast<const path_handle_t&>(value);
 }
 
+/// It's convenient to be able to sort path handles
+inline bool operator<(const path_handle_t& a, const path_handle_t& b) {
+  return (as_integer(a) < as_integer(b));
+}
+
 //
 // Step handles
 //
@@ -101,7 +110,12 @@ inline const int64_t* as_integers(const step_handle_t& step_handle) {
     return reinterpret_cast<const int64_t*>(&step_handle);
 }
 
-
+/// Sort of step handles is based on first then second integers
+inline bool operator<(const step_handle_t& a, const step_handle_t& b) {
+  return (as_integers(a)[0] < as_integers(b)[0] ||
+          (as_integers(a)[0] == as_integers(b)[0]
+           && as_integers(a)[1] < as_integers(b)[1]));
+}
 
 }
 
