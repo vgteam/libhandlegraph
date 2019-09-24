@@ -60,7 +60,7 @@ public:
     /// Return the largest ID in the graph, or some larger number if the
     /// largest ID is unavailable. Return value is unspecified if the graph is empty.
     virtual nid_t max_node_id() const = 0;
-    
+
     ////////////////////////////////////////////////////////////////////////////
     // Stock interface that uses backing virtual methods
     ////////////////////////////////////////////////////////////////////////////

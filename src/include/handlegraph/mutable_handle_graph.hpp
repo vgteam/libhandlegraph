@@ -74,6 +74,10 @@ public:
     /// This may be a no-op in the case of graph implementations that do not have any mechanism to maintain an ordering.
     virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids = false) = 0;
 
+    /// Set a minimum id to increment the id space by, used as a hint during construction.
+    /// May have no effect on a backing implementation.
+    virtual void set_id_increment(const nid_t& min_id) = 0;
+
 };
 
 }
