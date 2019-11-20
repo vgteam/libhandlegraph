@@ -78,6 +78,8 @@ public:
     /// May have no effect on a backing implementation.
     virtual void set_id_increment(const nid_t& min_id) = 0;
 
+    /// Add the given value to all node IDs
+    virtual void increment_node_ids(nid_t increment) = 0;
 };
 
 }
