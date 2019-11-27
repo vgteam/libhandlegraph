@@ -73,6 +73,22 @@ bool HandleGraph::has_edge(const handle_t& left, const handle_t& right) const {
     return !not_seen;
 }
 
+size_t HandleGraph::get_edge_count() const {
+    size_t total = 0;
+    for_each_edge([&](const edge_t& ignored) {
+        total++;
+    });
+    return total;
+};
+
+size_t HandleGraph::get_total_length() const {
+    size_t total = 0;
+    for_each_handle([&](const handle_t& h) {
+        total += get_length(h);
+    });
+    return total;
+};
+
 char HandleGraph::get_base(const handle_t& handle, size_t index) const {
     return get_sequence(handle)[index];
 }
