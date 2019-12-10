@@ -1,4 +1,5 @@
 #include "handlegraph/handle_graph.hpp"
+#include "handlegraph/mutable_handle_graph.hpp"
 #include "handlegraph/path_handle_graph.hpp"
 #include "handlegraph/path_position_handle_graph.hpp"
 #include "handlegraph/util.hpp"
@@ -95,6 +96,13 @@ char HandleGraph::get_base(const handle_t& handle, size_t index) const {
 
 std::string HandleGraph::get_subsequence(const handle_t& handle, size_t index, size_t size) const {
     return get_sequence(handle).substr(index, size);
+}
+
+void MutableHandleGraph::increment_node_ids(nid_t increment) {
+    // Increment IDs by just reassigning IDs and applying the increment as the ID translation
+    reassign_node_ids([&](const nid_t& old_id) -> nid_t {
+        return old_id + increment;
+    });
 }
 
 std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& handle,

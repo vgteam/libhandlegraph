@@ -70,7 +70,7 @@ public:
 
     /// Reorder the graph's internal structure to match that given.
     /// This sets the order that is used for iteration in functions like for_each_handle.
-    /// Optionally compact the id space of the graph to match the ordering, from 1->|ordering|.
+    /// Optionally may compact the id space of the graph to match the ordering, from 1->|ordering|.
     /// This may be a no-op in the case of graph implementations that do not have any mechanism to maintain an ordering.
     virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids = false) = 0;
 
@@ -78,8 +78,18 @@ public:
     /// May have no effect on a backing implementation.
     virtual void set_id_increment(const nid_t& min_id) = 0;
 
-    /// Add the given value to all node IDs
-    virtual void increment_node_ids(nid_t increment) = 0;
+    /// Add the given value to all node IDs.
+    /// Has a default implementation in terms of reassign_node_ids, but can be
+    /// implemented more efficiently in some graphs.
+    virtual void increment_node_ids(nid_t increment);
+    
+    /// Renumber all node IDs using the given function, which, given an old ID, returns the new ID.
+    /// Modifies the graph in place. Invalidates all outstanding handles.
+    /// If the graph supports paths, they also must be updated.
+    /// The mapping function may return 0. In this case, the input ID will
+    /// remain unchanged. The mapping function should not return any ID for
+    /// which it would return 0.
+    virtual void reassign_node_ids(const std::function<nid_t(const nid_t&)>& get_new_id) = 0;
 };
 
 }
