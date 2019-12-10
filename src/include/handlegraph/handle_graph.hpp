@@ -110,6 +110,14 @@ public:
         return has_edge(edge.first, edge.second);
     }
     
+    /// Return the total number of edges in the graph. If not overridden,
+    /// counts them all in linear time.
+    virtual size_t get_edge_count() const;
+    
+    /// Return the total length of all nodes in the graph, in bp. If not
+    /// overridden, loops over all nodes in linear time.
+    virtual size_t get_total_length() const;
+    
     /// Returns one base of a handle's sequence, in the orientation of the
     /// handle.
     virtual char get_base(const handle_t& handle, size_t index) const;
