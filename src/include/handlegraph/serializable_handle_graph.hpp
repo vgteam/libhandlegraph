@@ -23,7 +23,7 @@ public:
     /// Returns a number that is specific to the serialized implementation for type
     /// checking. Does not depend on the contents of any particular instantiation
     /// (i.e. behaves as if static, but cannot be static and virtual).
-    virtual uint64_t get_magic_number() const = 0;
+    virtual uint32_t get_magic_number() const = 0;
     
         
 protected:
