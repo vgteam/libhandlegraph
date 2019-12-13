@@ -29,10 +29,10 @@ public:
 protected:
     
     /// Underlying implementation for "serialize" method
-    virtual void serialize_impl(ostream& out) const = 0;
+    virtual void serialize_impl(std::ostream& out) const = 0;
     
     /// Underlying implementation to "deserialize" method
-    virtual void deserialize_impl(istream& in) = 0;
+    virtual void deserialize_impl(std::istream& in) = 0;
     
 public:
     
