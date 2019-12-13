@@ -53,12 +53,13 @@ public:
  */
         
 inline void SerializableHandleGraph::serialize(std::ostream& out) const {
-    out << htonl(get_magic_number());
+    uint32_t magic_number = htonl(get_magic_number());
+    out.write((char*) &magic_number, sizeof(magic_number) / sizeof(char));
     serialize_impl(out);
 }
-    
+
 inline void SerializableHandleGraph::deserialize(std::istream& in) {
-    uint64_t magic_number;
+    uint32_t magic_number;
     in.read((char*) &magic_number, sizeof(magic_number) / sizeof(char));
     magic_number = ntohl(magic_number);
     if (magic_number != get_magic_number()) {
