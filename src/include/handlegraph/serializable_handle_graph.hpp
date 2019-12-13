@@ -23,16 +23,16 @@ public:
     /// Returns a number that is specific to the serialized implementation for type
     /// checking. Does not depend on the contents of any particular instantiation
     /// (i.e. behaves as if static, but cannot be static and virtual).
-    virtual uint64_t get_magic_number() const;
+    virtual uint64_t get_magic_number() const = 0;
     
         
-private:
+protected:
     
     /// Underlying implementation for "serialize" method
-    virtual void serialize_impl(ostream& out) const;
+    virtual void serialize_impl(ostream& out) const = 0;
     
     /// Underlying implementation to "deserialize" method
-    virtual void deserialize_impl(istream& in);
+    virtual void deserialize_impl(istream& in) = 0;
     
 public:
     
