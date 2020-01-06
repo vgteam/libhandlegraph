@@ -2,7 +2,7 @@
 #define HANDLEGRAPH_SERIALIZABLE_HANDLE_GRAPH_HPP_INCLUDED
 
 /** \file 
- * Defines the base HandleGraph interface.
+ * Defines the base SerializableHandleGraph interface.
  */
 
 #include <iostream>
@@ -11,7 +11,7 @@
 namespace handlegraph {
 
 /*
- * Defines an interface for serialization and deserialization for handle graph,
+ * Defines an interface for serialization and deserialization for handle graphs,
  * which can be co-inherited alongside HandleGraph.
  */
 class SerializableHandleGraph {
@@ -25,17 +25,6 @@ public:
     /// (i.e. behaves as if static, but cannot be static and virtual).
     virtual uint32_t get_magic_number() const = 0;
     
-        
-protected:
-    
-    /// Underlying implementation for "serialize" method
-    virtual void serialize_impl(std::ostream& out) const = 0;
-    
-    /// Underlying implementation to "deserialize" method
-    virtual void deserialize_impl(std::istream& in) = 0;
-    
-public:
-    
     /// Write the contents of this graph to an ostream.
     inline void serialize(std::ostream& out) const;
     
@@ -44,18 +33,29 @@ public:
     /// HandleGraph interface as is calling deserialize(). Can only be called by an
     /// empty graph.
     inline void deserialize(std::istream& in);
+        
+protected:
+    
+    /// Underlying implementation for "serialize" method
+    virtual void serialize_members(std::ostream& out) const = 0;
+    
+    /// Underlying implementation to "deserialize" method
+    virtual void deserialize_members(std::istream& in) = 0;
+    
 };
 
 
 
-/*
+
+
+/**
  * Inline implementations
  */
         
 inline void SerializableHandleGraph::serialize(std::ostream& out) const {
     uint32_t magic_number = htonl(get_magic_number());
     out.write((char*) &magic_number, sizeof(magic_number) / sizeof(char));
-    serialize_impl(out);
+    serialize_members(out);
 }
 
 inline void SerializableHandleGraph::deserialize(std::istream& in) {
@@ -65,7 +65,7 @@ inline void SerializableHandleGraph::deserialize(std::istream& in) {
     if (magic_number != get_magic_number()) {
         throw std::runtime_error("error: Serialized handle graph does not match deserialzation type.");
     }
-    deserialize_impl(in);
+    deserialize_members(in);
 }
 }
 
