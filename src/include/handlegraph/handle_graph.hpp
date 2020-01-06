@@ -174,26 +174,6 @@ protected:
 };
 
 /*
- * Defines an interface for serialization and deserialization for handle graph,
- * which can be co-inherited alongside HandleGraph.
- */
-class SerializableHandleGraph {
-    
-public:
-
-    virtual ~SerializableHandleGraph() = default;
-    
-    /// Write the contents of this graph to an ostream.
-    virtual void serialize(std::ostream& out) const = 0;
-    
-    /// Sets the contents of this graph to the contents of a serialized graph from
-    /// an istream. The serialized graph must be from the same implementation of the
-    /// HandleGraph interface as is calling deserialize(). Can only be called by an
-    /// empty graph.
-    virtual void deserialize(std::istream& in) = 0;
-};
-
-/*
  * Defines an interface providing a vectorization of the graph nodes and edges,
  * which can be co-inherited alongside HandleGraph.
  */
