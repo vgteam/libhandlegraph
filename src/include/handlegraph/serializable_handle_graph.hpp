@@ -25,17 +25,18 @@ public:
     /// (i.e. behaves as if static, but cannot be static and virtual).
     virtual uint32_t get_magic_number() const = 0;
     
-    /// Write the contents of this graph to an ostream.
+    /// Write the contents of this graph to an ostream. Makes sure to include a
+    /// leading magic number.
     inline void serialize(std::ostream& out) const;
     
     /// Sets the contents of this graph to the contents of a serialized graph from
     /// an istream. The serialized graph must be from the same implementation of the
-    /// HandleGraph interface as is calling deserialize(). Can only be called by an
+    /// HandleGraph interface as is calling deserialize(). Can only be called on an
     /// empty graph.
     inline void deserialize(std::istream& in);
         
 protected:
-    
+
     /// Underlying implementation for "serialize" method
     virtual void serialize_members(std::ostream& out) const = 0;
     
@@ -59,11 +60,30 @@ inline void SerializableHandleGraph::serialize(std::ostream& out) const {
 }
 
 inline void SerializableHandleGraph::deserialize(std::istream& in) {
-    uint32_t magic_number;
-    in.read((char*) &magic_number, sizeof(magic_number) / sizeof(char));
-    magic_number = ntohl(magic_number);
+    // Make sure our byte wrangling is likely to work
+    static_assert(sizeof(char) * 4 == sizeof(uint32_t), "Char must be 8 bits");
+    
+    // Read the first 4 bytes. We keep them in an array because we might need to unget them.
+    char magic_bytes[4];
+    in.read(magic_bytes, 4);
+    
+    uint32_t magic_number = ntohl(*((uint32_t*) magic_bytes));
     if (magic_number != get_magic_number()) {
-        throw std::runtime_error("error: Serialized handle graph does not match deserialzation type.");
+        // They don't look right for what we are loading.
+        // This could be an old file, or we could have been given the wrong kind of thing to load.
+        std::cerr << "warning [libhandlegraph]: Serialized handle graph does not appear to match deserialzation type." << std::endl;
+        std::cerr << "warning [libhandlegraph]: It is either an old version or in the wrong format." << std::endl;
+        std::cerr << "warning [libhandlegraph]: Attempting to load it anyway. Future releases will reject it!" << std::endl;
+        
+        // Put the characters back in reverse order.
+        for (int i = 3; i >= 0; i--) {
+            in.putback(magic_bytes[i]);
+        }
+        
+        if (!in) {
+            // The stream did not rewind right (or was already at EOF somehow)
+            throw std::runtime_error("Error rewinding to load non-magic-prefixed SerializableHandleGraph");
+        }
     }
     deserialize_members(in);
 }
