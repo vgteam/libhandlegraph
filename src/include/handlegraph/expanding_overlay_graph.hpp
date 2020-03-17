@@ -5,7 +5,7 @@
  * Defines an interface for overlay graphs that duplicate underlying graph nodes.
  */
  
-#include "handle_graph.hpp"
+#include "handlegraph/handle_graph.hpp"
 
 namespace handlegraph {
 
