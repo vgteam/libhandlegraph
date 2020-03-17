@@ -69,7 +69,7 @@ inline void SerializableHandleGraph::serialize(std::ostream& out) const {
 }
 
 inline void SerializableHandleGraph::serialize(const std::string& filename) const {
-    ofstream out(filename);
+    std::ofstream out(filename);
     serialize(out);
 }
 
@@ -103,7 +103,7 @@ inline void SerializableHandleGraph::deserialize(std::istream& in) {
 }
 
 inline void SerializableHandleGraph::deserialize(const std::string& filename) const {
-    ifstream in(filename);
+    std::ifstream in(filename);
     deserialize(in);
 }
 
