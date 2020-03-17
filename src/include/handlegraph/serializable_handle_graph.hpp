@@ -42,7 +42,7 @@ public:
     /// a file. The serialized graph must be from the same implementation of the
     /// HandleGraph interface as is calling deserialize(). Can only be called on an
     /// empty graph.
-    inline void deserialize(const std::string& filename) const;
+    inline void deserialize(const std::string& filename);
         
 protected:
 
@@ -102,7 +102,7 @@ inline void SerializableHandleGraph::deserialize(std::istream& in) {
     deserialize_members(in);
 }
 
-inline void SerializableHandleGraph::deserialize(const std::string& filename) const {
+inline void SerializableHandleGraph::deserialize(const std::string& filename) {
     std::ifstream in(filename);
     deserialize(in);
 }
