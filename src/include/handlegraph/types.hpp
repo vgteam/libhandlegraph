@@ -8,11 +8,18 @@
 #include <cstdint>
 #include <utility>
 #include <functional>
+#include <limits>
 
 namespace handlegraph {
 
-/// Represents an id
-typedef int64_t nid_t;
+/// Represents an id.
+/// We use "long long int" here so that we resolve to a consistent C-level type across platforms.
+/// On Mac, int64_t is "long long" while on Linux it is just "long", and
+/// generated code that resolves all typedefs (i.e. Python bindings) is thus
+/// not portable between them if we use int64_t.
+typedef long long int nid_t;
+static_assert(std::numeric_limits<nid_t>::digits == std::numeric_limits<int64_t>::digits);
+
     
 [[deprecated("id_t collides with a standard type, use nid_t instead")]]
 typedef nid_t id_t;
