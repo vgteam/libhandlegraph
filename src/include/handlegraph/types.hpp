@@ -18,7 +18,7 @@ namespace handlegraph {
 /// generated code that resolves all typedefs (i.e. Python bindings) is thus
 /// not portable between them if we use int64_t.
 typedef long long int nid_t;
-static_assert(std::numeric_limits<nid_t>::digits == std::numeric_limits<int64_t>::digits);
+static_assert(std::numeric_limits<nid_t>::digits == std::numeric_limits<int64_t>::digits, "Can only build on a system where long long int is 64 bits");
 
     
 [[deprecated("id_t collides with a standard type, use nid_t instead")]]
