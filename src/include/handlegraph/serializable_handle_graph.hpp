@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <arpa/inet.h>
 
 namespace handlegraph {
@@ -28,12 +29,20 @@ public:
     /// Write the contents of this graph to an ostream. Makes sure to include a
     /// leading magic number.
     inline void serialize(std::ostream& out) const;
+    /// Write the contents of this graph to a named file. Makes sure to include
+    /// a leading magic number.
+    inline void serialize(const std::string& filename) const;
     
     /// Sets the contents of this graph to the contents of a serialized graph from
     /// an istream. The serialized graph must be from the same implementation of the
     /// HandleGraph interface as is calling deserialize(). Can only be called on an
     /// empty graph.
     inline void deserialize(std::istream& in);
+    /// Sets the contents of this graph to the contents of a serialized graph from
+    /// a file. The serialized graph must be from the same implementation of the
+    /// HandleGraph interface as is calling deserialize(). Can only be called on an
+    /// empty graph.
+    inline void deserialize(const std::string& filename);
         
 protected:
 
@@ -57,6 +66,11 @@ inline void SerializableHandleGraph::serialize(std::ostream& out) const {
     uint32_t magic_number = htonl(get_magic_number());
     out.write((char*) &magic_number, sizeof(magic_number) / sizeof(char));
     serialize_members(out);
+}
+
+inline void SerializableHandleGraph::serialize(const std::string& filename) const {
+    std::ofstream out(filename);
+    serialize(out);
 }
 
 inline void SerializableHandleGraph::deserialize(std::istream& in) {
@@ -87,6 +101,12 @@ inline void SerializableHandleGraph::deserialize(std::istream& in) {
     }
     deserialize_members(in);
 }
+
+inline void SerializableHandleGraph::deserialize(const std::string& filename) {
+    std::ifstream in(filename);
+    deserialize(in);
+}
+
 }
 
 #endif
