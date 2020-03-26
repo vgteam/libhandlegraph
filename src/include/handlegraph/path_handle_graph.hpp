@@ -183,8 +183,11 @@ bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Ite
     bool keep_going = true;
     for (auto here = path_begin(path); keep_going; here = get_next_step(here)) {
         // Execute the iteratee on this step
-        keep_going &= wrapped(here) && here != end;
-        
+        keep_going &= wrapped(here);
+        if (here == end) {
+            // Stop, but leave keep_going true so we return True because iteration completed.
+            break;
+        }
     }
     
     return keep_going;
