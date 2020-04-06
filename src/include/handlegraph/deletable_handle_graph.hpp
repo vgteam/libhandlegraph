@@ -19,13 +19,15 @@ public:
     virtual ~DeletableHandleGraph() = default;
     
     /// Remove the node belonging to the given handle and all of its edges.
-    /// Destroys any paths in which the node participates.
+    /// Either destroys any paths in which the node participates, or leaves a
+    /// "hidden", un-iterateable handle in the path to represent the sequence
+    /// of the removed node.
     /// Invalidates the destroyed handle.
     /// May be called during serial for_each_handle iteration **ONLY** on the node being iterated.
     /// May **NOT** be called during parallel for_each_handle iteration.
     /// May **NOT** be called on the node from which edges are being followed during follow_edges.
-    /// May **NOT** be called during iteration over paths, if it would destroy a path.
-    /// May **NOT** be called during iteration along a path, if it would destroy that path.
+    /// May **NOT** be called during iteration over paths, if it could destroy a path.
+    /// May **NOT** be called during iteration along a path, if it could destroy that path.
     virtual void destroy_handle(const handle_t& handle) = 0;
     
     /// Remove the edge connecting the given handles in the given order and orientations.
@@ -38,7 +40,7 @@ public:
         destroy_edge(edge.first, edge.second);
     }
     
-    /// Remove all nodes and edges.
+    /// Remove all nodes and edges. May also remove all paths, if applicable.
     virtual void clear() = 0;
 };
 
