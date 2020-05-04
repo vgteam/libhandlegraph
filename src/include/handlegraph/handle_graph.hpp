@@ -173,11 +173,38 @@ protected:
     
 };
 
-/*
+/**
+ * Defines an interface for a handle graph that can rank its nodes and handles.
+ *
+ * Doesn't actually require an efficient node lookup by sequence position as in
+ * VectorizableHandleGraph.
+ */
+class RankedHandleGraph : virtual public HandleGraph {
+public:
+
+    /// Return the rank of a node (ranks start at 1 and are dense).
+    virtual size_t id_to_rank(const nid_t& node_id) const = 0;
+
+    /// Return the node with a given rank.
+    virtual nid_t rank_to_id(const size_t& rank) const = 0;
+    
+    // If you define node ID ranks you get a default implementation of handle ranks.
+    
+    /// Return the rank of a handle (ranks start at 1 and are dense, and each
+    /// orientation has its own rank). Handle ranks may not have anything to do
+    /// with node ranks.
+    virtual size_t handle_to_rank(const handle_t& handle) const;
+
+    /// Return the handle with a given rank.
+    virtual handle_t rank_to_handle(const size_t& rank) const;
+
+};
+
+/**
  * Defines an interface providing a vectorization of the graph nodes and edges,
  * which can be co-inherited alongside HandleGraph.
  */
-class VectorizableHandleGraph {
+class VectorizableHandleGraph : virtual public RankedHandleGraph {
 
 public:
 
@@ -192,12 +219,6 @@ public:
 
     /// Return a unique index among edges in the graph
     virtual size_t edge_index(const edge_t& edge) const = 0;
-
-    /// Return the rank of a node (ranks start at 1)
-    virtual size_t id_to_rank(const nid_t& node_id) const = 0;
-
-    /// Return the node with a given rank
-    virtual nid_t rank_to_id(const size_t& rank) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////
