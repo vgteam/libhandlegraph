@@ -119,6 +119,10 @@ void MutableHandleGraph::increment_node_ids(nid_t increment) {
     });
 }
 
+void MutableHandleGraph::increment_node_ids(long increment) {
+    increment_node_ids((nid_t)increment);
+}
+
 std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& handle,
                                                             bool match_orientation) const {
     std::vector<step_handle_t> found;
