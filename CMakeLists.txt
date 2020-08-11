@@ -7,7 +7,7 @@ include(GNUInstallDirs)
 # Set a default install directory.
 # See https://stackoverflow.com/a/39485990/402891
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX /usr CACHE PATH FORCE)
+  set(CMAKE_INSTALL_PREFIX /usr CACHE PATH "Directory to install to" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # Project's name
