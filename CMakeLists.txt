@@ -1,5 +1,5 @@
 # Specify the minimum version for CMake
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 
 # This defines default install directories like "lib"
 include(GNUInstallDirs)
@@ -20,9 +20,6 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
 # Let cmake decide where to put the output files, allowing for out-of-tree builds.
-
-# The following folder will be included
-include_directories("src/include")
 
 # Don't use @rpath in Mac builds' install_name fields (AKA LC_ID_DYLIB in otool
 # -l output). Populate with an absolute path instead. This will let us actually
@@ -48,14 +45,21 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/iteratee.hpp
   )
 
-# Build objects position-independent to allow a shared library
-set_property(TARGET handlegraph_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
+# Use the include directory when building the objects.
+# It can't be picked up via dependency by the other libraries even if it's public.
+target_include_directories(handlegraph_objs PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
-# Make static and shared versions with the same base name
+# Build objects position-independent to allow a shared library
+set_target_properties(handlegraph_objs PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+# Make static and shared versions with the same base name.
+# Make sure to give them interface include directories that depending targets can use.
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
+target_include_directories(handlegraph_shared INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
+target_include_directories(handlegraph_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 # Set up for installability
 install(TARGETS handlegraph_shared handlegraph_static 
