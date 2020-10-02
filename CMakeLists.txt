@@ -15,11 +15,22 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
 # Let cmake decide where to put the output files, allowing for out-of-tree builds.
 
-# Don't use @rpath in Mac builds' install_name fields (AKA LC_ID_DYLIB in otool
-# -l output). Populate with an absolute path instead. This will let us actually
-# find the library when we use it as a CMake external project and don't fully
-# install it to any normal lib directory.
-set (CMAKE_MACOSX_RPATH OFF)
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    # We are probably an external project. Don't use @rpath in Mac builds'
+    # install_name fields (AKA LC_ID_DYLIB in otool -l output). Populate with
+    # an absolute path instead. This will let us actually find the library when
+    # we use it as a CMake external project and don't fully install it to any
+    # normal lib directory.
+    message("libhandlegraph is root project or external_project")
+    set (CMAKE_MACOSX_RPATH OFF)
+else()
+    # We are probably an add_subdirectory. We will expect to be in the root
+    # project's lib directory, so we do want to have our non-installed
+    # install_name use @rpath.
+    message("libhandlegraph is add_subdirectory project")
+    set (CMAKE_MACOSX_RPATH ON)
+endif()
+
 # The install_name gets modified on installation to be this.
 set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
