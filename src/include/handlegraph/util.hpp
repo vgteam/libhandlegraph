@@ -118,55 +118,28 @@ inline bool operator<(const step_handle_t& a, const step_handle_t& b) {
 }
 
 //
-// Snarl handles
+// Net handles
 //
 
-/// View a step handle as an integer array
-inline int64_t* as_integers(snarl_handle_t& snarl_handle) {
-    return reinterpret_cast<int64_t*>(&snarl_handle);
+/// View a net handle as an integer array
+inline int64_t* as_integers(net_handle_t& net_handle) {
+    return reinterpret_cast<int64_t*>(&net_handle);
 }
 
-/// View a const step handle as a const integer array
-inline const int64_t* as_integers(const snarl_handle_t& snarl_handle) {
-    return reinterpret_cast<const int64_t*>(&snarl_handle);
+/// View a const net handle as a const integer array
+inline const int64_t* as_integers(const net_handle_t& net_handle) {
+    return reinterpret_cast<const int64_t*>(&net_handle);
 }
 
-/// Sort of snarl handles is based on first then second integers
-inline bool operator<(const snarl_handle_t& a, const snarl_handle_t& b) {
+/// Sort of net handles is based on first then second then third integers
+inline bool operator<(const net_handle_t& a, const net_handle_t& b) {
   return (as_integers(a)[0] < as_integers(b)[0] ||
           (as_integers(a)[0] == as_integers(b)[0]
-           && as_integers(a)[1] < as_integers(b)[1]));
+           && as_integers(a)[1] < as_integers(b)[1]) ||
+          (as_integers(a)[0] == as_integers(b)[0] &&
+           as_integers(a)[1] == as_integers(b)[1] &&
+           as_integers(a)[2] < as_integers(b)[2]));
 }
-
-//
-// Chain handles
-//
-
-/// View a chain handle as an integer
-inline uint64_t& as_integer(chain_handle_t& handle) {
-    return reinterpret_cast<uint64_t&>(handle);
-}
-
-/// View a const chain handle as a const integer
-inline const uint64_t& as_integer(const chain_handle_t& handle) {
-    return reinterpret_cast<const uint64_t&>(handle);
-}
-
-/// View an integer as a chain handle
-inline chain_handle_t& as_chain_handle(uint64_t& value) {
-    return reinterpret_cast<path_handle_t&>(value);
-}
-
-/// View a const integer as a const chain handle
-inline const chain_handle_t& as_chain_handle(const uint64_t& value) {
-    return reinterpret_cast<const path_handle_t&>(value);
-}
-
-/// It's convenient to be able to sort chain handles
-inline bool operator<(const chain_handle_t& a, const chain_handle_t& b) {
-  return (as_integer(a) < as_integer(b));
-}
-
 
 }
 
