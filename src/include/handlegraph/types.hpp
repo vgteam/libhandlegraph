@@ -30,7 +30,7 @@ typedef std::size_t off_t;
 /// Represents a position
 typedef std::tuple<nid_t, bool, off_t> pos_t;
     
-/// Represents the internal id of a node traversal
+/// Represents a traversal of a node in a graph in a particular direction
 struct handle_t { char data[sizeof(nid_t)]; };
     
 /// Represents an edge in terms of its endpoints
@@ -42,6 +42,18 @@ struct path_handle_t { char data[sizeof(int64_t)]; };
 /// A step handle is an opaque reference to a single step of an oriented node on a path in a graph
 struct step_handle_t { char data[2 * sizeof(int64_t)]; };
 
+/// A snarl handle is an opaque reference to a traversal of a genetic site in the graph, bounded by two handles.
+/// The traversal is both oriented and placed: it includes the strand (forward or reverse) and also the "place" ("near" or "far"), to properly handle traversing over snarls with interesting internal connectivity.
+///
+/// If you are near, you need to cross the snarl's contents in order to proceed in the current traversal direction, while if you are far, you do not.
+struct snarl_handle_t { char data[2 * sizeof(int64_t)]; };
+
+/// A chain handle is an opaque reference to an oriented traversal of a run of successive snarls in the graph.
+/// The traversal is both oriented and placed: it includes the strand (forward or reverse) and also the "place" ("near" or "far"), to properly handle traversing over chains of snarls with interesting internal connectivity.
+///
+/// If you are near, you need to cross the chain's contents in order to proceed in the current traversal direction, while if you are far, you do not.
+struct chain_handle_t { char data[sizeof(int64_t)]; };
+
 /// Define equality on handles
 bool operator==(const handle_t& a, const handle_t& b);
 
@@ -51,6 +63,12 @@ bool operator!=(const handle_t& a, const handle_t& b);
 /// Define equality on path handles
 bool operator==(const path_handle_t& a, const path_handle_t& b);
 
+/// Define equality on snarl handles
+bool operator==(const snarl_handle_t& a, const snarl_handle_t& b);
+
+/// Define equality on chain handles
+bool operator==(const snarl_handle_t& a, const snarl_handle_t& b);
+
 /// Define inequality on path handles
 bool operator!=(const path_handle_t& a, const path_handle_t& b);
 
@@ -59,6 +77,12 @@ bool operator==(const step_handle_t& a, const step_handle_t& b);
 
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b);
+
+/// Define equality on snarl handles
+bool operator!=(const snarl_handle_t& a, const snarl_handle_t& b);
+
+/// Define equality on chain handles
+bool operator!=(const snarl_handle_t& a, const snarl_handle_t& b);
 
 }
 
@@ -98,6 +122,29 @@ public:
         size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&step_handle)[1]);
         // Boost combine for hash values
         return hsh1 ^ (hsh2 + 0x9e3779b9 + (hsh1<<6) + (hsh1>>2));
+    }
+};
+
+/**
+ * Define hashes for snarl handles.
+ */
+template<> struct hash<handlegraph::snarl_handle_t> {
+public:
+    inline size_t operator()(const handlegraph::snarl_handle_t& snarl_handle) const {
+        size_t hsh1 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&snarl_handle)[0]);
+        size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&snarl_handle)[1]);
+        // Boost combine for hash values
+        return hsh1 ^ (hsh2 + 0x9e3779b9 + (hsh1<<6) + (hsh1>>2));
+    }
+};
+
+/**
+ * Define hashes for chain handles.
+ */
+template<> struct hash<handlegraph::chain_handle_t> {
+public:
+    inline size_t operator()(const handlegraph::chain_handle_t& chain_handle) const {
+        return std::hash<int64_t>()(reinterpret_cast<const uint64_t&>(chain_handle));
     }
 };
 

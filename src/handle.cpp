@@ -217,6 +217,27 @@ bool operator!=(const step_handle_t& a, const step_handle_t& b) {
     return !(a == b);
 }
 
+/// Define equality on snarl handles
+bool operator==(const snarl_handle_t& a, const snarl_handle_t& b) {
+    return as_integers(a)[0] == as_integers(b)[0] && as_integers(a)[1] == as_integers(b)[1];
+}
+
+/// Define inequality on snarl handles
+bool operator!=(const snarl_handle_t& a, const snarl_handle_t& b) {
+    return !(a == b);
+}
+
+/// Define equality on chain handles
+bool operator==(const chain_handle_t& a, const chain_handle_t& b) {
+    return as_integer(a) == as_integer(b);
+}
+
+/// Define inequality on chain handles
+bool operator!=(const chain_handle_t& a, const chain_handle_t& b) {
+    return as_integer(a) != as_integer(b);
+}
+
+
 }
 
 
