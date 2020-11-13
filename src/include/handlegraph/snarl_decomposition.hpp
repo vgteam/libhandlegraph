@@ -2,7 +2,7 @@
 #define HANDLEGRAPH_SNARL_DECOMPOSITION_HPP_INCLUDED
 
 /** \file 
- * Defines the base SerializableHandleGraph interface.
+ * Defines the base SnarlDecomposition interface.
  */
 
 #include <iostream>
@@ -17,8 +17,18 @@ namespace handlegraph {
  * Within each snarl are 0 or more chains (which act like nodes).
  * Within each chain is one or more nodes, and, between nodes, there are snarls.
  *
- * This interface does not include any net graph functionality, for traversing inside a snarl while stepping over chains.
- * For that, see NetGraphSnarlDecomposition. TODO: write that.
+ * You can traverse up and down the decomposition, and within each snarl or
+ * chain you can traverse left and right between traversals of the child
+ * chains, snarls, and nodes.
+ *
+ * The handle type used is net_handle_t, which refers to a particular kind of
+ * traversal of a chain, snarl, or node. Traversals can be start-to-end or
+ * end-to-start (the only kinds allowed for nodes), or they can be
+ * start-to-start, start-to-tip, end-to-end, end-to-tip, or tip-to-tip. Each
+ * snarl and chain knows which of these traversal types are "realizable" (i.e.
+ * consistent with the internal connectivity of the snarl or chain), and
+ * methods are provided to let you walk around inside a snarl or chain among
+ * the realizable traversals of its children.
  */
 class SnarlDecomposition {
     
