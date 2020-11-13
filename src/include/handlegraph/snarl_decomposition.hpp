@@ -159,8 +159,38 @@ public:
      */
     virtual net_handle_t get_parent_traversal(const net_handle_t& traversal_start, const net_handle_t& traversal_end) const = 0;
     
-    // TODO: let us loop over acceptable start and end points as children given the parent traversal: bounds, all tips/tip-containing children, etc.
-    // TODO: Know if we have accessible tips in either orientation vs. only loops.
+    
+    /**
+     * Get a handle to the inward-facing traversal of the first node in a chain
+     * or the start boundary in a snarl.
+     *
+     * This isn't necessarily where the traversal specified by the given handle
+     * actually starts (it may be end to end or tip to tip, for example.)
+     */
+    virtual net_handle_t get_start(const net_handle_t& parent) const = 0;
+    
+    /**
+     * Get a handle to the outward-facing traversal of the last node in a chain
+     * or the end boundary in a snarl.
+     *
+     * This isn't necessarily where the traversal specified by the given handle
+     * actually ends (it may be start to start or tip to tip, for example.)
+     */
+    virtual net_handle_t get_end(const net_handle_t& parent) const = 0;
+    
+    // TODO: How to find all the tips that can actually start traversals?
+    // Maybe just find all of them.
+    // Want to track whether tips are reachable from the start and the end separately, possibly.
+    // TODO: Function that gets you where exactly the kind of traversal you are looking at starts and ends.
+        // Would need to handle tips, and not be required to filter tips for validity
+        // Except that when producing child snarls/chains containing tips as tip options it needs to know that e.g. tip-to-start traversals are realizable for that child before producing it.
+            // Probably worth precomputing
+    
+    template<typename Iteratee>
+    bool for_each_traversal_start(const net_handle_t& traversal, const Iteratee&) const = 0;
+    
+    template<typename Iteratee>
+    bool for_each_traversal_end(const net_handle_t& traversal, const Iteratee&) const = 0;
     
     /**
      * Loop over the child snarls and nodes of a chain, or the child chains of
