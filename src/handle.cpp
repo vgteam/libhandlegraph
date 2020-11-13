@@ -5,6 +5,7 @@
 #include "handlegraph/util.hpp"
 
 #include <vector>
+#include <limits>
 
 /** \file handle.cpp
  * Implement handle graph utility methods, oprtators, and default implementations.
@@ -220,6 +221,10 @@ bool operator==(const step_handle_t& a, const step_handle_t& b) {
 bool operator!=(const step_handle_t& a, const step_handle_t& b) {
     return !(a == b);
 }
+
+/// Define the null handle.
+const handle_t null_handle = as_handle(std::numeric_limits<uint64_t>::max());
+
 
 }
 

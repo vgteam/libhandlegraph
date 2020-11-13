@@ -60,6 +60,9 @@ bool operator==(const step_handle_t& a, const step_handle_t& b);
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b);
 
+/// represents a null handle
+extern const handle_t null_handle;
+
 }
 
 // Hashes need to be in the std namespace
