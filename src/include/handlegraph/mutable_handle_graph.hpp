@@ -85,6 +85,8 @@ public:
     /// Has a default implementation in terms of reassign_node_ids, but can be
     /// implemented more efficiently in some graphs.
     virtual void increment_node_ids(nid_t increment);
+    /// This specialization for long appears to be needed to avoid confusion about nid_t
+    virtual void increment_node_ids(long increment);
     
     /// Renumber all node IDs using the given function, which, given an old ID, returns the new ID.
     /// Modifies the graph in place. Invalidates all outstanding handles.
