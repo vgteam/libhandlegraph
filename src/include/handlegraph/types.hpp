@@ -112,7 +112,7 @@ public:
     }
 };
     
-inline size_t combine_hashes(const size_t& hsh1, const size_t hsh1) {
+inline size_t combine_hashes(const size_t& hsh1, const size_t hsh2) {
     // Boost combine for hash values
     return hsh1 ^ (hsh2 + 0x9e3779b9 + (hsh1<<6) + (hsh1>>2));
 }
@@ -134,11 +134,11 @@ public:
  */
 template<> struct hash<handlegraph::net_handle_t> {
 public:
-    inline size_t operator()(const handlegraph::snarl_handle_t& snarl_handle) const {
-        size_t hsh1 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&snarl_handle)[0]);
-        size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&snarl_handle)[1]);
-        size_t hsh3 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&snarl_handle)[2]);
-        return combine_hashes(hsh1, combine_hashes(hsh2, hsh3););
+    inline size_t operator()(const handlegraph::net_handle_t& net_handle) const {
+        size_t hsh1 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&net_handle)[0]);
+        size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&net_handle)[1]);
+        size_t hsh3 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&net_handle)[2]);
+        return combine_hashes(hsh1, combine_hashes(hsh2, hsh3));
     }
 };
 
