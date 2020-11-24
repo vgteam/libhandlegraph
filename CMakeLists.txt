@@ -35,7 +35,14 @@ endif()
 set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 add_library(handlegraph_objs OBJECT
-  src/handle.cpp
+  src/handle_graph.cpp
+  src/mutable_handle_graph.cpp
+  src/path_handle_graph.cpp 
+  src/path_position_handle_graph.cpp
+  src/ranked_handle_graph.cpp
+  src/serializable.cpp
+  src/snarl_decomposition.cpp
+  src/types.cpp
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp

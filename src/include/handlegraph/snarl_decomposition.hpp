@@ -5,9 +5,11 @@
  * Defines the base SnarlDecomposition interface.
  */
 
-#include <iostream>
-#include <fstream>
-#include <arpa/inet.h>
+#include "handlegraph/types.hpp"
+
+#include "handlegraph/iteratee.hpp"
+
+#include <functional>
 
 namespace handlegraph {
 
