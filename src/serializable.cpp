@@ -25,7 +25,7 @@ void Serializable::serialize(const std::string& filename) const {
 }
 
 void Serializable::serialize(const std::string& filename) {
-    ((const Serializable*) this)->serialize(out);
+    ((const Serializable*) this)->serialize(filename);
 }
 
 

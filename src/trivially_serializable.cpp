@@ -3,9 +3,14 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
+#include <cassert>
+#include <sstream>
 
 
 /** \file trivially_serializable.cpp
@@ -24,25 +29,144 @@ TriviallySerializable::~TriviallySerializable() {
     }
     if (serializedFD != -1) {
         ::close(serializedFD);
+        serializedFD = -1;
     }
 }
 
 void TriviallySerializable::dissociate() {
-    // If we have a file
-    
-    // Remap as private
-    
-    // Otherwise do nothing.
+    if (serializedFD != -1) {
+        // If we have a file we are writing back to
+        
+        // We really should have a mapping.
+        assert(serializedData != nullptr);
+        
+        // Remap as private (just over the existing mapping, without unmapping)
+        void* new_mapping = ::mmap(serializedData, serializedLength, PROT_READ | PROT_WRITE, MAP_PRIVATE, serializedFD, 0);
+        
+        if (new_mapping == nullptr) {
+            // Mapping failed!
+            auto problem = errno;
+            std::stringstream ss;
+            ss << "Could not remap private: " << ::strerror(problem);
+            throw std::runtime_error(ss.str());
+        }
+        
+        if (new_mapping != serializedData) {
+            // The data had to move
+            
+            // So we need to get rid of the old one
+            if (::munmap(serializedData, serializedLength) != 0) {
+                auto problem = errno;
+                std::stringstream ss;
+                ss << "Could not remove old mapping: " << ::strerror(problem);
+                // Try to unmap the new mapping so we don't leave it behind
+                // after the exception is caught.
+                ::munmap(new_mapping, serializedLength);
+                throw std::runtime_error(ss.str());
+            }
+            
+            serializedData = new_mapping;
+        }
+        
+        // And close the file
+        close_fd(serializedFD);
+        serializedFD = -1;
+    }
 }
 
 void TriviallySerializable::serialized_data_resize(size_t bytes) {
-    // See if we have a file
     
-    // If so, truncate it longer
+    // Determine new total size including magic number
+    size_t new_serialized_length = MAGIC_SIZE + bytes;
     
-    // And mremap
-    
-    // Otherwise just mremap anonymously
+    if (serializedData == nullptr) {
+        // We need to initially allocate, and populate the magic number.
+        
+        // No file ought to be associated
+        assert(serializedFD == -1);
+        
+        serializedData = ::mmap(nullptr, new_serialized_length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (serializedData == nullptr) {
+            auto problem = errno;
+            std::stringstream ss;
+            ss << "Could not create anonymous mapping: " << ::strerror(problem);
+            throw std::runtime_error(ss.str());
+        }
+        
+        // Fill in the magic number
+        *((uint32_t*)serializedData) = htonl(get_magic_number());
+    } else if (new_serialized_length == serializedLength) {
+        // Some data is already allocated, and it is already the right size.
+        // Do nothing.
+        return;
+    } else {
+        // Some data is already allocated, and it is the wrong size.
+        
+        // See if we have a file
+        if (serializedFD != -1) {
+            // If so, we need to lengthen or shorten it.
+            // Supposedly you can get undefined behavior with ftruncate and
+            // partial mapped pages, but the man page at
+            // <https://linux.die.net/man/3/ftruncate> doesn't back that up.
+            
+            if (new_serialized_length > serializedLength) {
+                // Lengthening, so truncate and then remap, allowing to move
+                if (::ftruncate(serializedFD, new_serialized_length) != 0) {
+                    auto problem = errno;
+                    std::stringstream ss;
+                    ss << "Could not grow mapped file: " << ::strerror(problem);
+                    throw std::runtime_error(ss.str());
+                }
+                
+                void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
+                if (new_mapping == nullptr) {
+                    auto problem = errno;
+                    std::stringstream ss;
+                    ss << "Could not grow mapping: " << ::strerror(problem);
+                    throw std::runtime_error(ss.str());
+                }
+                
+                // Commit to object
+                serializedData = new_mapping;
+                serializedLength = new_serialized_length;
+            } else {
+                // Shortening, so remap in place and then truncate.
+                void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, 0);
+                if (new_mapping == nullptr) {
+                    auto problem = errno;
+                    std::stringstream ss;
+                    ss << "Could not shrink mapping: " << ::strerror(problem);
+                    throw std::runtime_error(ss.str());
+                }
+                // It's not allowed to move,
+                assert(new_mapping == serializedData);
+                
+                // Save the length change now so we can unmap on exception
+                serializedLength = new_serialized_length;
+                
+                if (::ftruncate(serializedFD, new_serialized_length) != 0) {
+                    auto problem = errno;
+                    std::stringstream ss;
+                    ss << "Could not shrink mapped file: " << ::strerror(problem);
+                    throw std::runtime_error(ss.str());
+                }
+            }
+        } else {
+            // Otherwise, we have no file.
+            // Just mremap the anonymous mapping, allowing to move.
+            void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
+            if (new_mapping == nullptr) {
+                auto problem = errno;
+                std::stringstream ss;
+                ss << "Could not resize mapping: " << ::strerror(problem);
+                throw std::runtime_error(ss.str());
+            }
+            
+            // Commit to object
+            serializedData = new_mapping;
+            serializedLength = new_serialized_length;
+        }
+    }
 }
 
 size_t TriviallySerializable::serialized_data_size() const {
@@ -70,8 +194,11 @@ const char* TriviallySerializable::serialized_data() const {
 void TriviallySerializable::serialize_members(std::ostream& out) const {
     // Serializable handle sthe magic number for us
     
+    out.clear();
     out.write(serialized_data(), serialized_data_size());
-    // TODO: check error ourselves?
+    if (out.fail()) {
+        throw std::runtime_error("Could not write " + std::to_string(serialized_data_size()) + " bytes to stream");
+    }
 }
 
 void TriviallySerializable::deserialize_members(std::istream& in) {
@@ -86,7 +213,7 @@ void TriviallySerializable::deserialize_members(std::istream& in) {
     if (data_start != -1 && !in.fail()) {
         // Stream seems seekable
         in.seekg(0, in.end);
-        auto data_end = is.tellg();
+        auto data_end = in.tellg();
         in.seekg(data_start);
         
         if (data_end != -1 && !in.fail()) {
@@ -140,24 +267,24 @@ void TriviallySerializable::deserialize_members(std::istream& in) {
 void TriviallySerializable::serialize(std::ostream& out) const {
     // Just call the base class version for streams. We implemented the stream
     // IO to support it.
-    Serializeable::serialize(out);
+    Serializable::serialize(out);
 }
 
 void TriviallySerializable::serialize(std::ostream& out) {
     // Do the same thing but non-const.
     // Ends up doing the same as above; we don't use the non-const hook here.
-    Serializeable::serialize(out);
+    Serializable::serialize(out);
 }
 
 // To let the const and non-const filename serialization implementations share
 // code, we have some helpers
 
-static int open_fd(const std::string& filename) {
+int TriviallySerializable::open_fd(const std::string& filename) const {
     // Open a file descriptor
-    int fd = ::open(filename.c_str(), ::O_RDWR | ::O_CREAT);
+    int fd = ::open(filename.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
         // Open failed; report a sensible problem.
-        auto problem = ::errno;
+        auto problem = errno;
         std::stringstream ss;
         ss << "Could not save to file " << filename << ": " << ::strerror(problem);
         throw std::runtime_error(ss.str());
@@ -166,13 +293,13 @@ static int open_fd(const std::string& filename) {
     return fd;
 }
 
-static void close_fd(int fd) {
+void TriviallySerializable::close_fd(int fd) const {
     // Close up the file
     if (::close(fd) != 0) {
         // An error happened closing
-        auto problem = ::errno;
+        auto problem = errno;
         std::stringstream ss;
-        ss << "Could not close " << filename << ": " << ::strerror(problem);
+        ss << "Could not close FD: " << ::strerror(problem);
         throw std::runtime_error(ss.str());
     }
 }
@@ -183,7 +310,7 @@ void TriviallySerializable::serialize(const std::string& filename) const {
     // Serialize to the file, as const
     serialize(fd);
     
-    close_fd(filename);
+    close_fd(fd);
 }
 
 void TriviallySerializable::serialize(const std::string& filename) {
@@ -192,13 +319,13 @@ void TriviallySerializable::serialize(const std::string& filename) {
     // Serialize to the file, as non const
     serialize(fd);
     
-    close_fd(filename);
+    close_fd(fd);
 }
 
 void TriviallySerializable::deserialize(std::istream& in) {
     // Just call the base class version for streams. We implemented the stream
     // IO to support it.
-    Serializeable::deserialize(in);
+    Serializable::deserialize(in);
 }
 
 void TriviallySerializable::deserialize(const std::string& filename) {
@@ -206,16 +333,16 @@ void TriviallySerializable::deserialize(const std::string& filename) {
     // Use the file descriptor version
     
     // Try to open in read write mode
-    int fd = ::open(filename.c_str(), ::O_RDWR);
+    int fd = ::open(filename.c_str(), O_RDWR);
     if (fd == -1) {
         // Try to open in read only mode instead.
         // Changes won't write back.
-        fd = ::open(filename.c_str(), ::O_RDONLY); 
+        fd = ::open(filename.c_str(), O_RDONLY); 
     }
     
     if (fd == -1) {
         // Open failed; report a sensible problem.
-        auto problem = ::errno;
+        auto problem = errno;
         std::stringstream ss;
         ss << "Could not load from file " << filename << ": " << ::strerror(problem);
         throw std::runtime_error(ss.str());
@@ -228,7 +355,7 @@ void TriviallySerializable::deserialize(const std::string& filename) {
     close_fd(fd);
 }
 
-void TriviallySerializable::serialize_and_get_mapping(int fd) const {
+void* TriviallySerializable::serialize_and_get_mapping(int fd) const {
     // We need to serialize and return the new maping (which may be the same as the current one, which may be null).
     // Then non-const FD serialize can adopt it.
     
@@ -237,13 +364,13 @@ void TriviallySerializable::serialize_and_get_mapping(int fd) const {
         // If so, serializing would be a no-op.
         
         // Reserve buffers for file metadata
-        ::stat our_stat;
-        ::stat fd_stat;
+        struct stat our_stat;
+        struct stat fd_stat;
         
         // Get info on the file we have open
         if (::fstat(serializedFD, &our_stat) != 0) {
             // It didn't work
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not interrogate mapped file: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
@@ -252,7 +379,7 @@ void TriviallySerializable::serialize_and_get_mapping(int fd) const {
         // Get info on the file we want to use
         if (::fstat(fd, &fd_stat) != 0) {
             // It didn't work
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not interrogate destination file: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
@@ -275,7 +402,7 @@ void TriviallySerializable::serialize_and_get_mapping(int fd) const {
     
     if (serializedData) {
         // We have data
-        data_to_write = serializedData;
+        data_to_write = (const char*) serializedData;
         output_length = serializedLength;
     } else {
         // Just buffer the magic number on the stack.
@@ -302,7 +429,7 @@ void TriviallySerializable::serialize_and_get_mapping(int fd) const {
             
             if (written_now == -1) {
                 // We encountered an error writing.
-                auto problem = ::errno;
+                auto problem = errno;
                 std::stringstream ss;
                 ss << "Could not write to destination file: " << ::strerror(problem);
                 throw std::runtime_error(ss.str());
@@ -322,12 +449,12 @@ void TriviallySerializable::serialize_and_get_mapping(int fd) const {
     
     // TODO: We would like the new mapped memory to come into existence knowing it ought to match the old mapped memory.
     // TODO: work out a way to reflink here instead so the file can really be CoW.
-    // Right now we will just do a big memcpy
+    // Right now we will just do a big memcpy between disk-backed regions.
     
     // Make the mapping
-    void* new_mapping = ::mmap(nullptr, output_length, ::PROT_READ | ::PROT_WRITE, ::MAP_SHARED, fd, 0);
+    void* new_mapping = ::mmap(nullptr, output_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (new_mapping == nullptr) {
-        auto problem = ::errno;
+        auto problem = errno;
         std::stringstream ss;
         ss << "Could not map memory: " << ::strerror(problem);
         throw std::runtime_error(ss.str());
@@ -348,7 +475,7 @@ void TriviallySerializable::serialize(int fd) const {
     // We know it's either the size of our data, or the size of the magic number if we have no data.
     if (::munmap(new_mapping, serializedData ? serializedLength : MAGIC_SIZE) != 0) {
         // We encountered an error unmapping.
-        auto problem = ::errno;
+        auto problem = errno;
         std::stringstream ss;
         ss << "Could not unmap memory: " << ::strerror(problem);
         throw std::runtime_error(ss.str());
@@ -364,7 +491,7 @@ void TriviallySerializable::serialize(int fd) {
         // Unmap the old one
         if (::munmap(serializedData, serializedLength) != 0) {
             // We encountered an error unmapping.
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not unmap memory: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
@@ -380,7 +507,7 @@ void TriviallySerializable::serialize(int fd) {
     // Adopt the new one via dup
     serializedFD = dup(fd);
     if (serializedFD == -1) {
-        auto problem = ::errno;
+        auto problem = errno;
         std::stringstream ss;
         ss << "Could not keep descriptor to mapped file: " << ::strerror(problem);
         throw std::runtime_error(ss.str());
@@ -394,7 +521,7 @@ void TriviallySerializable::deserialize(int fd) {
         // We have data already. Unmap it.
         if (::munmap(serializedData, serializedLength) != 0) {
             // We encountered an error unmapping.
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not unmap memory: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
@@ -407,13 +534,13 @@ void TriviallySerializable::deserialize(int fd) {
         serializedFD = -1;
     }
 
-    auto file_length = ::lseek(fd, 0, ::SEEK_END);
+    auto file_length = ::lseek(fd, 0, SEEK_END);
     if (file_length != -1) {
         // We can probably seek in this probably normal file.
         // Go back to the start.
-        if (::lseek(fd, 0, ::SEEK_SET) != 0) {
+        if (::lseek(fd, 0, SEEK_SET) != 0) {
             // But we couldn't seek back. We messed it up!
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not seek back to start of file: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
@@ -421,13 +548,14 @@ void TriviallySerializable::deserialize(int fd) {
         
         // Now mmap
         serializedLength = file_length;
-        serializedData = ::mmap(nullptr, file_length, ::PROT_READ | ::PROT_WRITE, ::MAP_SHARED, fd, 0);
+        serializedData = ::mmap(nullptr, file_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (serializedData == nullptr) {
-            // Try mapping read-only and private if read-write and shared doesn't work.
-            serializedData = ::mmap(nullptr, file_length, ::PROT_READ, ::MAP_PRIVATE, fd, 0);
+            // Try mapping private if read-write and shared doesn't work.
+            // Needs to be writeable or we will segfault if someone tries to modify us.
+            serializedData = ::mmap(nullptr, file_length, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
         }
         if (serializedData == nullptr) {
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not map memory: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
@@ -436,14 +564,14 @@ void TriviallySerializable::deserialize(int fd) {
         // Adopt the new FD via dup
         serializedFD = dup(fd);
         if (serializedFD == -1) {
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not keep descriptor to mapped file: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
         }
         
         // Validate magic number length and value.
-        if (serializedLength < MAGIC_LENGTH) {
+        if (serializedLength < MAGIC_SIZE) {
             throw std::runtime_error("EOF in magic number");
         }
         // Just grab it from the start of our mapping.
@@ -470,13 +598,13 @@ void TriviallySerializable::deserialize(int fd) {
         current_bytes = ::read(fd, (void*)(((char*)&observed_magic) + magic_cursor), MAGIC_SIZE - magic_cursor);
         if (current_bytes < 0) {
             // An error occurred
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not read from FD stream: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
         }
         magic_cursor += current_bytes;
-    } while (current_bytes > 0 && magic_cursor < MAGIC_SIZE)
+    } while (current_bytes > 0 && magic_cursor < MAGIC_SIZE);
     
     if (current_bytes == 0) {
         // We got an EOF in the magic number.
@@ -512,7 +640,7 @@ void TriviallySerializable::deserialize(int fd) {
         current_bytes = ::read(fd, (void*)(serialized_data() + read_bytes), serialized_data_size() - read_bytes);
         if (current_bytes < 0) {
             // An error occurred
-            auto problem = ::errno;
+            auto problem = errno;
             std::stringstream ss;
             ss << "Could not read from FD stream: " << ::strerror(problem);
             throw std::runtime_error(ss.str());

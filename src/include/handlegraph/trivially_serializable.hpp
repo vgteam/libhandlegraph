@@ -5,6 +5,8 @@
  * Defines an interface for objects that us the same representation in memory and on disk. 
  */
 
+#include "handlegraph/serializable.hpp"
+
 #include <iostream>
 
 namespace handlegraph {
@@ -105,6 +107,9 @@ public:
     /// Dump the magic number and user data to the given stream. Does not
     /// affect any backing file link.
     void serialize(std::ostream& out) const final;
+    /// Dump the magic number and user data to the given stream. Does not
+    /// affect any backing file link.
+    void serialize(std::ostream& out) final;
     /// Write the contents of this object to a named file. Makes sure to
     /// include a leading magic number.
     void serialize(const std::string& filename) const final;
@@ -169,10 +174,16 @@ private:
     int serializedFD = -1;
     
     /// How big is the magic number?
-    constexpr int MAGIC_SIZE = sizeof(uint32_t) / sizeof(char);
+    static constexpr int MAGIC_SIZE = sizeof(uint32_t) / sizeof(char);
     
     /// Helper function to set up output mappings to new files.
-    void serialize_and_get_mapping(int fd) const;
+    void* serialize_and_get_mapping(int fd) const;
+    
+    /// Helper to open a file descriptor with error checking.
+    int open_fd(const std::string& filename) const;
+    
+    /// Helper to close a file descriptor with error checking.
+    void close_fd(int fd) const;
 };
 
 
