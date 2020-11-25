@@ -42,6 +42,7 @@ add_library(handlegraph_objs OBJECT
   src/ranked_handle_graph.cpp
   src/serializable.cpp
   src/snarl_decomposition.cpp
+  src/trivially_serializable.cpp
   src/types.cpp
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
