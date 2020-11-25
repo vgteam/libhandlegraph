@@ -15,6 +15,9 @@ namespace handlegraph {
  * The representation begins with the serialized 4-byte magic number, followed
  * by user data. Length is implicit in either stream length or file size, and
  * can be grown.
+ *
+ * If serialization or deserialization throws, it is safe to destroy the
+ * object, but not to do anything else with it.
  */
 class TriviallySerializable : public Serializable {
 
@@ -24,6 +27,14 @@ public:
      * Destroy a TriviallySerializable object and any associated memory mapping.
      */
     virtual ~TriviallySerializable();
+    
+    // We are not copyable or movable.
+    // TODO: implement copy by dissociating backing storage.
+    // TODO: Move should be easy.
+    TriviallySerializable& operator=(const TriviallySerializable& other) = delete;
+    TriviallySerializable& operator=(TriviallySerializable&& other) = delete;
+    TriviallySerializable(const TriviallySerializable& other) = delete;
+    TriviallySerializable(TriviallySerializable&& other) = delete;
     
     /**
      * Break the write-back link between this object and the file it was loaded
@@ -91,14 +102,17 @@ public:
     // Don't let implementations take control of serialize and deserialize by
     // not making our overrides virtual.
 
-    /// Dump the magic number and dht user data to the given stream. Does not
+    /// Dump the magic number and user data to the given stream. Does not
     /// affect any backing file link.
     void serialize(std::ostream& out) const final;
+    /// Write the contents of this object to a named file. Makes sure to
+    /// include a leading magic number.
+    void serialize(const std::string& filename) const final;
     /// Write the contents of this object to a named file. Makes sure to
     /// include a leading magic number. If the file is nonexistent or a normal
     /// file, future modifications to the object will affect the file until
     /// dissociate() is called or another normal file is associated.
-    void serialize(const std::string& filename) const final;
+    void serialize(const std::string& filename) final;
     
     /// Sets the contents of this object to the contents of a serialized object
     /// from an istream. The serialized object must be from the same
@@ -108,7 +122,7 @@ public:
     /// Sets the contents of this object to the contents of a serialized object
     /// from a file. The serialized object must be from the same implementation
     /// of this interface as is calling deserialize(). Can only be called on an
-    /// empty object  If the file is a normal writeable file, future
+    /// empty object. If the file is a normal writeable file, future
     /// modifications to the object will affect the file until dissociate() is
     /// called or another normal file is associated.
     void deserialize(const std::string& filename) final;
@@ -120,12 +134,17 @@ public:
     // libhandlegraph to avoid dependencies and duplicate code with libvgio.
    
     /// Write the contents of this object to an open file descriptor. Makes
+    /// sure to include a leading magic number.
+    ///
+    /// Assumes that the file entirely belongs to this object.
+    void serialize(int fd) const;
+    /// Write the contents of this object to an open file descriptor. Makes
     /// sure to include a leading magic number. If the file is a normal file,
     /// future modifications to the object will affect the file until
     /// dissociate() is called or another normal file is associated.
     ///
     /// Assumes that the file entirely belongs to this object.
-    void serialize(int fd) const;
+    void serialize(int fd);
     
     /// Sets the contents of this object to the contents of a serialized object
     /// from an open file descriptor. The serialized object must be from the
@@ -140,6 +159,7 @@ public:
 private:
     /// How many bytes of associated data are there?
     /// This includes the magic number!
+    /// Might not be accuate if serialization/deserialization throws.
     size_t serializedLength = 0;
     /// Where is it in memory?
     /// THis includes the magic number!
@@ -149,7 +169,10 @@ private:
     int serializedFD = -1;
     
     /// How big is the magic number?
-    constexpr int MAGIC_SIZE = sizeof(uint32_t);
+    constexpr int MAGIC_SIZE = sizeof(uint32_t) / sizeof(char);
+    
+    /// Helper function to set up output mappings to new files.
+    void serialize_and_get_mapping(int fd) const;
 };
 
 

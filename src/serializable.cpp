@@ -15,15 +15,19 @@ void Serializable::serialize(std::ostream& out) const {
     serialize_members(out);
 }
 
+void Serializable::serialize(std::ostream& out) {
+    ((const Serializable*) this)->serialize(out);
+}
+
 void Serializable::serialize(const std::string& filename) const {
     std::ofstream out(filename);
     serialize(out);
 }
 
-void Serializable::serialize(int fd) const {
-    std::ofstream out(filename);
-    serialize(out);
+void Serializable::serialize(const std::string& filename) {
+    ((const Serializable*) this)->serialize(out);
 }
+
 
 void Serializable::deserialize(std::istream& in) {
     // Make sure our byte wrangling is likely to work

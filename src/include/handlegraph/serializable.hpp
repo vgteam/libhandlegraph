@@ -64,6 +64,18 @@ public:
     /// of this interface as is calling deserialize(). Can only be called on an
     /// empty object.
     virtual void deserialize(const std::string& filename);
+    
+    ////////////////////////////////////////
+    // These methods can be overridden if non-const serialization can be more
+    // efficient.
+    ////////////////////////////////////////
+    
+    /// Write the contents of this object to an ostream. Makes sure to include a
+    /// leading magic number.
+    virtual void serialize(std::ostream& out);
+    /// Write the contents of this object to a named file. Makes sure to include
+    /// a leading magic number.
+    virtual void serialize(const std::string& filename);
         
 };
 
