@@ -1,5 +1,6 @@
 #include "handlegraph/handle_graph.hpp"
 #include "handlegraph/mutable_handle_graph.hpp"
+#include "handlegraph/deletable_handle_graph.hpp"
 #include "handlegraph/path_handle_graph.hpp"
 #include "handlegraph/path_position_handle_graph.hpp"
 #include "handlegraph/util.hpp"
@@ -121,6 +122,18 @@ void MutableHandleGraph::increment_node_ids(nid_t increment) {
 
 void MutableHandleGraph::increment_node_ids(long increment) {
     increment_node_ids((nid_t)increment);
+}
+
+handle_t DeletableHandleGraph::truncate_handle(const handle_t& handle, bool trunc_left, size_t offset) {
+    auto halves = divide_handle(handle, offset);
+    if (trunc_left) {
+        destroy_handle(halves.first);
+        return halves.second;
+    }
+    else {
+        destroy_handle(halves.second);
+        return halves.first;
+    }
 }
 
 std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& handle,
