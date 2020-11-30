@@ -46,7 +46,7 @@ public:
     virtual size_t get_step_count(const path_handle_t& path_handle) const = 0;
 
     /// Returns the number of node steps on a handle
-    virtual size_t get_step_count(const handle_t& handle) const = 0;
+    virtual size_t get_step_count(const handle_t& handle) const;
     
     /// Get a node handle (node ID and orientation) from a handle to an step on a path
     virtual handle_t get_handle_of_step(const step_handle_t& step_handle) const = 0;

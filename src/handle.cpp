@@ -150,6 +150,14 @@ std::vector<step_handle_t> PathHandleGraph::steps_of_handle(const handle_t& hand
     
     return found;
 }
+
+size_t PathHandleGraph::get_step_count(const handle_t& handle) const {
+    size_t count = 0;
+    for_each_step_on_handle(handle, [&](const step_handle_t& step) {
+        ++count;
+    });
+    return count;
+}
     
 bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
     // By default, we can answer emptiness queries with the length query.
