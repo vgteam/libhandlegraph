@@ -18,6 +18,7 @@
  */
  
 //#define debug
+//#define debug_ref
 
 namespace handlegraph {
 
@@ -41,6 +42,10 @@ void TriviallySerializable::dissociate() {
         
         // We really should have a mapping.
         assert(serializedData != nullptr);
+        
+#ifdef debug
+        std::cerr << "Cutting file write-back association." << std::endl;
+#endif
         
         // Remap as private (just over the existing mapping, without unmapping)
         void* new_mapping = ::mmap(serializedData, serializedLength, PROT_READ | PROT_WRITE, MAP_PRIVATE, serializedFD, 0);
@@ -73,6 +78,10 @@ void TriviallySerializable::dissociate() {
         // And close the file
         close_fd(serializedFD);
         serializedFD = -1;
+    } else {
+#ifdef debug
+        std::cerr << "No file write-back association to cut." << std::endl;
+#endif
     }
 }
 
@@ -214,7 +223,7 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
 
 size_t TriviallySerializable::serialized_data_size() const {
     if (serializedData != nullptr) {
-#ifdef debug
+#ifdef debug_ref
             std::cerr << "Current length of " << serializedLength << " includes " << MAGIC_SIZE << " magic bytes and " << (serializedLength - MAGIC_SIZE) << " user bytes" << std::endl;
 #endif
         assert(serializedLength >= MAGIC_SIZE);
@@ -226,14 +235,14 @@ size_t TriviallySerializable::serialized_data_size() const {
 char* TriviallySerializable::serialized_data() {
     if (serializedData != nullptr) {
     
-#ifdef debug
+#ifdef debug_ref
         std::cerr << "Report base address of " << (void*)(((char*)serializedData) + MAGIC_SIZE) << " valid until " << (void*)(((char*)serializedData) + serializedLength) << std::endl;
 #endif
     
         return ((char*)serializedData) + MAGIC_SIZE;
     }
     
-#ifdef debug
+#ifdef debug_ref
     std::cerr << "Report base address of 0" << std::endl;
 #endif
     return nullptr;
@@ -247,7 +256,11 @@ const char* TriviallySerializable::serialized_data() const {
 }
 
 void TriviallySerializable::serialize_members(std::ostream& out) const {
-    // Serializable handle sthe magic number for us
+    // Serializable handles the magic number for us
+    
+#ifdef debug
+    std::cerr << "Serializing to stream." << std::endl;
+#endif
     
     out.clear();
     out.write(serialized_data(), serialized_data_size());
@@ -258,6 +271,10 @@ void TriviallySerializable::serialize_members(std::ostream& out) const {
 
 void TriviallySerializable::deserialize_members(std::istream& in) {
     // Serializable handles the magic number for us
+    
+#ifdef debug
+    std::cerr << "Deserializing from stream..." << std::endl;
+#endif
     
     // We might have an implementation with a constructor that allocates some
     // memory already. That's fine; we'll clobber it.
@@ -317,6 +334,11 @@ void TriviallySerializable::deserialize_members(std::istream& in) {
     serialized_data_resize(read_bytes);
     
     // Now we're done!
+    
+#ifdef debug
+    std::cerr << "Deserialized from stream." << std::endl;
+#endif
+    
 }
 
 void TriviallySerializable::serialize(std::ostream& out) const {
@@ -523,6 +545,10 @@ void* TriviallySerializable::serialize_and_get_mapping(int fd) const {
 }
 
 void TriviallySerializable::serialize(int fd) const {
+
+#ifdef debug
+    std::cerr << "Serializing to FD as const..." << std::endl;
+#endif
     
     void* new_mapping = serialize_and_get_mapping(fd);
     
@@ -535,42 +561,76 @@ void TriviallySerializable::serialize(int fd) const {
         ss << "Could not unmap memory: " << ::strerror(problem);
         throw std::runtime_error(ss.str());
     }
+    
+#ifdef debug
+    std::cerr << "Serialized to FD as const." << std::endl;
+#endif
 
 }
 
 void TriviallySerializable::serialize(int fd) {
+
+#ifdef debug
+    std::cerr << "Serializing to FD..." << std::endl;
+#endif
+
     void* new_mapping = serialize_and_get_mapping(fd);
     
-    // Now adopt the new mapping
-    if (serializedData) {
-        // Unmap the old one
-        if (::munmap(serializedData, serializedLength) != 0) {
-            // We encountered an error unmapping.
+    if (new_mapping != serializedData) {
+        // We have a (distinct!) new mapping to adopt.
+    
+#ifdef debug
+        std::cerr << "\tSerializing produced new mapping at " << new_mapping << std::endl;
+#endif
+        
+        if (serializedData) {
+        
+#ifdef debug
+            std::cerr << "\t\tReplacing old mapping at " << serializedData << std::endl;
+#endif
+        
+            // Unmap the old one (which we know is distinct)
+            if (::munmap(serializedData, serializedLength) != 0) {
+                // We encountered an error unmapping.
+                auto problem = errno;
+                std::stringstream ss;
+                ss << "Could not unmap memory: " << ::strerror(problem);
+                throw std::runtime_error(ss.str());
+            }
+            serializedData = nullptr;
+        }
+        
+        // Save the new mapping.
+        serializedData = new_mapping;
+        
+        // We only want to replace our old FD if we changed the mapping.
+        // Otherwise we might grab a pipe FD when serializing to a pipe and hold the pipe open.
+        if (serializedFD != -1) {
+            // Close the old FD
+            close_fd(serializedFD);
+            serializedFD = -1;
+        }
+        // Adopt the new one via dup
+        serializedFD = dup(fd);
+        if (serializedFD == -1) {
             auto problem = errno;
             std::stringstream ss;
-            ss << "Could not unmap memory: " << ::strerror(problem);
+            ss << "Could not keep descriptor to mapped file: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
         }
-        serializedData = nullptr;
     }
     
-    if (serializedFD != -1) {
-        // Close the old FD
-        close_fd(serializedFD);
-        serializedFD = -1;
-    }
-    // Adopt the new one via dup
-    serializedFD = dup(fd);
-    if (serializedFD == -1) {
-        auto problem = errno;
-        std::stringstream ss;
-        ss << "Could not keep descriptor to mapped file: " << ::strerror(problem);
-        throw std::runtime_error(ss.str());
-    }
+#ifdef debug
+    std::cerr << "Serialized to FD." << std::endl;
+#endif
     
 }
 
 void TriviallySerializable::deserialize(int fd) {
+
+#ifdef debug
+    std::cerr << "Deserializing from FD..." << std::endl;
+#endif
     
     if (serializedData != nullptr) {
         // We have data already. Unmap it.
@@ -592,6 +652,11 @@ void TriviallySerializable::deserialize(int fd) {
     auto file_length = ::lseek(fd, 0, SEEK_END);
     if (file_length != -1) {
         // We can probably seek in this probably normal file.
+        
+#ifdef debug
+        std::cerr << "\tSought to end of non-stream file at " << file_length << std::endl;
+#endif
+        
         // Go back to the start.
         if (::lseek(fd, 0, SEEK_SET) != 0) {
             // But we couldn't seek back. We messed it up!
@@ -636,75 +701,112 @@ void TriviallySerializable::deserialize(int fd) {
         }
         
         // Now we're done!
-        return;
-    }
+    } else {
     
-    // If we get here, we have to handle the streaming case.
-    // TODO: deduplicate with deserialize_members?
-    
-    // This tracks the number of bytes read in the last read operation.
-    ssize_t current_bytes;
-    
-    // Read magic number
-    uint32_t observed_magic;
-    size_t magic_cursor = 0;
-    do {
-        // Get bytes
-        current_bytes = ::read(fd, (void*)(((char*)&observed_magic) + magic_cursor), MAGIC_SIZE - magic_cursor);
-        if (current_bytes < 0) {
-            // An error occurred
-            auto problem = errno;
-            std::stringstream ss;
-            ss << "Could not read from FD stream: " << ::strerror(problem);
-            throw std::runtime_error(ss.str());
-        }
-        magic_cursor += current_bytes;
-    } while (current_bytes > 0 && magic_cursor < MAGIC_SIZE);
-    
-    if (current_bytes == 0) {
-        // We got an EOF in the magic number.
-        throw std::runtime_error("EOF in magic number");
-    }
-    
-    // Validate magic number
-    observed_magic = ntohl(observed_magic);
-    if (observed_magic != get_magic_number()) {
-        // This sort of mismatch is now the programmer's problem.
-        throw std::runtime_error("Incorrect magic number " + std::to_string(observed_magic) + " should be " + std::to_string(get_magic_number()));
-    }
-    
-    // From here on we can just use the normal size and data functions we
-    // present to users, but populating from an FD to a stream.
-    
-    // This tracks how many bytes of our data are actually used.
-    size_t read_bytes = 0;
-    
-    // Start with a relatively large size, because big IO calls are fast and
-    // untouched pages here are free.
-    serialized_data_resize(1024 * 1024);
-    
-    do {
-        if (read_bytes == serialized_data_size()) {
-            // Make the buffer bigger because we have filled it.
-            // Because untouched pages don't take any memory, we don't need to
-            // worry about this getting too big really.
-            serialized_data_resize(serialized_data_size() * 2);
+        // If we get here, we have to handle the streaming case.
+        // TODO: deduplicate with deserialize_members?
+        
+#ifdef debug
+        std::cerr << "\tDeserializing from FD as a stream!" << std::endl;
+#endif
+        
+        // This tracks the number of bytes read in the last read operation.
+        ssize_t current_bytes;
+        
+        // Read magic number
+        uint32_t observed_magic;
+        size_t magic_cursor = 0;
+        do {
+        
+#ifdef debug
+            std::cerr << "\t\tAttempt magic read of " << (MAGIC_SIZE - magic_cursor) << " bytes" << std::endl;
+#endif        
+
+            // Get bytes
+            current_bytes = ::read(fd, (void*)(((char*)&observed_magic) + magic_cursor), MAGIC_SIZE - magic_cursor);
+            
+#ifdef debug
+            std::cerr << "\t\t\tMagic read() result: " << current_bytes << std::endl;
+#endif
+            
+            if (current_bytes < 0) {
+                // An error occurred
+                auto problem = errno;
+                std::stringstream ss;
+                ss << "Could not read from FD stream: " << ::strerror(problem);
+                throw std::runtime_error(ss.str());
+            }
+            magic_cursor += current_bytes;
+            
+#ifdef debug
+            std::cerr << "\t\t\tMagic cursor at: " << magic_cursor << std::endl;
+#endif
+            
+        } while (current_bytes > 0 && magic_cursor < MAGIC_SIZE);
+        
+        if (current_bytes == 0) {
+            // We got an EOF in the magic number.
+            throw std::runtime_error("EOF in magic number");
         }
         
-        // Get bytes
-        current_bytes = ::read(fd, (void*)(serialized_data() + read_bytes), serialized_data_size() - read_bytes);
-        if (current_bytes < 0) {
-            // An error occurred
-            auto problem = errno;
-            std::stringstream ss;
-            ss << "Could not read from FD stream: " << ::strerror(problem);
-            throw std::runtime_error(ss.str());
+        // Validate magic number
+        observed_magic = ntohl(observed_magic);
+        if (observed_magic != get_magic_number()) {
+            // This sort of mismatch is now the programmer's problem.
+            throw std::runtime_error("Incorrect magic number " + std::to_string(observed_magic) + " should be " + std::to_string(get_magic_number()));
         }
-        read_bytes += current_bytes;
-    } while (current_bytes > 0);
+        
+        // From here on we can just use the normal size and data functions we
+        // present to users, but populating from an FD to a stream.
+        
+        // This tracks how many bytes of our data are actually used.
+        size_t read_bytes = 0;
+        
+        // Start with a relatively large size, because big IO calls are fast and
+        // untouched pages here are free.
+        serialized_data_resize(1024 * 1024);
+        
+        do {
+            if (read_bytes == serialized_data_size()) {
+                // Make the buffer bigger because we have filled it.
+                // Because untouched pages don't take any memory, we don't need to
+                // worry about this getting too big really.
+                serialized_data_resize(serialized_data_size() * 2);
+            }
+            
+#ifdef debug
+            std::cerr << "\t\tAttempt data read of " << (serialized_data_size() - read_bytes) << " bytes" << std::endl;
+#endif
+            
+            // Get bytes
+            current_bytes = ::read(fd, (void*)(serialized_data() + read_bytes), serialized_data_size() - read_bytes);
+            
+#ifdef debug
+            std::cerr << "\t\t\tData read() result: " << current_bytes << std::endl;
+#endif
+            
+            if (current_bytes < 0) {
+                // An error occurred
+                auto problem = errno;
+                std::stringstream ss;
+                ss << "Could not read from FD stream: " << ::strerror(problem);
+                throw std::runtime_error(ss.str());
+            }
+            read_bytes += current_bytes;
+            
+#ifdef debug
+            std::cerr << "\t\t\tData bytes read overall: " << read_bytes << std::endl;
+#endif
+            
+        } while (current_bytes > 0);
+        
+        // Now we have all the data. Shrink back to the size we actually got.
+        serialized_data_resize(read_bytes);
+    }
+#ifdef debug
+    std::cerr << "Deserialized from FD." << std::endl;
+#endif
     
-    // Now we have all the data. Shrink back to the size we actually got.
-    serialized_data_resize(read_bytes);
 }
 
 // TODO overall:
