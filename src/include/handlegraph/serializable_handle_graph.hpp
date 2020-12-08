@@ -13,7 +13,10 @@ namespace handlegraph {
  * Defines an interface for serialization and deserialization for handle graphs,
  * which can be co-inherited alongside HandleGraph.
  */
-using SerializableHandleGraph = Serializable;
+class SerializableHandleGraph : public Serializable {
+};
+// Note that this needs to be a real class and not just a using because the
+// libbdsg Python bindings want to bind it with "class" in front of it.
 
 }
 
