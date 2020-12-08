@@ -16,6 +16,8 @@
 /** \file trivially_serializable.cpp
  * Implement TriviallySerializable class-serving methods
  */
+ 
+//#define debug
 
 namespace handlegraph {
 
@@ -79,8 +81,16 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
     // Determine new total size including magic number
     size_t new_serialized_length = MAGIC_SIZE + bytes;
     
+#ifdef debug
+    std::cerr << "Resizing to " << new_serialized_length << " = " << MAGIC_SIZE << " magic + " << bytes << " user..." << std::endl;
+#endif
+    
     if (serializedData == nullptr) {
         // We need to initially allocate, and populate the magic number.
+        
+#ifdef debug
+        std::cerr << "\tCreate new anonymous mapping" << std::endl;
+#endif
         
         // No file ought to be associated
         assert(serializedFD == -1);
@@ -93,14 +103,31 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
             throw std::runtime_error(ss.str());
         }
         
+#ifdef debug
+        std::cerr << "\tAnonymous mapping at " << (void*)serializedData << std::endl;
+#endif
+        
         // Fill in the magic number
         *((uint32_t*)serializedData) = htonl(get_magic_number());
+        
+        // Save the length
+        serializedLength = new_serialized_length;
+        
     } else if (new_serialized_length == serializedLength) {
         // Some data is already allocated, and it is already the right size.
         // Do nothing.
+        
+#ifdef debug
+        std::cerr << "\tLength already correct" << std::endl;
+#endif
+        
         return;
     } else {
         // Some data is already allocated, and it is the wrong size.
+        
+#ifdef debug
+        std::cerr << "\tReallocating..." << std::endl;
+#endif
         
         // See if we have a file
         if (serializedFD != -1) {
@@ -108,6 +135,10 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
             // Supposedly you can get undefined behavior with ftruncate and
             // partial mapped pages, but the man page at
             // <https://linux.die.net/man/3/ftruncate> doesn't back that up.
+        
+#ifdef debug
+            std::cerr << "\t\tResizing file mapping..." << std::endl;
+#endif
             
             if (new_serialized_length > serializedLength) {
                 // Lengthening, so truncate and then remap, allowing to move
@@ -119,7 +150,8 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                 }
                 
                 void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
-                if (new_mapping == nullptr) {
+                if (new_mapping == MAP_FAILED) {
+                    // This one returns a sentinel and not nullptr on error.
                     auto problem = errno;
                     std::stringstream ss;
                     ss << "Could not grow mapping: " << ::strerror(problem);
@@ -132,7 +164,8 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
             } else {
                 // Shortening, so remap in place and then truncate.
                 void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, 0);
-                if (new_mapping == nullptr) {
+                if (new_mapping == MAP_FAILED) {
+                    // This one returns a sentinel and not nullptr on error.
                     auto problem = errno;
                     std::stringstream ss;
                     ss << "Could not shrink mapping: " << ::strerror(problem);
@@ -153,9 +186,15 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
             }
         } else {
             // Otherwise, we have no file.
+            
+#ifdef debug
+            std::cerr << "\t\tResizing anonymous mapping of " << serializedLength << " to " << new_serialized_length << "..." << std::endl;
+#endif
+            
             // Just mremap the anonymous mapping, allowing to move.
             void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
-            if (new_mapping == nullptr) {
+            if (new_mapping == MAP_FAILED) {
+                // This one returns a sentinel and not nullptr on error.
                 auto problem = errno;
                 std::stringstream ss;
                 ss << "Could not resize mapping: " << ::strerror(problem);
@@ -165,13 +204,20 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
             // Commit to object
             serializedData = new_mapping;
             serializedLength = new_serialized_length;
+            
+#ifdef debug
+            std::cerr << "\t\tAnonymous mapping at " << (void*)serializedData << std::endl;
+#endif
         }
     }
 }
 
 size_t TriviallySerializable::serialized_data_size() const {
     if (serializedData != nullptr) {
-        assert(serializedLength > MAGIC_SIZE);
+#ifdef debug
+            std::cerr << "Current length of " << serializedLength << " includes " << MAGIC_SIZE << " magic bytes and " << (serializedLength - MAGIC_SIZE) << " user bytes" << std::endl;
+#endif
+        assert(serializedLength >= MAGIC_SIZE);
         return serializedLength - MAGIC_SIZE;
     }
     return 0;
@@ -179,8 +225,17 @@ size_t TriviallySerializable::serialized_data_size() const {
 
 char* TriviallySerializable::serialized_data() {
     if (serializedData != nullptr) {
+    
+#ifdef debug
+        std::cerr << "Report base address of " << (void*)(((char*)serializedData) + MAGIC_SIZE) << " valid until " << (void*)(((char*)serializedData) + serializedLength) << std::endl;
+#endif
+    
         return ((char*)serializedData) + MAGIC_SIZE;
     }
+    
+#ifdef debug
+    std::cerr << "Report base address of 0" << std::endl;
+#endif
     return nullptr;
 }
 

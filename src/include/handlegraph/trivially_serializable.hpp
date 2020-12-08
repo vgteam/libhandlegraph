@@ -24,7 +24,13 @@ namespace handlegraph {
 class TriviallySerializable : public Serializable {
 
 public:
-    
+   
+    /**
+     * Make a new TriviallySerializable.
+     * Should really only be called by constructors of inheriting types.
+     */
+    TriviallySerializable() = default;
+   
     /**
      * Destroy a TriviallySerializable object and any associated memory mapping.
      */
