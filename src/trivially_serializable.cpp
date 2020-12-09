@@ -30,31 +30,25 @@ namespace handlegraph {
 #endif
 
 /**
- * Remap the given region of the given file descriptor (or -1) to be the given
- * size.
+ * mremap-like implementation that always copies data into the new mapping if
+ * it is not a shared mapping to a file.
+ * Useful on systems where mremap() is not available.
  *
- * Return the new mapped address, which may have moved even if MREMAP_MAYMOVE
- * is not provided as a flag. If we absolutely can't get a new mapping returns
- * MAP_FAILED.
+ * Resizes the mapping at old_address of old_size to be a mapping of new_size,
+ * probably at a new address.
  *
- * If we just can't grow or shrink the mapping, may destroy and recreate the
- * mapping, or even copy contents of an anonymous mapping that can't grow.
+ * If fd is -1, the new mapping is anonymous, and is copied into.
+ *
+ * If fd is not -1, the new mapping is a shared mapping from that file.
+ *
+ * Returns MAP_FAILED if the mapping cannot be created or anything else goes wrong.
  */
-static void* portable_mremap(int fd, void* old_address, size_t old_size, size_t new_size, int mremap_flags) {
-    
+static void* copying_mremap(int fd, void* old_address, size_t old_size, size_t new_size) {
+
     if (old_size == new_size) {
         // Handle no-ops
         return old_address;
     }
-
-#ifdef MREMAP_MAYMOVE
-    // Assume if we have the flag macros for it, we actually have mremap.
-    return ::mremap(old_address, old_size, new_size, mremap_flags);
-#else
-// Give the flag a value for user code later
-#define MREMAP_MAYMOVE (1)
-
-    // We don't have mremap; we have to make new mappings ourselves.
     
     if (fd == -1) {
         // We are working with an anonymous mapping, or at least want to have
@@ -102,12 +96,10 @@ static void* portable_mremap(int fd, void* old_address, size_t old_size, size_t 
         // Map first, then unmap, so that if map fails we don't leave the
         // mapping gone and the object in a bad state for the destructor.
         
+        // Always make a shared mapping.
+        // Private and anonymous mappings both go around with no associated
+        // open FD to call this function with.
         void* new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (new_address == nullptr) {
-            // Try mapping private if read-write and shared doesn't work.
-            // Needs to be writeable or we will segfault on modification.
-            new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-        }
         if (new_address == nullptr) {
             auto problem = errno;
             std::stringstream ss;
@@ -130,6 +122,33 @@ static void* portable_mremap(int fd, void* old_address, size_t old_size, size_t 
         
         return new_address;
     }
+
+}
+
+/**
+ * Remap the given region of the given file descriptor (or -1) to be the given
+ * size.
+ *
+ * Return the new mapped address, which may have moved even if MREMAP_MAYMOVE
+ * is not provided as a flag. If we absolutely can't get a new mapping returns
+ * MAP_FAILED.
+ *
+ * If we just can't grow or shrink the mapping, may destroy and recreate the
+ * mapping, or even copy contents of an anonymous mapping that can't grow.
+ */
+static void* portable_mremap(int fd, void* old_address, size_t old_size, size_t new_size, int mremap_flags) {
+    
+#ifdef MREMAP_MAYMOVE
+    // Assume if we have the flag macros for it, we actually have mremap.
+    return ::mremap(old_address, old_size, new_size, mremap_flags);
+#else
+// Give the flag a value for user code later
+#define MREMAP_MAYMOVE (1)
+
+    // Call the copying-if-anonymous-or-private version.
+    // We can't respect the moving flags.
+    return copying_mremap(fd, old_address, old_size, new_size);
+    
 #endif
 }
 
@@ -216,6 +235,7 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
         
         // No file ought to be associated
         assert(serializedFD == -1);
+        assert(mappingFileSize == std::numeric_limits<size_t>::max());
         
         serializedData = ::mmap(nullptr, new_serialized_length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
         if (serializedData == nullptr) {
@@ -270,7 +290,6 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                     ss << "Could not grow mapped file: " << ::strerror(problem);
                     throw std::runtime_error(ss.str());
                 }
-                
                 void* new_mapping = portable_mremap(serializedFD, serializedData,
                                                     serializedLength, new_serialized_length,
                                                     MREMAP_MAYMOVE);
@@ -285,6 +304,7 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                 // Commit to object
                 serializedData = new_mapping;
                 serializedLength = new_serialized_length;
+                mappingFileSize = new_serialized_length;
             } else {
                 // Shortening, so remap in place and then truncate.
                 void* new_mapping = portable_mremap(serializedFD, serializedData,
@@ -312,36 +332,67 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                     ss << "Could not shrink mapped file: " << ::strerror(problem);
                     throw std::runtime_error(ss.str());
                 }
+                
+                // Remember the new size of the file.
+                mappingFileSize = new_serialized_length;
             }
         } else {
-            // Otherwise, we have no file.
-            
-            // TODO: the mapping mapping may still be to a now-closed file,
-            // instead of an anonymous mapping. If we mremap it bigger than how
-            // big the file is, that may be UB.
+            // Otherwise, we have no open file. serializedFD == -1.
             
 #ifdef debug
             std::cerr << "\t\tResizing mapping of " << serializedLength << " to " << new_serialized_length << "..." << std::endl;
 #endif
-            
-            // Just mremap the anonymous mapping, allowing to move.
-            // We pass the FD along so we can use the mremap-faking wrapper.
-            void* new_mapping = portable_mremap(serializedFD, serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
-            if (new_mapping == MAP_FAILED) {
-                // This one returns a sentinel and not nullptr on error.
-                auto problem = errno;
-                std::stringstream ss;
-                ss << "Could not resize mapping: " << ::strerror(problem);
-                throw std::runtime_error(ss.str());
-            }
-            
-            // Commit to object
-            serializedData = new_mapping;
-            serializedLength = new_serialized_length;
-            
+
+            if (new_serialized_length > mappingFileSize) {
+                // The mapping may still be a private mapping to a now-closed
+                // file, instead of an anonymous mapping. If we mremap it
+                // bigger than how big the file is, that may be undefined
+                // behavior. TODO: See if the interaction is documented, or the
+                // unspecified behavior past the end of the file is only for
+                // mmap.
+                
+                // To deal with this, we do a faked remap that copies to a new anonymous mapping.
+                void* new_mapping = copying_mremap(-1, serializedData, serializedLength, new_serialized_length);
+                if (new_mapping == MAP_FAILED) {
+                    // This one returns a sentinel and not nullptr on error.
+                    auto problem = errno;
+                    std::stringstream ss;
+                    ss << "Could not replace with anonymous mapping: " << ::strerror(problem);
+                    throw std::runtime_error(ss.str());
+                }
+                
+                // Commit to object
+                serializedData = new_mapping;
+                serializedLength = new_serialized_length;
+                // No more limiting file
+                mappingFileSize = std::numeric_limits<size_t>::max();
+                
 #ifdef debug
-            std::cerr << "\t\tAnonymous mapping at " << (void*)serializedData << std::endl;
+                std::cerr << "\t\tResized to anonymous mapping at " << (void*)serializedData << std::endl;
 #endif
+                
+            } else {
+                // We aren't exceeding a file size on a private mapping.
+                
+                // Just mremap the anonymous mapping, allowing to move.
+                // We pass the FD along so we can use the mremap-faking wrapper.
+                void* new_mapping = portable_mremap(serializedFD, serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
+                if (new_mapping == MAP_FAILED) {
+                    // This one returns a sentinel and not nullptr on error.
+                    auto problem = errno;
+                    std::stringstream ss;
+                    ss << "Could not resize mapping: " << ::strerror(problem);
+                    throw std::runtime_error(ss.str());
+                }
+                
+                // Commit to object
+                serializedData = new_mapping;
+                serializedLength = new_serialized_length;
+                
+#ifdef debug
+                std::cerr << "\t\tResized mapping at " << (void*)serializedData << std::endl;
+#endif
+            }
         }
     }
 }
@@ -791,13 +842,26 @@ void TriviallySerializable::deserialize(int fd) {
             throw std::runtime_error(ss.str());
         }
         
+        if (file_length == 0) {
+            // We can't mmap a 0-length file.
+            throw std::runtime_error("Cannot read empty file; no magic number");
+        }
+        
         // Now mmap
+        
+        // Usually we want to establish a write-back connection with the original file
+        bool write_back = true;
+        
         serializedLength = file_length;
         serializedData = ::mmap(nullptr, file_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (serializedData == nullptr) {
             // Try mapping private if read-write and shared doesn't work.
             // Needs to be writeable or we will segfault if someone tries to modify us.
+            // But we may be loading a read-only file.
             serializedData = ::mmap(nullptr, file_length, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+            
+            // Since we are a read-only file, we don't want a write-back connection.
+            write_back = false;
         }
         if (serializedData == nullptr) {
             auto problem = errno;
@@ -805,14 +869,25 @@ void TriviallySerializable::deserialize(int fd) {
             ss << "Could not map memory: " << ::strerror(problem);
             throw std::runtime_error(ss.str());
         }
+        // Remember the size of the file we mapped in.
+        mappingFileSize = file_length;
         
-        // Adopt the new FD via dup
-        serializedFD = dup(fd);
-        if (serializedFD == -1) {
-            auto problem = errno;
-            std::stringstream ss;
-            ss << "Could not keep descriptor to mapped file: " << ::strerror(problem);
-            throw std::runtime_error(ss.str());
+        if (write_back) {
+            // We want to keep writing to this file.
+            // Adopt the new FD via dup
+            serializedFD = dup(fd);
+            if (serializedFD == -1) {
+                auto problem = errno;
+                std::stringstream ss;
+                ss << "Could not keep descriptor to mapped file: " << ::strerror(problem);
+                throw std::runtime_error(ss.str());
+            }
+        } else {
+            // We don't want a write-back connection to this file or anywhere
+            if (serializedFD != -1) {
+                close_fd(serializedFD);
+                serializedFD = -1;
+            }
         }
         
         // Validate magic number length and value.

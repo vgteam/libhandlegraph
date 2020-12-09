@@ -8,6 +8,7 @@
 #include "handlegraph/serializable.hpp"
 
 #include <iostream>
+#include <limits>
 
 namespace handlegraph {
 
@@ -173,11 +174,16 @@ private:
     /// Might not be accuate if serialization/deserialization throws.
     size_t serializedLength = 0;
     /// Where is it in memory?
-    /// THis includes the magic number!
+    /// This includes the magic number!
     void* serializedData = nullptr;
     /// What file descriptor do we have to the file for resizing it?
     /// Will be -1 if we don't have one.
     int serializedFD = -1;
+    /// Even if serializedFD is -1, our mapping may actually be to a file, mapped privately.
+    /// We can't necessarily safely grow a mapping with mremap if it's to a smaller file.
+    /// This holds the size of the file our mapping is to, or
+    /// std::numeric_limits<size_t>::max() if the mapping isn't to a file.
+    size_t mappingFileSize = std::numeric_limits<size_t>::max();
     
     /// How big is the magic number?
     static constexpr int MAGIC_SIZE = sizeof(uint32_t) / sizeof(char);
