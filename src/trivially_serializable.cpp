@@ -20,7 +20,120 @@
 //#define debug
 //#define debug_ref
 
+
 namespace handlegraph {
+
+// Because Mac doesn't have mremap, we need a remapping function that takes the FD.
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void*) -1)
+#endif
+
+/**
+ * Remap the given region of the given file descriptor (or -1) to be the given
+ * size.
+ *
+ * Return the new mapped address, which may have moved even if MREMAP_MAYMOVE
+ * is not provided as a flag. If we absolutely can't get a new mapping returns
+ * MAP_FAILED.
+ *
+ * If we just can't grow or shrink the mapping, may destroy and recreate the
+ * mapping, or even copy contents of an anonymous mapping that can't grow.
+ */
+static void* portable_mremap(int fd, void* old_address, size_t old_size, size_t new_size, int mremap_flags) {
+    
+    if (old_size == new_size) {
+        // Handle no-ops
+        return old_address;
+    }
+
+#ifdef MREMAP_MAYMOVE
+    // Assume if we have the flag macros for it, we actually have mremap.
+    return ::mremap(old_address, old_size, new_size, mremap_flags);
+#else
+// Give the flag a value for user code later
+#define MREMAP_MAYMOVE (1)
+
+    // We don't have mremap; we have to make new mappings ourselves.
+    
+    if (fd == -1) {
+        // We are working with an anonymous mapping, or at least want to have
+        // an anonymous mapping next.
+        // We can't actually grow it, because if we call mmap() asking for it
+        // to be bigger we might clobber something after it.
+        // We can't have allocated a big sparse arena mapping to let it grow
+        // into because we also probably don't have MAP_NORESERVE.
+        // We can't shrink it because the unmap we would need to do to shrink
+        // it isn't page-aligned.
+        
+        // Map a new version
+        void* new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+        if (new_address == nullptr) {
+            auto problem = errno;
+            std::stringstream ss;
+            ss << "Could not create anonymous mapping: " << ::strerror(problem);
+            std::cerr << ss.str() << std::endl;
+            return MAP_FAILED;
+        }
+        
+        // Copy the part of the data that should be preserved
+        ::memcpy(new_address, old_address, std::min(old_size, new_size));
+        
+        // Unmap the old memory
+        if (::munmap(old_address, old_size) != 0) {
+            auto problem = errno;
+            std::stringstream ss;
+            ss << "Could not remove old mapping: " << ::strerror(problem);
+            // Try to unmap the new mapping so we don't leave it behind
+            // after the exception is caught.
+            ::munmap(new_address, new_size);
+            std::cerr << ss.str() << std::endl;
+            return MAP_FAILED;
+        }
+        
+        // Return the new address
+        return new_address;
+    } else {
+        // We are working with a file-backed mapping.
+        
+        // TODO: We should be smart and discard the tail end in place if we're
+        // shrinking. Right now we don't even try to not move.
+        
+        // Map first, then unmap, so that if map fails we don't leave the
+        // mapping gone and the object in a bad state for the destructor.
+        
+        void* new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (new_address == nullptr) {
+            // Try mapping private if read-write and shared doesn't work.
+            // Needs to be writeable or we will segfault on modification.
+            new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+        }
+        if (new_address == nullptr) {
+            auto problem = errno;
+            std::stringstream ss;
+            ss << "Could not map memory: " << ::strerror(problem);
+            std::cerr << ss.str() << std::endl;
+            return MAP_FAILED;
+        }
+        
+        if (::munmap(old_address, old_size) != 0) {
+            auto problem = errno;
+            std::stringstream ss;
+            ss << "Could not remove old mapping: " << ::strerror(problem);
+            
+            // Clean up the new mapping, if possible
+            ::munmap(new_address, new_size);
+            
+            std::cerr << ss.str() << std::endl;
+            return MAP_FAILED;
+        }
+        
+        return new_address;
+    }
+#endif
+}
+
+
 
 TriviallySerializable::~TriviallySerializable() {
     // Don't check errors here!
@@ -104,7 +217,7 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
         // No file ought to be associated
         assert(serializedFD == -1);
         
-        serializedData = ::mmap(nullptr, new_serialized_length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        serializedData = ::mmap(nullptr, new_serialized_length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
         if (serializedData == nullptr) {
             auto problem = errno;
             std::stringstream ss;
@@ -158,7 +271,9 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                     throw std::runtime_error(ss.str());
                 }
                 
-                void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
+                void* new_mapping = portable_mremap(serializedFD, serializedData,
+                                                    serializedLength, new_serialized_length,
+                                                    MREMAP_MAYMOVE);
                 if (new_mapping == MAP_FAILED) {
                     // This one returns a sentinel and not nullptr on error.
                     auto problem = errno;
@@ -172,7 +287,9 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                 serializedLength = new_serialized_length;
             } else {
                 // Shortening, so remap in place and then truncate.
-                void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, 0);
+                void* new_mapping = portable_mremap(serializedFD, serializedData,
+                                                    serializedLength, new_serialized_length,
+                                                    0);
                 if (new_mapping == MAP_FAILED) {
                     // This one returns a sentinel and not nullptr on error.
                     auto problem = errno;
@@ -180,8 +297,11 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                     ss << "Could not shrink mapping: " << ::strerror(problem);
                     throw std::runtime_error(ss.str());
                 }
-                // It's not allowed to move,
-                assert(new_mapping == serializedData);
+                
+                // We can't guarantee that it didn't move, even if we told it
+                // not to, because sometimes we don't have a real mremap(). So
+                // if it managed to move, record that.
+                serializedData = new_mapping;
                 
                 // Save the length change now so we can unmap on exception
                 serializedLength = new_serialized_length;
@@ -196,12 +316,17 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
         } else {
             // Otherwise, we have no file.
             
+            // TODO: the mapping mapping may still be to a now-closed file,
+            // instead of an anonymous mapping. If we mremap it bigger than how
+            // big the file is, that may be UB.
+            
 #ifdef debug
-            std::cerr << "\t\tResizing anonymous mapping of " << serializedLength << " to " << new_serialized_length << "..." << std::endl;
+            std::cerr << "\t\tResizing mapping of " << serializedLength << " to " << new_serialized_length << "..." << std::endl;
 #endif
             
             // Just mremap the anonymous mapping, allowing to move.
-            void* new_mapping = ::mremap(serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
+            // We pass the FD along so we can use the mremap-faking wrapper.
+            void* new_mapping = portable_mremap(serializedFD, serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
             if (new_mapping == MAP_FAILED) {
                 // This one returns a sentinel and not nullptr on error.
                 auto problem = errno;
