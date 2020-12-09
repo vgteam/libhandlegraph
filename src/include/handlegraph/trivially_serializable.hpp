@@ -21,6 +21,11 @@ namespace handlegraph {
  *
  * If serialization or deserialization throws, it is safe to destroy the
  * object, but not to do anything else with it.
+ *
+ * Modifying a file that an object has been loaded from or saved to, either on
+ * disk or through another associated object, is undefined behavior.
+ * To prevent modifications to an object from modifying the last file loaded or
+ * saved to, use dissociate().
  */
 class TriviallySerializable : public Serializable {
 

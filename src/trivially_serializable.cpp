@@ -25,10 +25,6 @@ namespace handlegraph {
 
 // Because Mac doesn't have mremap, we need a remapping function that takes the FD.
 
-#ifndef MAP_FAILED
-#define MAP_FAILED ((void*) -1)
-#endif
-
 /**
  * mremap-like implementation that always copies data into the new mapping if
  * it is not a shared mapping to a file.
@@ -62,7 +58,7 @@ static void* copying_mremap(int fd, void* old_address, size_t old_size, size_t n
         
         // Map a new version
         void* new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        if (new_address == nullptr) {
+        if (new_address == MAP_FAILED) {
             auto problem = errno;
             std::stringstream ss;
             ss << "Could not create anonymous mapping: " << ::strerror(problem);
@@ -100,7 +96,7 @@ static void* copying_mremap(int fd, void* old_address, size_t old_size, size_t n
         // Private and anonymous mappings both go around with no associated
         // open FD to call this function with.
         void* new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (new_address == nullptr) {
+        if (new_address == MAP_FAILED) {
             auto problem = errno;
             std::stringstream ss;
             ss << "Could not map memory: " << ::strerror(problem);
@@ -182,7 +178,7 @@ void TriviallySerializable::dissociate() {
         // Remap as private (just over the existing mapping, without unmapping)
         void* new_mapping = ::mmap(serializedData, serializedLength, PROT_READ | PROT_WRITE, MAP_PRIVATE, serializedFD, 0);
         
-        if (new_mapping == nullptr) {
+        if (new_mapping == MAP_FAILED) {
             // Mapping failed!
             auto problem = errno;
             std::stringstream ss;
@@ -238,7 +234,7 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
         assert(mappingFileSize == std::numeric_limits<size_t>::max());
         
         serializedData = ::mmap(nullptr, new_serialized_length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        if (serializedData == nullptr) {
+        if (serializedData == MAP_FAILED) {
             auto problem = errno;
             std::stringstream ss;
             ss << "Could not create anonymous mapping: " << ::strerror(problem);
@@ -354,7 +350,6 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                 // To deal with this, we do a faked remap that copies to a new anonymous mapping.
                 void* new_mapping = copying_mremap(-1, serializedData, serializedLength, new_serialized_length);
                 if (new_mapping == MAP_FAILED) {
-                    // This one returns a sentinel and not nullptr on error.
                     auto problem = errno;
                     std::stringstream ss;
                     ss << "Could not replace with anonymous mapping: " << ::strerror(problem);
@@ -378,7 +373,6 @@ void TriviallySerializable::serialized_data_resize(size_t bytes) {
                 // We pass the FD along so we can use the mremap-faking wrapper.
                 void* new_mapping = portable_mremap(serializedFD, serializedData, serializedLength, new_serialized_length, MREMAP_MAYMOVE);
                 if (new_mapping == MAP_FAILED) {
-                    // This one returns a sentinel and not nullptr on error.
                     auto problem = errno;
                     std::stringstream ss;
                     ss << "Could not resize mapping: " << ::strerror(problem);
@@ -706,7 +700,7 @@ void* TriviallySerializable::serialize_and_get_mapping(int fd) const {
     
     // Make the mapping
     void* new_mapping = ::mmap(nullptr, output_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (new_mapping == nullptr) {
+    if (new_mapping == MAP_FAILED) {
         auto problem = errno;
         std::stringstream ss;
         ss << "Could not map memory: " << ::strerror(problem);
@@ -854,7 +848,7 @@ void TriviallySerializable::deserialize(int fd) {
         
         serializedLength = file_length;
         serializedData = ::mmap(nullptr, file_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (serializedData == nullptr) {
+        if (serializedData == MAP_FAILED) {
             // Try mapping private if read-write and shared doesn't work.
             // Needs to be writeable or we will segfault if someone tries to modify us.
             // But we may be loading a read-only file.
@@ -863,7 +857,7 @@ void TriviallySerializable::deserialize(int fd) {
             // Since we are a read-only file, we don't want a write-back connection.
             write_back = false;
         }
-        if (serializedData == nullptr) {
+        if (serializedData == MAP_FAILED) {
             auto problem = errno;
             std::stringstream ss;
             ss << "Could not map memory: " << ::strerror(problem);
