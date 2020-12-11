@@ -56,6 +56,11 @@ static void* copying_mremap(int fd, void* old_address, size_t old_size, size_t n
         // We can't shrink it because the unmap we would need to do to shrink
         // it isn't page-aligned.
         
+        // TODO: map an arena that gets bigger in powers of 2 that we can grow
+        // into, so we can just map more memory in there when we need it
+        // without forcing a copy. We want to worry about the costs of 2x-ing
+        // instead of the user code.
+        
         // Map a new version
         void* new_address = ::mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
         if (new_address == MAP_FAILED) {
