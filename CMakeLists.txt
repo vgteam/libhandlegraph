@@ -63,6 +63,7 @@ add_library(handlegraph_objs OBJECT
   src/split_strands.cpp
   src/unchop.cpp
   src/weakly_connected_components.cpp
+  src/extend.cpp
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
@@ -93,6 +94,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/algorithms/split_strands.hpp
   src/include/handlegraph/algorithms/unchop.hpp
   src/include/handlegraph/algorithms/weakly_connected_components.hpp
+  src/include/handlegraph/algorithms/extend.hpp
   )
 
 # Use the include directory when building the objects.
