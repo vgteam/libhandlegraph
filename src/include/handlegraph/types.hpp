@@ -142,6 +142,14 @@ public:
     }
 };
 
+template<> struct hash<handlegraph::edge_t> {
+public:
+    inline size_t operator()(const handlegraph::edge_t& edge_handle) const {
+        return combine_hashes(hash<handlegraph::handle_t>()(edge_handle.first),
+                              hash<handlegraph::handle_t>()(edge_handle.second));
+    }
+};
+
 }
 
 

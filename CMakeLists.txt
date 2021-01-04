@@ -45,6 +45,24 @@ add_library(handlegraph_objs OBJECT
   src/snarl_decomposition.cpp
   src/trivially_serializable.cpp
   src/types.cpp
+  src/copy_graph.cpp
+  src/append_graph.cpp
+  src/are_equivalent.cpp
+  src/find_tips.cpp
+  src/topological_sort.cpp
+  src/apply_orientations.cpp
+  src/is_single_stranded.cpp
+  src/count_walks.cpp
+  src/eades_algorithm.cpp
+  src/dagify.cpp
+  src/strongly_connected_components.cpp
+  src/find_shortest_paths.cpp
+  src/dijkstra.cpp
+  src/is_acyclic.cpp
+  src/reverse_complement.cpp
+  src/split_strands.cpp
+  src/unchop.cpp
+  src/weakly_connected_components.cpp
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
@@ -57,6 +75,24 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
+  src/include/handlegraph/algorithms/copy_graph.hpp
+  src/include/handlegraph/algorithms/append_graph.hpp
+  src/include/handlegraph/algorithms/are_equivalent.hpp
+  src/include/handlegraph/algorithms/find_tips.hpp
+  src/include/handlegraph/algorithms/topological_sort.hpp
+  src/include/handlegraph/algorithms/apply_orientations.hpp
+  src/include/handlegraph/algorithms/is_single_stranded.hpp
+  src/include/handlegraph/algorithms/count_walks.hpp
+  src/include/handlegraph/algorithms/eades_algorithm.hpp
+  src/include/handlegraph/algorithms/dagify.hpp
+  src/include/handlegraph/algorithms/strongly_connected_components.hpp
+  src/include/handlegraph/algorithms/find_shortest_paths.hpp
+  src/include/handlegraph/algorithms/dijkstra.hpp
+  src/include/handlegraph/algorithms/reverse_complement.hpp
+  src/include/handlegraph/algorithms/is_acyclic.hpp
+  src/include/handlegraph/algorithms/split_strands.hpp
+  src/include/handlegraph/algorithms/unchop.hpp
+  src/include/handlegraph/algorithms/weakly_connected_components.hpp
   )
 
 # Use the include directory when building the objects.
