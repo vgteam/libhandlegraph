@@ -7,6 +7,7 @@
 //#define debug_dagify
 #include <vector>
 #include <unordered_set>
+#include <atomic>
 
 #include "handlegraph/expanding_overlay_graph.hpp"
 #include "handlegraph/algorithms/dagify.hpp"

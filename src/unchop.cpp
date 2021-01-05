@@ -11,6 +11,7 @@
 #include <set>
 #include <sstream>
 #include <utility>
+#include <cassert>
 
 namespace handlegraph {
 namespace algorithms {

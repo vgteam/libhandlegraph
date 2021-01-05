@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <cassert>
 
 namespace handlegraph {
 namespace algorithms {
