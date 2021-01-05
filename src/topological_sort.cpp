@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <map>
+#include <cassert>
 
 #include "handlegraph/algorithms/topological_sort.hpp"
 

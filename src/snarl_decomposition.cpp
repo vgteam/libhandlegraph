@@ -24,6 +24,7 @@ bool SnarlDecomposition::for_each_tippy_child_impl(const net_handle_t& parent, c
             }
         });
     });
+    return true;
 }
 
 bool SnarlDecomposition::for_each_traversal_start_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const {
@@ -41,6 +42,7 @@ bool SnarlDecomposition::for_each_traversal_start_impl(const net_handle_t& trave
         return for_each_tippy_child(traversal, iteratee);
         break;
     }
+    return true;
 }
 
 bool SnarlDecomposition::for_each_traversal_end_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const {
@@ -60,6 +62,7 @@ bool SnarlDecomposition::for_each_traversal_end_impl(const net_handle_t& travers
         });
         break;
     }
+    return true;
 }
 
 }
