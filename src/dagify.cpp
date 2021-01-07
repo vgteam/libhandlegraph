@@ -162,34 +162,13 @@ bool SubHandleGraph::follow_edges_impl(const handle_t& handle, bool go_left, con
 }
 
 bool SubHandleGraph::for_each_handle_impl(const function<bool(const handle_t&)>& iteratee, bool parallel) const {
-    if (parallel) {
-        atomic<bool> keep_going(true);
-        // do parallelism taskwise inside the iteration
-#pragma omp parallel
-        {
-#pragma omp single
-            {
-                for(auto iter = contents.begin(); keep_going && iter != contents.end(); iter++) {
-#pragma omp task
-                    {
-                        if (!iteratee(super->get_handle(*iter))) {
-                            keep_going = false;
-                        }
-                    }
-                }
-            }
+    // non-parallel so we don't pull in any dependencies
+    for (nid_t node_id : contents) {
+        if (!iteratee(super->get_handle(node_id))) {
+            return false;
         }
-        return keep_going;
     }
-    else {
-        // non-parallel
-        for (nid_t node_id : contents) {
-            if (!iteratee(super->get_handle(node_id))) {
-                return false;
-            }
-        }
-        return true;
-    }
+    return true;
 }
 
 size_t SubHandleGraph::get_node_count() const {

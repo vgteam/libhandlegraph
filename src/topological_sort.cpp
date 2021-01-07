@@ -66,7 +66,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
             if(unvisited.count(g->get_id(first_seed))) {
                 // We have an unvisited seed. Use it
 #ifdef debug
-#pragma omp critical (cerr)
                 cerr << "Starting from seed " << g->get_id(first_seed) << " orientation " << g->get_is_reverse(first_seed) << endl;
 #endif
 
@@ -81,7 +80,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
             // If we couldn't find a seed, just grab any old node.
             // Since map order is stable across systems, we can take the first node by id and put it locally forward.
 #ifdef debug
-#pragma omp critical (cerr)
             cerr << "Starting from arbitrary node " << unvisited.begin()->first << " locally forward" << endl;
 #endif
 
@@ -96,7 +94,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
             // Emit it
             sorted.push_back(n);
 #ifdef debug
-#pragma omp critical (cerr)
             cerr << "Using oriented node " << g->get_id(n) << " orientation " << g->get_is_reverse(n) << endl;
 #endif
 
@@ -114,7 +111,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                     }
                     
 #ifdef debug
-#pragma omp critical (cerr)
                     cerr << "\tHas left-side edge to cycle entry point " << g->get_id(prev_node)
                          << " orientation " << g->get_is_reverse(prev_node) << endl;
 #endif
@@ -123,7 +119,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                     masked_edges.insert(edge);
                     
 #ifdef debug
-#pragma omp critical (cerr)
                     cerr << "\t\tEdge: " << g->get_id(edge.first) << " " << g->get_is_reverse(edge.first)
                         << " -> " << g->get_id(edge.second) << " " << g->get_is_reverse(edge.second) << endl;
 #endif
@@ -143,7 +138,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                 }
 
 #ifdef debug
-#pragma omp critical (cerr)
                 cerr << "\tHas edge to " << g->get_id(next_node) << " orientation " << g->get_is_reverse(next_node) << endl;
 #endif
 
@@ -151,7 +145,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                 // relative orientation, so we can't traverse it again
 
 #ifdef debug
-#pragma omp critical (cerr)
                 cerr << "\t\tEdge: " << g->get_id(edge.first) << " " << g->get_is_reverse(edge.first)
                     << " -> " << g->get_id(edge.second) << " " << g->get_is_reverse(edge.second) << endl;
 #endif
@@ -163,7 +156,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                     // We haven't already started here as an arbitrary cycle entry point
 
 #ifdef debug
-#pragma omp critical (cerr)
                     cerr << "\t\tAnd node hasn't been visited yet" << endl;
 #endif
 
@@ -184,7 +176,6 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                     if(!unmasked_incoming_edge) {
 
 #ifdef debug
-#pragma omp critical (cerr)
                         cerr << "\t\t\tIs last incoming edge" << endl;
 #endif
                         // Keep this orientation and put it here
@@ -202,13 +193,11 @@ vector<handle_t> topological_order(const HandleGraph* g) {
                         seeds[g->get_id(next_node)] = next_node;
 
 #ifdef debug
-#pragma omp critical (cerr)
                         cerr << "\t\t\tSuggests seed " << g->get_id(next_node) << " orientation " << g->get_is_reverse(next_node) << endl;
 #endif
                     }
                 } else {
 #ifdef debug
-#pragma omp critical (cerr)
                     cerr << "\t\tAnd node was already visited (to break a cycle)" << endl;
 #endif
                 }
