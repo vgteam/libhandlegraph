@@ -197,7 +197,7 @@ protected:
     /**
      * Internal implementation for for_each_traversal.
      */
-    virtual bool for_each_traversal_impl(const net_handle_t& item, const std::function<bool(const net_handle_t&)>& iteratee) const; 
+    virtual bool for_each_traversal_impl(const net_handle_t& item, const std::function<bool(const net_handle_t&)>& iteratee) const = 0; 
 public:
 
     /**
