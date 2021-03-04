@@ -122,23 +122,18 @@ inline bool operator<(const step_handle_t& a, const step_handle_t& b) {
 //
 
 /// View a net handle as an integer array
-inline int64_t* as_integers(net_handle_t& net_handle) {
-    return reinterpret_cast<int64_t*>(&net_handle);
+inline int64_t as_integer(net_handle_t& net_handle) {
+    return reinterpret_cast<int64_t>(&net_handle);
 }
 
 /// View a const net handle as a const integer array
-inline const int64_t* as_integers(const net_handle_t& net_handle) {
-    return reinterpret_cast<const int64_t*>(&net_handle);
+inline const int64_t as_integer(const net_handle_t& net_handle) {
+    return reinterpret_cast<const int64_t>(&net_handle);
 }
 
 /// Sort of net handles is based on first then second then third integers
 inline bool operator<(const net_handle_t& a, const net_handle_t& b) {
-  return (as_integers(a)[0] < as_integers(b)[0] ||
-          (as_integers(a)[0] == as_integers(b)[0]
-           && as_integers(a)[1] < as_integers(b)[1]) ||
-          (as_integers(a)[0] == as_integers(b)[0] &&
-           as_integers(a)[1] == as_integers(b)[1] &&
-           as_integers(a)[2] < as_integers(b)[2]));
+  return as_integer(a) < as_integer(b) ;
 }
 
 }
