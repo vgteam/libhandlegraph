@@ -131,6 +131,18 @@ inline const int64_t as_integer(const net_handle_t& net_handle) {
     return reinterpret_cast<const int64_t>(&net_handle);
 }
 
+/// View an integer as a net_handle
+inline net_handle_t& as_net_handle(int64_t& value) {
+    return reinterpret_cast<net_handle_t&>(value);
+}
+
+/// View a const integer as a const net_handle
+inline const net_handle_t& as_net_handle(const int64_t& value) {
+    return reinterpret_cast<const net_handle_t&>(value);
+}
+
+
+
 /// Sort of net handles is based on first then second then third integers
 inline bool operator<(const net_handle_t& a, const net_handle_t& b) {
   return as_integer(a) < as_integer(b) ;
