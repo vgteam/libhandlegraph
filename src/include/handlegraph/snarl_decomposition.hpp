@@ -7,6 +7,8 @@
 
 #include "handlegraph/types.hpp"
 
+#include "handlegraph/handle_graph.hpp"
+
 #include "handlegraph/iteratee.hpp"
 
 #include <functional>
