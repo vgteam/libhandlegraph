@@ -48,7 +48,7 @@ public:
      * Get a net handle referring to a tip-to-tip traversal of the contents of the root snarl.
      * TODO: Special handling for circular things in the root snarl? Circular traversal type?
      */
-    virtual bool get_root(const net_handle_t& net) const = 0;
+    virtual net_handle_t get_root() const = 0;
     
     /**
      * Return true if the given handle refers to (a traversal of) the root
@@ -304,7 +304,7 @@ protected:
     /**
      * Internal implementation for for_each_traversal_end.
      */
-    virtual bool for_each_traversal_end_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
+    virtual bool for_each_traversal_end_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const;
 public:
 
     ///////////////////////////////////////////////////////////
