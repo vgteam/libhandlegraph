@@ -126,7 +126,7 @@ public:
      * Return a net handle to the same snarl/chain/node in the opposite orientation.
      * No effect on tip-to-tip, start-to-start, or end-to-end net handles. Flips all the others.
      */
-    virtual net_handle_t flip(const net_handle_t& net) const;
+    virtual net_handle_t flip(const net_handle_t& net) const = 0;
     
     /**
      * Get a canonical traversal handle from any net handle. All handles to the
@@ -135,7 +135,7 @@ public:
      * even consistently be the same kind of traversal for different snarls,
      * chains, or nodes. Mostly useful to normalize for equality comparisons.
      */
-    virtual net_handle_t canonical(const net_handle_t& net) const;
+    virtual net_handle_t canonical(const net_handle_t& net) const = 0;
     
     /**
      * Represents a place that a traversal can start or end. Traversals can start
@@ -195,7 +195,7 @@ protected:
     /**
      * Internal implementation for for_each_traversal.
      */
-    virtual bool for_each_traversal_impl(const net_handle_t& item, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
+    virtual bool for_each_traversal_impl(const net_handle_t& item, const std::function<bool(const net_handle_t&)>& iteratee) const; 
 public:
 
     /**
@@ -221,7 +221,7 @@ protected:
     /**
      * Internal implementation for follow_net_edges.
      */
-    virtual bool follow_net_edges_impl(const net_handle_t& here, bool go_left, const std::function<bool(const net_handle_t&)>& iteratee) const;
+    virtual bool follow_net_edges_impl(const net_handle_t& here, bool go_left, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
 public:
     
     ///////////////////////////////////////////////////////////
@@ -271,7 +271,7 @@ public:
      * May only be called if a path actually exists between the given start
      * and end.
      */
-    virtual net_handle_t get_parent_traversal(const net_handle_t& traversal_start, const net_handle_t& traversal_end) const;
+    virtual net_handle_t get_parent_traversal(const net_handle_t& traversal_start, const net_handle_t& traversal_end) const = 0;
     
     /**
      * Loop over all the child net graph item traversals that could potentially
@@ -302,7 +302,7 @@ protected:
     /**
      * Internal implementation for for_each_traversal_end.
      */
-    virtual bool for_each_traversal_end_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const;
+    virtual bool for_each_traversal_end_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
 public:
 
     ///////////////////////////////////////////////////////////
