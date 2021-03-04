@@ -77,13 +77,13 @@ public:
     /**
      * Turn a handle to an oriented node into a net handle for a start-to-end or end-to-start traversal of the node, as appropriate.
      */
-    virtual net_handle_t get_net(const handle_t& handle) const = 0;
+    virtual net_handle_t get_net(const handle_t& handle, const HandleGraph* graph) const = 0;
     
     /**
      * For a net handle to a traversal of a single node, get the handle for that node in the orientation it is traversed.
      * May not be called for other net handles.
      */
-    virtual handle_t get_handle(const net_handle_t& net) const = 0;
+    virtual handle_t get_handle(const net_handle_t& net, const HandleGraph* graph) const = 0;
     
     /**
      * Get the parent snarl of a chain, or the parent chain of a snarl or node.
@@ -215,13 +215,13 @@ public:
      * If you do want to leave a snarl or a chain, jump up to the parent with get_parent_traversal().
      */
     template<typename Iteratee>
-    bool follow_net_edges(const net_handle_t& here, bool go_left, const Iteratee& iteratee) const;
+    bool follow_net_edges(const net_handle_t& here, const HandleGraph* graph, bool go_left, const Iteratee& iteratee) const;
     
 protected:
     /**
      * Internal implementation for follow_net_edges.
      */
-    virtual bool follow_net_edges_impl(const net_handle_t& here, bool go_left, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
+    virtual bool follow_net_edges_impl(const net_handle_t& here, const HandleGraph* graph, bool go_left, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
 public:
     
     ///////////////////////////////////////////////////////////
@@ -371,8 +371,8 @@ bool SnarlDecomposition::for_each_traversal(const net_handle_t& item, const Iter
 }
 
 template<typename Iteratee>
-bool SnarlDecomposition::follow_net_edges(const net_handle_t& here, bool go_left, const Iteratee& iteratee) const {
-    return follow_net_edges_impl(here, go_left, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+bool SnarlDecomposition::follow_net_edges(const net_handle_t& here, const HandleGraph* graph, bool go_left, const Iteratee& iteratee) const {
+    return follow_net_edges_impl(here, graph, go_left, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
 }
 
 template<typename Iteratee>
