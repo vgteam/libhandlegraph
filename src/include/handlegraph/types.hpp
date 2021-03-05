@@ -58,7 +58,7 @@ struct step_handle_t { char data[2 * sizeof(int64_t)]; };
  *
  * For single nodes, we only have forward and reverse.
  */
-struct net_handle_t { char data[ sizeof(int64_t)]; };
+struct net_handle_t { char data[sizeof(nid_t)]; };
 
 /// Define equality on handles
 bool operator==(const handle_t& a, const handle_t& b);
@@ -135,7 +135,7 @@ public:
 template<> struct hash<handlegraph::net_handle_t> {
 public:
     inline size_t operator()(const handlegraph::net_handle_t& net_handle) const {
-        return std::hash<int64_t>()(reinterpret_cast<const int64_t>(&net_handle));
+        return std::hash<uint64_t>()(reinterpret_cast<const uint64_t>(&net_handle));
     }
 };
 
