@@ -132,12 +132,12 @@ inline const uint64_t& as_integer(const net_handle_t& handle) {
 }
 
 /// View an integer as a net handle
-inline net_handle_t& as_handle(uint64_t& value) {
+inline net_handle_t& as_net_handle(uint64_t& value) {
     return reinterpret_cast<net_handle_t&>(value);
 }
 
 /// View a const integer as a const handle
-inline const net_handle_t& as_handle(const uint64_t& value) {
+inline const net_handle_t& as_net_handle(const uint64_t& value) {
     return reinterpret_cast<const net_handle_t&>(value);
 }
 
