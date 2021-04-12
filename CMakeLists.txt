@@ -61,7 +61,7 @@ add_library(handlegraph_objs OBJECT
   src/is_acyclic.cpp
   src/reverse_complement.cpp
   src/split_strands.cpp
-  src/unchop.cpp
+  src/chop.cpp
   src/weakly_connected_components.cpp
   src/extend.cpp
   src/include/handlegraph/handle_graph.hpp
@@ -92,7 +92,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/algorithms/reverse_complement.hpp
   src/include/handlegraph/algorithms/is_acyclic.hpp
   src/include/handlegraph/algorithms/split_strands.hpp
-  src/include/handlegraph/algorithms/unchop.hpp
+  src/include/handlegraph/algorithms/chop.hpp
   src/include/handlegraph/algorithms/weakly_connected_components.hpp
   src/include/handlegraph/algorithms/extend.hpp
   )
