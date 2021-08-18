@@ -81,8 +81,10 @@ public:
     
     //////////////////////////////////////////////////////////////////////////
     
-    // Implementation doesn't need to provide anything below here.
-    
+    // Implementation doesn't need to provide anything below here; these all
+    // call serialize_members() and deserialize_members(), or serialize(int)
+    // and deserialize(int) as appropriate. But they can still be overridden if
+    // needed.
 
     // Interface takes control of serialization to and from named files and
     // routes it through file descriptor functions.
@@ -90,19 +92,19 @@ public:
     /// Write the contents of this object to a named file. Makes sure to
     /// include a leading magic number. Does not affect any existing write-back
     /// links.
-    void serialize(const std::string& filename) const final;
+    virtual void serialize(const std::string& filename) const;
     /// Write the contents of this object to a named file. Makes sure to
     /// include a leading magic number. If the file is nonexistent or a normal
     /// file, future modifications to the object will affect the file until
     /// dissociate() is called or another normal file is associated.
-    void serialize(const std::string& filename) final;
+    virtual void serialize(const std::string& filename);
     /// Sets the contents of this object to the contents of a serialized object
     /// from a file. The serialized object must be from the same implementation
     /// of this interface as is calling deserialize(). Can only be called on an
     /// empty object. If the file is a normal writeable file, future
     /// modifications to the object will affect the file until dissociate() is
     /// called or another normal file is associated.
-    void deserialize(const std::string& filename) final;
+    virtual void deserialize(const std::string& filename);
     
     // Interface also takes control of stream serialization and deserialization
     // that match standard input, output, and error, and delegate to
@@ -110,15 +112,15 @@ public:
     
     /// Dump the magic number and user data to the given stream. Does not
     /// affect any backing file link.
-    void serialize(std::ostream& out) const final;
+    virtual void serialize(std::ostream& out) const;
     /// Dump the magic number and user data to the given stream. Does not
     /// affect any backing file link.
-    void serialize(std::ostream& out) final;
+    virtual void serialize(std::ostream& out);
     /// Sets the contents of this object to the contents of a serialized object
     /// from an istream. The serialized object must be from the same
     /// implementation of the interface as is calling deserialize(). Can only
     /// be called on an empty object.
-    void deserialize(std::istream& in) final;
+    virtual void deserialize(std::istream& in);
 
 protected:
 

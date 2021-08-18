@@ -7,6 +7,8 @@
 
 #include "handlegraph/types.hpp"
 
+#include "handlegraph/handle_graph.hpp"
+
 #include "handlegraph/iteratee.hpp"
 
 #include <functional>
@@ -46,7 +48,7 @@ public:
      * Get a net handle referring to a tip-to-tip traversal of the contents of the root snarl.
      * TODO: Special handling for circular things in the root snarl? Circular traversal type?
      */
-    virtual bool get_root(const net_handle_t& net) const = 0;
+    virtual net_handle_t get_root() const = 0;
     
     /**
      * Return true if the given handle refers to (a traversal of) the root
@@ -77,13 +79,13 @@ public:
     /**
      * Turn a handle to an oriented node into a net handle for a start-to-end or end-to-start traversal of the node, as appropriate.
      */
-    virtual net_handle_t get_net(const handle_t& handle) const = 0;
+    virtual net_handle_t get_net(const handle_t& handle, const HandleGraph* graph) const = 0;
     
     /**
      * For a net handle to a traversal of a single node, get the handle for that node in the orientation it is traversed.
      * May not be called for other net handles.
      */
-    virtual handle_t get_handle(const net_handle_t& net) const = 0;
+    virtual handle_t get_handle(const net_handle_t& net, const HandleGraph* graph) const = 0;
     
     /**
      * Get the parent snarl of a chain, or the parent chain of a snarl or node.
@@ -126,7 +128,7 @@ public:
      * Return a net handle to the same snarl/chain/node in the opposite orientation.
      * No effect on tip-to-tip, start-to-start, or end-to-end net handles. Flips all the others.
      */
-    virtual net_handle_t flip(const net_handle_t& net) const;
+    virtual net_handle_t flip(const net_handle_t& net) const = 0;
     
     /**
      * Get a canonical traversal handle from any net handle. All handles to the
@@ -135,7 +137,7 @@ public:
      * even consistently be the same kind of traversal for different snarls,
      * chains, or nodes. Mostly useful to normalize for equality comparisons.
      */
-    virtual net_handle_t canonical(const net_handle_t& net) const;
+    virtual net_handle_t canonical(const net_handle_t& net) const = 0;
     
     /**
      * Represents a place that a traversal can start or end. Traversals can start
@@ -195,7 +197,7 @@ protected:
     /**
      * Internal implementation for for_each_traversal.
      */
-    virtual bool for_each_traversal_impl(const net_handle_t& item, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
+    virtual bool for_each_traversal_impl(const net_handle_t& item, const std::function<bool(const net_handle_t&)>& iteratee) const = 0; 
 public:
 
     /**
@@ -215,13 +217,13 @@ public:
      * If you do want to leave a snarl or a chain, jump up to the parent with get_parent_traversal().
      */
     template<typename Iteratee>
-    bool follow_net_edges(const net_handle_t& here, bool go_left, const Iteratee& iteratee) const;
+    bool follow_net_edges(const net_handle_t& here, const HandleGraph* graph, bool go_left, const Iteratee& iteratee) const;
     
 protected:
     /**
      * Internal implementation for follow_net_edges.
      */
-    virtual bool follow_net_edges_impl(const net_handle_t& here, bool go_left, const std::function<bool(const net_handle_t&)>& iteratee) const;
+    virtual bool follow_net_edges_impl(const net_handle_t& here, const HandleGraph* graph, bool go_left, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
 public:
     
     ///////////////////////////////////////////////////////////
@@ -271,7 +273,7 @@ public:
      * May only be called if a path actually exists between the given start
      * and end.
      */
-    virtual net_handle_t get_parent_traversal(const net_handle_t& traversal_start, const net_handle_t& traversal_end) const;
+    virtual net_handle_t get_parent_traversal(const net_handle_t& traversal_start, const net_handle_t& traversal_end) const = 0;
     
     /**
      * Loop over all the child net graph item traversals that could potentially
@@ -371,8 +373,8 @@ bool SnarlDecomposition::for_each_traversal(const net_handle_t& item, const Iter
 }
 
 template<typename Iteratee>
-bool SnarlDecomposition::follow_net_edges(const net_handle_t& here, bool go_left, const Iteratee& iteratee) const {
-    return follow_net_edges_impl(here, go_left, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+bool SnarlDecomposition::follow_net_edges(const net_handle_t& here, const HandleGraph* graph, bool go_left, const Iteratee& iteratee) const {
+    return follow_net_edges_impl(here, graph, go_left, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
 }
 
 template<typename Iteratee>
