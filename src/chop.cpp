@@ -651,23 +651,6 @@ static handle_t concat_nodes(MutablePathDeletableHandleGraph& graph, const deque
         }
     }
     
-    // Destroy all the old edges
-    // We know they only exist to the left and right neighbors, and along the run
-    for (auto& n : left_neighbors) {
-        graph.destroy_edge(n, nodes.front());
-    }
-    for (auto& n : right_neighbors) {
-        graph.destroy_edge(nodes.back(), n);
-    }
-    auto it = nodes.begin();
-    auto next_it = it;
-    ++next_it;
-    while (next_it != nodes.end()) {
-        graph.destroy_edge(*it, *next_it);
-        it = next_it;
-        ++next_it;
-    }
-    
     for (auto& n : nodes) {
         // Destroy all the old nodes
 #ifdef debug
