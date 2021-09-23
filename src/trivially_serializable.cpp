@@ -17,7 +17,7 @@
  
 namespace handlegraph {
 
-void TriviallySerializeable::serialize(int fd) const {
+void TriviallySerializable::serialize(int fd) const {
     serialize([&](const void* start, size_t length) {
         // Copy each block to the fd
         size_t written = 0;
