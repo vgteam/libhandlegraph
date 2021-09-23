@@ -17,6 +17,22 @@
  
 namespace handlegraph {
 
+void TriviallySerializeable::serialize(int fd) const {
+    serialize([&](const void* start, size_t length) {
+        // Copy each block to the fd
+        size_t written = 0;
+        while (written != length) {
+            // Bang on the write call until it is all written
+            auto result = write(fd, (const void*)((const char*) start + written), length - written);
+            if (result == -1) {
+                // Can't write at all, something broke.
+                throw std::runtime_error("Could not write!");
+            }
+            written += result;
+        }
+    });
+}
+
 void TriviallySerializable::serialize(std::ostream& out) const {
     if (out.rdbuf() == std::cout.rdbuf()) {
         // Assume we are using standard output

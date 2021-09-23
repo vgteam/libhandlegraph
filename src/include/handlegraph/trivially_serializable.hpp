@@ -56,11 +56,9 @@ public:
     // your own FD-to-C++-stream wrapper. We don't include one in
     // libhandlegraph to avoid dependencies and duplicate code with libvgio.
     
-    /// Write the contents of this object to an open file descriptor. Makes
-    /// sure to include a leading magic number.
-    ///
-    /// Assumes that the file entirely belongs to this object.
-    virtual void serialize(int fd) const = 0;
+    //Serialize as blocks of data shown to the given function. The pointer must not be null.
+    virtual void serialize(const std::function<void(const void*, size_t)>& iteratee) const = 0;
+    
     /// Write the contents of this object to an open file descriptor. Makes
     /// sure to include a leading magic number. If the file is a normal file,
     /// future modifications to the object will affect the file until
@@ -83,8 +81,14 @@ public:
     
     // Implementation doesn't need to provide anything below here; these all
     // call serialize_members() and deserialize_members(), or serialize(int)
-    // and deserialize(int) as appropriate. But they can still be overridden if
-    // needed.
+    // and deserialize(int), or serialize(function)  as appropriate. 
+    // But they can still be overridden if needed.
+
+    /// Write the contents of this object to an open file descriptor. Makes
+    /// sure to include a leading magic number.
+    ///
+    /// Assumes that the file entirely belongs to this object.
+    virtual void serialize(int fd) const;
 
     // Interface takes control of serialization to and from named files and
     // routes it through file descriptor functions.
