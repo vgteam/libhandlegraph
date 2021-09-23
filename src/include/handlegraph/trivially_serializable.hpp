@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <limits>
+#include <functional>
 
 namespace handlegraph {
 
