@@ -40,6 +40,7 @@ add_library(handlegraph_objs OBJECT
   src/mutable_handle_graph.cpp
   src/path_handle_graph.cpp 
   src/path_position_handle_graph.cpp
+  src/mutable_path_handle_graph.cpp
   src/ranked_handle_graph.cpp
   src/serializable.cpp
   src/snarl_decomposition.cpp

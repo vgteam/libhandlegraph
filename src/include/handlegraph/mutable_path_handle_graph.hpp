@@ -36,6 +36,12 @@ public:
                                              bool is_circular = false) = 0;
     
     /**
+     * Renames a path. Existing path_handle_t's may become invalidated..
+     */
+    virtual path_handle_t rename_path(const path_handle_t& path_handle_t,
+                                      const std::string& new_name);
+    
+    /**
      * Append a visit to a node to the given path. Returns a handle to the new
      * final step on the path which is appended. If the path is cirular, the new
      * step is placed between the steps considered "last" and "first" by the
@@ -52,6 +58,16 @@ public:
      * must remain valid.
      */
     virtual step_handle_t prepend_step(const path_handle_t& path, const handle_t& to_prepend) = 0;
+    
+    /**
+     * Remove the first step in a path. Undefined behavior if path is empty.
+     */
+    virtual void pop_front_step(const path_handle_t& path_handle);
+    
+    /**
+     * Remove the last step in a path. Undefined behavior if path is empty.
+     */
+    virtual void pop_back_step(const path_handle_t& path_handle);
     
     /**
      * Delete a segment of a path and rewrite it as some other sequence of
