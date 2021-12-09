@@ -135,7 +135,7 @@ public:
 template<> struct hash<handlegraph::net_handle_t> {
 public:
     inline size_t operator()(const handlegraph::net_handle_t& net_handle) const {
-        return std::hash<uint64_t>()(reinterpret_cast<const uint64_t*>(&net_handle));
+        return std::hash<int64_t>()(*reinterpret_cast<const int64_t*>(&net_handle));
     }
 };
 
