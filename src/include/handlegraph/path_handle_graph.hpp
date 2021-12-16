@@ -161,19 +161,19 @@ public:
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_path_handle(const Iteratee& iteratee) const {
-    return for_each_path_handle_impl(BoolReturningWrapper<Iteratee, path_handle_t>::wrap(iteratee));
+    return for_each_path_handle_impl(BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
-    return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee));
+    return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Iteratee& iteratee) const {
 
-    auto wrapped = BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee);
+    auto wrapped = BoolReturningWrapper<Iteratee>::wrap(iteratee);
 
     // We break in the case that the path is empty
     if (get_step_count(path) == 0) return true;
