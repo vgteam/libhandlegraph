@@ -87,7 +87,7 @@ bool SegmentHandleGraph::for_each_segment(const Iteratee& iteratee) const {
 }
 
 template<typename Iteratee>
-bool SegmentHandleGraph::for_each_link(const std::function<bool(const edge_t&, const std::string&, const std::string&)>& iteratee) const {
+bool SegmentHandleGraph::for_each_link(const Iteratee& iteratee) const {
     return for_each_link_impl(BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
