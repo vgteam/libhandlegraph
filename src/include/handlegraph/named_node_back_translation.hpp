@@ -36,13 +36,13 @@ public:
      * node in the current graph, to zero or more ranges on orientations of
      * nodes in some prior graph.
      */
-    virtual std::vector<oriented_node_range_t> translate_back(const oriented_node_range_t& range) = 0;
+    virtual std::vector<oriented_node_range_t> translate_back(const oriented_node_range_t& range) const = 0;
     
     /**
      * Get the name of a node in the graph that translate_back() translates
      * into, given its number.
      */
-    virtual std::string get_back_graph_node_name(const nid_t& back_node_id) = 0;
+    virtual std::string get_back_graph_node_name(const nid_t& back_node_id) const = 0;
 
 
 };
