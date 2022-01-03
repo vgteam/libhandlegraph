@@ -364,32 +364,32 @@ public:
 
 template<typename Iteratee>
 bool SnarlDecomposition::for_each_child(const net_handle_t& parent, const Iteratee& iteratee) const {
-    return for_each_child_impl(parent, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+    return for_each_child_impl(parent, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool SnarlDecomposition::for_each_traversal(const net_handle_t& item, const Iteratee& iteratee) const {
-    return for_each_traversal_impl(item, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+    return for_each_traversal_impl(item, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool SnarlDecomposition::follow_net_edges(const net_handle_t& here, const HandleGraph* graph, bool go_left, const Iteratee& iteratee) const {
-    return follow_net_edges_impl(here, graph, go_left, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+    return follow_net_edges_impl(here, graph, go_left, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool SnarlDecomposition::for_each_tippy_child(const net_handle_t& parent, const Iteratee& iteratee) const {
-    return for_each_tippy_child_impl(parent, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+    return for_each_tippy_child_impl(parent, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool SnarlDecomposition::for_each_traversal_start(const net_handle_t& traversal, const Iteratee& iteratee) const {
-    return for_each_traversal_start_impl(traversal, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+    return for_each_traversal_start_impl(traversal, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool SnarlDecomposition::for_each_traversal_end(const net_handle_t& traversal, const Iteratee& iteratee) const {
-    return for_each_traversal_end_impl(traversal, BoolReturningWrapper<Iteratee, net_handle_t>::wrap(iteratee));
+    return for_each_traversal_end_impl(traversal, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 ////////////////////////////////////////////////////////////////////////////

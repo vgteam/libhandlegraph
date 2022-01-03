@@ -24,40 +24,73 @@
 
 namespace handlegraph {
 
-/// This template has a static method that takes a callable on items and
-/// returns a wrapped version that returns the calable's returned bool, or true
-/// for void-returning callables.
-template<typename Iteratee, typename Iterated,
-    typename IterateeReturnType = decltype(std::declval<Iteratee>().operator()(std::declval<Iterated>()))>
-struct BoolReturningWrapper {
-    static inline std::function<bool(const Iterated&)> wrap(const Iteratee& iteratee);
+/**
+ * Tool to get the return type of a function.
+ * See for example <https://stackoverflow.com/a/7943765>
+ * For anything that's possibly a reference to something with with operator(), delegate to the return type of that operator.
+ */
+template<typename Function>
+struct return_type_of : public return_type_of<decltype(&std::remove_reference<Function>::type::operator())>
+{};
+
+/**
+ * Tool to get the return type of a const member function.
+ */
+template<typename Owner, typename Returns, typename... Args>
+struct return_type_of<Returns(Owner::*)(Args...) const> {
+    using type = Returns;
 };
 
+/**
+ * Tool to get the return type of a non-const member function.
+ */
+template<typename Owner, typename Returns, typename... Args>
+struct return_type_of<Returns(Owner::*)(Args...)> {
+    using type = Returns;
+};
 
-////////////////////////////////////////////////////////////////////////////
-// Template Implementations
-////////////////////////////////////////////////////////////////////////////
+/**
+ * Tool to get the return type of a free function.
+ */
+template<typename Returns, typename... Args>
+struct return_type_of<Returns(*)(Args...)> {
+    using type = Returns;
+};
 
-/// This specialization handles wrapping void-returning callables.
-template<typename Iteratee, typename Iterated>
-struct BoolReturningWrapper<Iteratee, Iterated, void> {
-    static inline std::function<bool(const Iterated&)> wrap(const Iteratee& iteratee) {
-        return [&](const Iterated& item){
-            iteratee(item);
+// Then try and pick a different wrapper implementation depending on if the function being wrapped returns bool or not.
+
+/**
+ * Specializations of this class have a wrap() static method that takes a
+ * function and returns a version of that function that returns a bool.
+ */
+template<typename Iteratee, bool ReturnsBool = std::is_same<typename return_type_of<Iteratee>::type, bool>::value>
+struct BoolReturningWrapper {};
+
+/**
+ * Wrap a function that returns bool to return bool: a no-op.
+ */
+template<typename Iteratee>
+struct BoolReturningWrapper<Iteratee, true> {
+    static auto wrap(const Iteratee& iteratee) {
+        return iteratee;
+    }
+};
+
+/**
+ * Wrap a function that returns anything other than bool to return bool.
+ */
+template<typename Iteratee>
+struct BoolReturningWrapper<Iteratee, false> {
+    static auto wrap(const Iteratee& iteratee) {
+        return [&](auto&&... args) -> bool {
+            iteratee(std::forward<decltype(args)>(args)...);
             return true;
         };
     }
 };
 
-/// This specialization handles wrapping bool-returning callables.
-template<typename Iteratee, typename Iterated>
-struct BoolReturningWrapper<Iteratee, Iterated, bool> {
-    static inline std::function<bool(const Iterated&)> wrap(const Iteratee& iteratee) {
-        return [&](const Iterated& item){
-            return iteratee(item);
-        };
-    }
-};
+
+
 
 }
 
