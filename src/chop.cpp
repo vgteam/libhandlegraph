@@ -762,17 +762,23 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
     graph.apply_ordering(handle_order, true);
 }
 
-void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
+static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, nid_t)>* record_change) {
     // borrowed from https://github.com/vgteam/odgi/blob/master/src/subcommand/chop_main.cpp
     
     std::vector<std::tuple<uint64_t, uint64_t, handle_t>> originalRank_inChoppedNodeRank_handle;
     std::vector<std::pair<uint64_t, handle_t>> originalRank_handleToChop;
+    std::vector<nid_t> originalId;
     uint64_t rank = 0;
     graph.for_each_handle([&](const handle_t& handle) {
         if (graph.get_length(handle) > max_node_length) {
             originalRank_handleToChop.push_back(std::make_pair(rank, handle));
         } else {
             originalRank_inChoppedNodeRank_handle.push_back(std::make_tuple(rank, 0, handle));
+        }
+        
+        if (record_change) {
+            // We'll need the ID this original node had, for emitting chops and renumbers
+            originalId.push_back(graph.get_id(handle));
         }
         
         rank++;
@@ -801,7 +807,18 @@ void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
         new_handles.push_back(std::get<2>(x_y_z));
     }
     
-    graph.apply_ordering(new_handles, true);
+    bool ids_changed = graph.apply_ordering(new_handles, true);
+    
+    if (record_change) {
+        // We need to announce our changes
+        if (ids_changed) {
+            // Nodes are now numbered 1 to n in correspondence with originalRank_inChoppedNodeRank_handle.
+            // So we need to walk them together and look at the node lengths, and generate calls to record_change for all the segments (or at least those that aren't full-length and changed number).
+        } else {
+            // Nodes have not been renumbered. Walk originalRank_inChoppedNodeRank_handle and find nodes that actually were divided and make calls to record_change.
+            // TODO: combine into one loop? Or avoid visiting non-modified nodes?
+        }
+    }
 }
 
 
