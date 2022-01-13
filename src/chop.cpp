@@ -821,7 +821,7 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
             // So we need to walk them together and look at the node lengths, and generate calls to record_change for all the segments (or at least those that aren't full-length and changed number).
             size_t offset = 0;
             size_t prevOriginalRank = numeric_limits<size_t>::max();
-            for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size() newRank++) {
+            for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size(); newRank++) {
                 size_t originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
                 if (originalRank != prevOriginalRank) {
                     // Starting a new old node
@@ -831,7 +831,7 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                 // Handles we stored are invalidated, so get based on ID based on rank
                 handle_t newHandle = graph.get_handle((nid_t)(newRank + 1), false);
                 // Announce a new node starting here
-                record_change(originalId[originalRank], offset, graph.get_id(newHandle));
+                (*record_change)(originalId[originalRank], offset, graph.get_id(newHandle));
                 // Update offset for next piece of original node
                 offset += graph.get_length(newHandle);
             }
@@ -840,7 +840,7 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
             // TODO: combine into one loop? Or avoid visiting non-modified nodes?
             size_t offset = 0;
             size_t prevOriginalRank = numeric_limits<size_t>::max();
-            for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size() newRank++) {
+            for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size(); newRank++) {
                 size_t originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
                 if (originalRank != prevOriginalRank) {
                     // Starting a new old node
@@ -851,7 +851,7 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                 // For now just use the existing handles and log all the nodes.
                 handle_t newHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
                 // Announce a new node starting here
-                record_change(originalId[originalRank], offset, graph.get_id(newHandle));
+                (*record_change)(originalId[originalRank], offset, graph.get_id(newHandle));
                 // Update offset for next piece of original node
                 offset += graph.get_length(newHandle);
             }
