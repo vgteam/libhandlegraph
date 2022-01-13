@@ -821,6 +821,14 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
     }
 }
 
+void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, nid_t)>& record_change) {
+    chop(graph, max_node_length, &record_changes);
+}
+
+void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
+    chop(graph, max_node_length, nullptr);
+}
+
 
 }
 }
