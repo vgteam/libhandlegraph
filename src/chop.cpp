@@ -873,16 +873,21 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
             
             // Then look at what's at the front of pieces, which is going to be us.
             handle_t newHandle = pieces.front();
+            size_t length = graph.get_length(newHandle);
+            
+            // Compute the right revOfset, which should no longer include our length.
+            // Its loop invariant is weird to save a length check.
+            revOffset -= length;
+            
             if (idsChanged || originalSplit) {
                 // We are (probably) an important change.
                 // TODO: Elide cases where IDs changed but this ID didn't.
                 // Announce a new node starting here
                 (*record_change)(originalId[originalRank], offset, revOffset, newHandle);
             }
-            // Update offsets for next piece of original node
-            size_t length = graph.get_length(newHandle);
+            
+            // Update forward strand offset for next piece of original node
             offset += length;
-            revOffset -= length;
             // And advance to next piece
             pieces.pop_front();
         }
