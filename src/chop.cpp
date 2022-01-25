@@ -850,6 +850,7 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                 originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
                 // Reset to offset 0.
                 offset = 0;
+                std::cerr << "Original rank " << originalRank << " starts at new rank " << newRank << std::endl;
                 revOffset = 0;
                 // And scan to the end of the original node to get our reverse
                 // strand offset and populate pieces.
@@ -861,8 +862,10 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                     // Until we hit a new node that belongs to a different old node, keep accumulating handles in pieces.
                     handle_t cursorHandle = get_handle_for_new_rank(nextOriginalStarts);
                     pieces.push_back(cursorHandle);
+                    std::cerr << "New rank " << nextOriginalStarts << " is new ID " << graph.get_id(cursorHandle) << std::endl;
                     // And add its length to the offset from the end of the original node
                     revOffset += graph.get_length(cursorHandle);
+                    std::cerr << "And has length " << graph.get_length(cursorHandle) << std::endl;
                     // Then look at the next new node.
                     nextOriginalStarts++;
                 }
@@ -871,6 +874,8 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                 originalSplit = (pieces.size() > 1);
             }
             
+            std::cerr << "So we're at offset " << offset << " forward and " << revOffset << " reverse for total original length " << (offset + revOffset) << std::endl;
+            
             // Then look at what's at the front of pieces, which is going to be us.
             handle_t newHandle = pieces.front();
             size_t length = graph.get_length(newHandle);
@@ -878,6 +883,8 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
             // Compute the right revOfset, which should no longer include our length.
             // Its loop invariant is weird to save a length check.
             revOffset -= length;
+            
+            std::cerr << "So we remove the " << length << " of node " << graph.get_id(newHandle) << " and we have a rev offset of " << revOffset << endl;
             
             if (idsChanged || originalSplit) {
                 // We are (probably) an important change.
@@ -888,6 +895,9 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
             
             // Update forward strand offset for next piece of original node
             offset += length;
+            
+            std::cerr << "And then we add it on the forward strand and we have a forward offset for the next node of " << offset << endl;
+            
             // And advance to next piece
             pieces.pop_front();
         }
