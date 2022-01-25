@@ -762,7 +762,7 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
     graph.apply_ordering(handle_order, true);
 }
 
-static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, nid_t)>* record_change) {
+static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>* record_change) {
     // borrowed from https://github.com/vgteam/odgi/blob/master/src/subcommand/chop_main.cpp
     
     std::vector<std::tuple<uint64_t, uint64_t, handle_t>> originalRank_inChoppedNodeRank_handle;
@@ -812,54 +812,84 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
         new_handles.push_back(std::get<2>(x_y_z));
     }
     
-    bool ids_changed = graph.apply_ordering(new_handles, true);
+    bool idsChanged = graph.apply_ordering(new_handles, true);
     
     if (record_change) {
         // We need to announce our changes
-        if (ids_changed) {
-            // Nodes are now numbered 1 to n in correspondence with originalRank_inChoppedNodeRank_handle.
-            // So we need to walk them together and look at the node lengths, and generate calls to record_change for all the segments (or at least those that aren't full-length and changed number).
-            size_t offset = 0;
-            size_t prevOriginalRank = numeric_limits<size_t>::max();
-            for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size(); newRank++) {
-                size_t originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
-                if (originalRank != prevOriginalRank) {
-                    // Starting a new old node
-                    offset = 0;
-                    prevOriginalRank = originalRank;
+        // Nodes are now numbered 1 to n in correspondence with
+        // originalRank_inChoppedNodeRank_handle.
+        // So we need to walk them together and look at the node lengths,
+        // and generate calls to record_change for all the segments (or at
+        // least those that aren't full-length and changed number).
+        
+        // Where are we aloing the current original node's forward strand?
+        size_t offset = 0;
+        // And where do we start on its reverse strand?
+        size_t revOffset = 0;
+        // What handles are the handles for the new nodes that make up this original node, from here to the end?
+        std::deque<handle_t> pieces;
+        // We set this if the original node was actually split
+        bool originalSplit = false;
+        // We set this to the rank of the original node we are at.
+        size_t originalRank = 0;
+        for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size(); newRank++) {
+            if (pieces.empty()) {
+                // We have started a new original node.
+                // Grab its rank
+                originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
+                // Reset to offset 0.
+                offset = 0;
+                // And scan to the end of the original node to get our reverse strand offset and populate pieces.
+                revOffset = 0;
+                handle_t cursorHandle;
+                if (idsChanged) {
+                    // Handles were invalidated but everything was renumbered by rank.
+                    cursorHandle = graph.get_handle((nid_t)(newRank + 1), false);
+                } else {
+                    // Stored new handles are valid still.
+                    cursorHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
                 }
-                // Handles we stored are invalidated, so get based on ID based on rank
-                handle_t newHandle = graph.get_handle((nid_t)(newRank + 1), false);
-                // Announce a new node starting here
-                (*record_change)(originalId[originalRank], offset, graph.get_id(newHandle));
-                // Update offset for next piece of original node
-                offset += graph.get_length(newHandle);
-            }
-        } else {
-            // Nodes have not been renumbered. Walk originalRank_inChoppedNodeRank_handle and find nodes that actually were divided and make calls to record_change.
-            // TODO: combine into one loop? Or avoid visiting non-modified nodes?
-            size_t offset = 0;
-            size_t prevOriginalRank = numeric_limits<size_t>::max();
-            for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size(); newRank++) {
-                size_t originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
-                if (originalRank != prevOriginalRank) {
-                    // Starting a new old node
-                    offset = 0;
-                    prevOriginalRank = originalRank;
+                pieces.push_back(cursorHandle);
+                size_t nextOriginalStarts = newRank + 1;
+                while (nextOriginalStarts < originalRank_inChoppedNodeRank_handle.size() && get<0>(originalRank_inChoppedNodeRank_handle[nextOriginalStarts]) == originalRank) {
+                    // Until we hit a new node that belongs to a different old node, keep accumulating handles in pieces.
+                    if (idsChanged) {
+                        // Handles were invalidated but everything was renumbered by rank.
+                        cursorHandle = graph.get_handle((nid_t)(nextOriginalStarts + 1), false);
+                    } else {
+                        // Stored new handles are valid still.
+                        cursorHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
+                    }
+                    pieces.push_back(cursorHandle);
+                    // And add its length to the offset from the end of the original node
+                    revOffset += graph.get_length(cursorHandle);
+                    // Then look at the next new node.
+                    nextOriginalStarts++;
                 }
-                // TODO: can we tell if an individual node was split?
-                // For now just use the existing handles and log all the nodes.
-                handle_t newHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
-                // Announce a new node starting here
-                (*record_change)(originalId[originalRank], offset, graph.get_id(newHandle));
-                // Update offset for next piece of original node
-                offset += graph.get_length(newHandle);
+                
+                // Decide if this original node actually got split.
+                originalSplit = (pieces.size() > 1);
             }
+            
+            // Then look at what's at the front of pieces, which is going to be us.
+            handle_t newHandle = pieces.front();
+            if (idsChanged || originalSplit) {
+                // We are (probably) an important change.
+                // TODO: Elide cases where IDs changed but this ID didn't.
+                // Announce a new node starting here
+                (*record_change)(originalId[originalRank], offset, revOffset, newHandle);
+            }
+            // Update offsets for next piece of original node
+            size_t length = graph.get_length(newHandle);
+            offset += length;
+            revOffset -= length;
+            // And advance to next piece
+            pieces.pop_front();
         }
     }
 }
 
-void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, nid_t)>& record_change) {
+void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>& record_change) {
     chop(graph, max_node_length, &record_change);
 }
 

@@ -23,10 +23,14 @@ void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length);
  * Invalidates handles into the graph.
  *
  * Call the given callback, if any nodes change ID or are divided, to describe
- * where each new node ID starts on each old node ID. Passes (old node ID,
- * start offset along old node, new node ID).
+ * where each new node starts on each old node ID. Passes (old node ID, start
+ * offset along old node forward strand, same for reverse strand, new node
+ * handle).
+ *
+ * During the callback, the new node will exist in the graph, while the old
+ * node may not.
  */
-void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, nid_t)>& record_change);
+void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>& record_change);
 
 /**
  * Unchop by gluing abutting handles with just a single edge between them and
