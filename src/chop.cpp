@@ -814,6 +814,17 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
     
     bool idsChanged = graph.apply_ordering(new_handles, true);
     
+    // Define a getter to get new node handle by new node rank.
+    auto get_handle_for_new_rank = [&](size_t rank) {
+        if (idsChanged) {
+            // Handles were invalidated but everything was renumbered by rank.
+            return graph.get_handle((nid_t)(rank + 1), false);
+        } else {
+            // Stored new handles are valid still.
+            return get<2>(originalRank_inChoppedNodeRank_handle[rank]);
+        }
+    };
+    
     if (record_change) {
         // We need to announce our changes
         // Nodes are now numbered 1 to n in correspondence with
@@ -839,30 +850,16 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                 originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
                 // Reset to offset 0.
                 offset = 0;
-                // And scan to the end of the original node to get our reverse strand offset and populate pieces.
-                handle_t cursorHandle;
-                if (idsChanged) {
-                    // Handles were invalidated but everything was renumbered by rank.
-                    cursorHandle = graph.get_handle((nid_t)(newRank + 1), false);
-                } else {
-                    // Stored new handles are valid still.
-                    cursorHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
-                }
-                pieces.push_back(cursorHandle);
+                revOffset = 0;
+                // And scan to the end of the original node to get our reverse
+                // strand offset and populate pieces.
                 // The reverse offset has to have the first handle's length in
                 // it, because the loop invariant is shifted to save a second
                 // length call on each subsequent loop.
-                revOffset = graph.get_length(cursorHandle);
-                size_t nextOriginalStarts = newRank + 1;
+                size_t nextOriginalStarts = newRank;
                 while (nextOriginalStarts < originalRank_inChoppedNodeRank_handle.size() && get<0>(originalRank_inChoppedNodeRank_handle[nextOriginalStarts]) == originalRank) {
                     // Until we hit a new node that belongs to a different old node, keep accumulating handles in pieces.
-                    if (idsChanged) {
-                        // Handles were invalidated but everything was renumbered by rank.
-                        cursorHandle = graph.get_handle((nid_t)(nextOriginalStarts + 1), false);
-                    } else {
-                        // Stored new handles are valid still.
-                        cursorHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
-                    }
+                    handle_t cursorHandle = get_handle_for_new_rank(nextOriginalStarts);
                     pieces.push_back(cursorHandle);
                     // And add its length to the offset from the end of the original node
                     revOffset += graph.get_length(cursorHandle);
