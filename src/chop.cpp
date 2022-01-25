@@ -840,7 +840,6 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                 // Reset to offset 0.
                 offset = 0;
                 // And scan to the end of the original node to get our reverse strand offset and populate pieces.
-                revOffset = 0;
                 handle_t cursorHandle;
                 if (idsChanged) {
                     // Handles were invalidated but everything was renumbered by rank.
@@ -850,6 +849,10 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
                     cursorHandle = get<2>(originalRank_inChoppedNodeRank_handle[newRank]);
                 }
                 pieces.push_back(cursorHandle);
+                // The reverse offset has to have the first handle's length in
+                // it, because the loop invariant is shifted to save a second
+                // length call on each subsequent loop.
+                revOffset = graph.get_length(cursorHandle);
                 size_t nextOriginalStarts = newRank + 1;
                 while (nextOriginalStarts < originalRank_inChoppedNodeRank_handle.size() && get<0>(originalRank_inChoppedNodeRank_handle[nextOriginalStarts]) == originalRank) {
                     // Until we hit a new node that belongs to a different old node, keep accumulating handles in pieces.
