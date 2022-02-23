@@ -56,6 +56,7 @@ public:
     /// handles come in the order and orientation appropriate for the handle
     /// passed in.
     /// Updates stored paths.
+    /// This invalidates the passed handles, but not other handles.
     virtual std::vector<handle_t> divide_handle(const handle_t& handle, const std::vector<size_t>& offsets) = 0;
     
     /// Specialization of divide_handle for a single division point
@@ -69,13 +70,17 @@ public:
     /// performance.
     /// Note: Ideally, this method is called one time once there is expected to be
     /// few graph modifications in the future.
+    /// This may invalidate outstanding handles.
     virtual void optimize(bool allow_id_reassignment = true) = 0;
 
     /// Reorder the graph's internal structure to match that given.
     /// This sets the order that is used for iteration in functions like for_each_handle.
-    /// Optionally may compact the id space of the graph to match the ordering, from 1->|ordering|.
+    /// If compact_ids is true, may (but will not necessarily) compact the id space of the graph to match the ordering, from 1->|ordering|.
+    /// In other cases, node IDs will be preserved.
     /// This may be a no-op in the case of graph implementations that do not have any mechanism to maintain an ordering.
-    virtual void apply_ordering(const std::vector<handle_t>& order, bool compact_ids = false) = 0;
+    /// This may invalidate outstanding handles.
+    /// Returns true if node IDs actually were adjusted to match the given order, and false if they remain unchanged.
+    virtual bool apply_ordering(const std::vector<handle_t>& order, bool compact_ids = false) = 0;
 
     /// Set a minimum id to increment the id space by, used as a hint during construction.
     /// May have no effect on a backing implementation.

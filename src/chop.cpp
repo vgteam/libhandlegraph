@@ -762,11 +762,12 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
     graph.apply_ordering(handle_order, true);
 }
 
-void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
+static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>* record_change) {
     // borrowed from https://github.com/vgteam/odgi/blob/master/src/subcommand/chop_main.cpp
     
     std::vector<std::tuple<uint64_t, uint64_t, handle_t>> originalRank_inChoppedNodeRank_handle;
     std::vector<std::pair<uint64_t, handle_t>> originalRank_handleToChop;
+    std::vector<nid_t> originalId;
     uint64_t rank = 0;
     graph.for_each_handle([&](const handle_t& handle) {
         if (graph.get_length(handle) > max_node_length) {
@@ -775,8 +776,18 @@ void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
             originalRank_inChoppedNodeRank_handle.push_back(std::make_tuple(rank, 0, handle));
         }
         
+        if (record_change) {
+            // We'll need the ID this original node had, for emitting chops and renumbers
+            originalId.push_back(graph.get_id(handle));
+        }
+        
         rank++;
     });
+    
+    if (originalRank_handleToChop.empty()) {
+        // No node is long enough to chop. Do nothing.
+        return;
+    }
     
     for (auto rank_handle : originalRank_handleToChop) {
         // get divide points
@@ -801,7 +812,94 @@ void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
         new_handles.push_back(std::get<2>(x_y_z));
     }
     
-    graph.apply_ordering(new_handles, true);
+    bool idsChanged = graph.apply_ordering(new_handles, true);
+    
+    // Define a getter to get new node handle by new node rank.
+    auto get_handle_for_new_rank = [&](size_t rank) {
+        if (idsChanged) {
+            // Handles were invalidated but everything was renumbered by rank.
+            return graph.get_handle((nid_t)(rank + 1), false);
+        } else {
+            // Stored new handles are valid still.
+            return get<2>(originalRank_inChoppedNodeRank_handle[rank]);
+        }
+    };
+    
+    if (record_change) {
+        // We need to announce our changes
+        // Nodes are now numbered 1 to n in correspondence with
+        // originalRank_inChoppedNodeRank_handle.
+        // So we need to walk them together and look at the node lengths,
+        // and generate calls to record_change for all the segments (or at
+        // least those that aren't full-length and changed number).
+        
+        // Where are we aloing the current original node's forward strand?
+        size_t offset = 0;
+        // And where do we start on its reverse strand?
+        size_t revOffset = 0;
+        // What handles are the handles for the new nodes that make up this original node, from here to the end?
+        std::deque<handle_t> pieces;
+        // We set this if the original node was actually split
+        bool originalSplit = false;
+        // We set this to the rank of the original node we are at.
+        size_t originalRank = 0;
+        for (size_t newRank = 0; newRank < originalRank_inChoppedNodeRank_handle.size(); newRank++) {
+            if (pieces.empty()) {
+                // We have started a new original node.
+                // Grab its rank
+                originalRank = get<0>(originalRank_inChoppedNodeRank_handle[newRank]);
+                // Reset to offset 0.
+                offset = 0;
+                revOffset = 0;
+                // And scan to the end of the original node to get our reverse
+                // strand offset and populate pieces.
+                // The reverse offset has to have the first handle's length in
+                // it, because the loop invariant is shifted to save a second
+                // length call on each subsequent loop.
+                size_t nextOriginalStarts = newRank;
+                while (nextOriginalStarts < originalRank_inChoppedNodeRank_handle.size() && get<0>(originalRank_inChoppedNodeRank_handle[nextOriginalStarts]) == originalRank) {
+                    // Until we hit a new node that belongs to a different old node, keep accumulating handles in pieces.
+                    handle_t cursorHandle = get_handle_for_new_rank(nextOriginalStarts);
+                    pieces.push_back(cursorHandle);
+                    // And add its length to the offset from the end of the original node
+                    revOffset += graph.get_length(cursorHandle);
+                    // Then look at the next new node.
+                    nextOriginalStarts++;
+                }
+                
+                // Decide if this original node actually got split.
+                originalSplit = (pieces.size() > 1);
+            }
+            
+            // Then look at what's at the front of pieces, which is going to be us.
+            handle_t newHandle = pieces.front();
+            size_t length = graph.get_length(newHandle);
+            
+            // Compute the right revOfset, which should no longer include our length.
+            // Its loop invariant is weird to save a length check.
+            revOffset -= length;
+            
+            if (idsChanged || originalSplit) {
+                // We are (probably) an important change.
+                // TODO: Elide cases where IDs changed but this ID didn't.
+                // Announce a new node starting here
+                (*record_change)(originalId[originalRank], offset, revOffset, newHandle);
+            }
+            
+            // Update forward strand offset for next piece of original node
+            offset += length;
+            // And advance to next piece
+            pieces.pop_front();
+        }
+    }
+}
+
+void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>& record_change) {
+    chop(graph, max_node_length, &record_change);
+}
+
+void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
+    chop(graph, max_node_length, nullptr);
 }
 
 
