@@ -98,12 +98,18 @@ public:
     /// Execute a function on each path_handle_t in the graph. If it returns bool, and
     /// it returns false, stop iteration. Returns true if we finished and false if we
     /// stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_path_handle(const Iteratee& iteratee) const;
     
     /// Execute a function on each step (step_handle_t) of a handle
     /// in any path. If it returns bool and returns false, stop iteration.
     /// Returns true if we finished and false if we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
     
@@ -115,11 +121,17 @@ protected:
     
     /// Execute a function on each path in the graph. If it returns false, stop
     /// iteration. Returns true if we finished and false if we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_path_handle_impl(const std::function<bool(const path_handle_t&)>& iteratee) const = 0;
     
     /// Execute a function on each step of a handle in any path. If it
     /// returns false, stop iteration. Returns true if we finished and false if
     /// we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_step_on_handle_impl(const handle_t& handle,
         const std::function<bool(const step_handle_t&)>& iteratee) const = 0;
 
