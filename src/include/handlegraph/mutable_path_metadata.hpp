@@ -19,7 +19,7 @@ namespace handlegraph {
  * a name-based create_path_handle() and special path name formatting.
  *
  */
-class MutablePathMetadata {
+class MutablePathMetadata : virtual public PathMetadata {
 public:
     
     virtual ~MutablePathMetadata() = default;
@@ -60,7 +60,19 @@ protected:
      */
     virtual path_handle_t create_path_handle(const std::string& name,
                                              bool is_circular = false) = 0;
-    
+                                             
+private:
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Internal machinery for path name mini-format
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// Separator used to separate path name components
+    static const char SEPARATOR;
+    // Ranges are set off with some additional characters.
+    static const char RANGE_START_SEPARATOR;
+    static const char RANGE_END_SEPARATOR;
+    static const char RANGE_TERMINATOR;
     
 };
 

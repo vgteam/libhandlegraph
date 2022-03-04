@@ -14,12 +14,6 @@ const int64_t PathMetadata::NO_PHASE_BLOCK = -1;
 const int64_t PathMetadata::NO_END_POSITION = -1;
 const std::pair<int64_t, int64_t> PathMetadata::NO_SUBRANGE{-1, PathMetadata::NO_END_POSITION};
 
-// And these are the constants for parsing path names out into metadata
-const char PathMetadata::SEPARATOR = '#';
-const char PathMetadata::RANGE_START_SEPARATOR = '[';
-const char PathMetadata::RANGE_END_SEPARATOR = '-';
-const char PathMetadata::RANGE_TERMINATOR = ']';
-
 // Format examples:
 // GRCh38#chrM (a reference)
 // CHM13#chr12 (another reference)
@@ -171,6 +165,28 @@ std::pair<int64_t, int64_t> PathMetadata::get_subrange(const path_handle_t& hand
     }
     
     return to_return;
+}
+
+bool PathMetadata::for_each_path_of_sense_impl(const Sense& sense, const std::function<bool(const path_handle_t&)>& iteratee) const {
+    return for_each_path_handle_impl([&](const path_handle_t& handle) {
+        if (get_sense(handle) != sense) {
+            // Skip this non-matching handle
+            return true;
+        }
+        // And emit any matching handles
+        return iteratee(handle);
+    });
+}
+    
+bool PathMetadata::for_each_step_of_sense_impl(const handle_t& visited, const Sense& sense, const std::function<bool(const step_handle_t&)>& iteratee) const {
+    return for_each_step_on_handle_impl(visited, [&](const step_handle_t& handle) {
+        if (get_sense(get_path_handle_of_step(handle)) != sense) {
+            // Skip this non-matching path's step
+            return true;
+        }
+        // And emit any steps on matching paths
+        return iteratee(handle);
+    });
 }
 
 }

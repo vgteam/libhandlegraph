@@ -124,6 +124,11 @@ protected:
     // Backing protected virtual methods that have a default implementation
     ////////////////////////////////////////////////////////////////////////////
     
+    // The default implementations for these scanning methods falls back on the
+    // generic for_each_path_handle/for_each_step_on_handle and just filters.
+    // If those are implemented to elide haplotype paths, these need to be
+    // implemented to allow them to be retrieved.
+    
     /// Loop through all the paths with the given sense. Returns false and
     /// stops if the iteratee returns false.
     virtual bool for_each_path_of_sense_impl(const Sense& sense, const std::function<bool(const path_handle_t&)>& iteratee) const;
@@ -136,8 +141,31 @@ protected:
     // Backing methods that need to be implemented for default implementation
     ////////////////////////////////////////////////////////////////////////////
     
+    // These are really PathHandleGraph methods; we just have to know they exist
+    
     /// Look up the name of a path from a handle to it
     virtual std::string get_path_name(const path_handle_t& path_handle) const = 0;
+    
+    /// Returns a handle to the path that an step is on
+    virtual path_handle_t get_path_handle_of_step(const step_handle_t& step_handle) const = 0;
+    
+    /// Execute a function on each path in the graph. If it returns false, stop
+    /// iteration. Returns true if we finished and false if we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths and properly
+    /// implements for_each_path_of_sense to retrieve them, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
+    virtual bool for_each_path_handle_impl(const std::function<bool(const path_handle_t&)>& iteratee) const = 0;
+    
+    /// Execute a function on each step of a handle in any path. If it
+    /// returns false, stop iteration. Returns true if we finished and false if
+    /// we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths and properly
+    /// implements for_each_step_of_sense to find them, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
+    virtual bool for_each_step_on_handle_impl(const handle_t& handle,
+        const std::function<bool(const step_handle_t&)>& iteratee) const = 0;
     
 private:
     
@@ -145,14 +173,6 @@ private:
     // Internal machinery for path name mini-format
     ////////////////////////////////////////////////////////////////////////////
     
-    /// Separator used to separate path name components
-    static const char SEPARATOR;
-    // Ranges are set off with some additional characters.
-    static const char RANGE_START_SEPARATOR;
-    static const char RANGE_END_SEPARATOR;
-    static const char RANGE_TERMINATOR;
-    
-    // And we use these for parsing
     static const std::regex FORMAT;
     static const size_t ASSEMBLY_OR_NAME_MATCH;
     static const size_t LOCUS_MATCH_WITHOUT_HAPLOTYPE;
