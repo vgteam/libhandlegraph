@@ -44,17 +44,26 @@ void copy_path_handle_graph(const PathHandleGraph* from, MutablePathMutableHandl
     //            throw runtime_error("error:[copy_handle_graph] cannot copy into a non-empty graph");
     //        }
     
-    // copy paths
-    from->for_each_path_handle([&](const path_handle_t& path_handle) {
-        copy_path(from, path_handle, into);
-    });
+    // For every sense of path
+    for (auto& sense : {PathMetadata::SENSE_REFERENCE, PathMetadata::SENSE_GENERIC, PathMetadata::SENSE_HAPLOTYPE}) {
+        // copy paths of that sense
+        from->for_each_path_of_sense(sense, [&](const path_handle_t& path_handle) {
+            copy_path(from, path_handle, into);
+        });
+    }
 }
 
 void copy_path(const PathHandleGraph* from, const path_handle_t& path,
                MutablePathHandleGraph* into) {
     
-    // init path
-    path_handle_t copied = into->create_path_handle(from->get_path_name(path), from->get_is_circular(path));
+    // We know that the new path metadata API is there, so use it
+    path_handle_t copied = into->create_path(from->get_sense(path),
+                                             from->get_sample_name(path),
+                                             from->get_locus_name(path),
+                                             from->get_haplotype(path),
+                                             from->get_phase_block(path),
+                                             from->get_subrange(path),
+                                             from->get_is_circular(path));
     
     // copy steps
     for (handle_t handle : from->scan_path(path)) {
