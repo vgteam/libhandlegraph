@@ -24,7 +24,7 @@ const std::pair<int64_t, int64_t> PathMetadata::NO_SUBRANGE{-1, PathMetadata::NO
 // We don't support extraneous [] in name components in the structured format, or in names with ranges.
 // TODO: escape them?
 
-// So we match a regax for:
+// So we match a regex for:
 // One separator-free name component
 // Up to 3 other optional separator-free name components, led by separators tacked on by non-capturing groups. Last one must be a number.
 // Possibly a bracket-bounded non-capturing group at the end
@@ -39,10 +39,38 @@ const size_t PathMetadata::PHASE_BLOCK_MATCH = 4;
 const size_t PathMetadata::RANGE_START_MATCH = 5;
 const size_t PathMetadata::RANGE_END_MATCH = 6;
 
+// And these are the constants for composing path names from metadata
+const char PathMetadata::SEPARATOR = '#';
+const char PathMetadata::RANGE_START_SEPARATOR = '[';
+const char PathMetadata::RANGE_END_SEPARATOR = '-';
+const char PathMetadata::RANGE_TERMINATOR = ']';
+
 
 PathMetadata::Sense PathMetadata::get_sense(const path_handle_t& handle) const {
-    // Get the name.
-    std::string path_name = get_path_name(handle);
+    return PathMetadata::parse_sense(get_path_name(handle));
+}
+
+std::string PathMetadata::get_sample_name(const path_handle_t& handle) const {
+    return PathMetadata::parse_sample_name(get_path_name(handle));
+}
+
+std::string PathMetadata::get_locus_name(const path_handle_t& handle) const {
+    return PathMetadata::parse_locus_name(get_path_name(handle));
+}
+
+int64_t PathMetadata::get_haplotype(const path_handle_t& handle) const {
+    return PathMetadata::parse_haplotype(get_path_name(handle));
+}
+
+int64_t PathMetadata::get_phase_block(const path_handle_t& handle) const {
+    return PathMetadata::parse_phase_block(get_path_name(handle));
+}
+
+std::pair<int64_t, int64_t> PathMetadata::get_subrange(const path_handle_t& handle) const {
+    return PathMetadata::parse_subrange(get_path_name(handle));
+}
+
+PathMetadata::Sense PathMetadata::parse_sense(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -62,9 +90,7 @@ PathMetadata::Sense PathMetadata::get_sense(const path_handle_t& handle) const {
 
 
 
-std::string PathMetadata::get_sample_name(const path_handle_t& handle) const {
-    // Get the name.
-    std::string path_name = get_path_name(handle);
+std::string PathMetadata::parse_sample_name(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -82,9 +108,7 @@ std::string PathMetadata::get_sample_name(const path_handle_t& handle) const {
 }
 
 
-std::string PathMetadata::get_locus_name(const path_handle_t& handle) const {
-    // Get the name.
-    std::string path_name = get_path_name(handle);
+std::string PathMetadata::parse_locus_name(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -105,9 +129,7 @@ std::string PathMetadata::get_locus_name(const path_handle_t& handle) const {
 }
 
 
-int64_t PathMetadata::get_haplotype(const path_handle_t& handle) const {
-    // Get the name.
-    std::string path_name = get_path_name(handle);
+int64_t PathMetadata::parse_haplotype(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -126,9 +148,7 @@ int64_t PathMetadata::get_haplotype(const path_handle_t& handle) const {
 }
 
 
-int64_t PathMetadata::get_phase_block(const path_handle_t& handle) const {
-    // Get the name.
-    std::string path_name = get_path_name(handle);
+int64_t PathMetadata::parse_phase_block(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -146,11 +166,9 @@ int64_t PathMetadata::get_phase_block(const path_handle_t& handle) const {
     }
 }
 
-std::pair<int64_t, int64_t> PathMetadata::get_subrange(const path_handle_t& handle) const {
+std::pair<int64_t, int64_t> PathMetadata::parse_subrange(const std::string& path_name) {
     auto to_return = NO_SUBRANGE;
     
-    // Get the name.
-    std::string path_name = get_path_name(handle);
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -165,6 +183,66 @@ std::pair<int64_t, int64_t> PathMetadata::get_subrange(const path_handle_t& hand
     }
     
     return to_return;
+}
+
+std::string PathMetadata::create_path_name(const PathMetadata::Sense& sense,
+                                           const std::string& sample,
+                                           const std::string& locus,
+                                           const int64_t& haplotype,
+                                           const int64_t& phase_block,
+                                           const std::pair<int64_t, int64_t>& subrange) {
+    
+    std::stringstream name_builder;
+    
+    if (sample != NO_SAMPLE_NAME) {
+        if (sense == SENSE_GENERIC) {
+            throw std::runtime_error("Generic path must have a sample");
+        }
+        name_builder << sample << SEPARATOR;
+    }
+    if (locus != NO_LOCUS_NAME) {
+        name_builder << locus;
+    } else {
+        if (sense == SENSE_GENERIC) {
+            throw std::runtime_error("Generic path must have a locus/name");
+        } else if (sense == SENSE_REFERENCE) {
+            throw std::runtime_error("Referecne path must have a locus");
+        } else if (sense == SENSE_HAPLOTYPE) {
+            throw std::runtime_error("Haplotype path must have a locus");
+        }
+    }
+    if (haplotype != NO_HAPLOTYPE) {
+        if (sense == SENSE_GENERIC) {
+            throw std::runtime_error("Generic path must have a haplotype number");
+        }
+        name_builder << SEPARATOR << haplotype;
+    } else {
+        if (sense == SENSE_HAPLOTYPE) {
+            throw std::runtime_error("Haplotype path must have a haplotype number");
+        }
+    }
+    if (phase_block != NO_PHASE_BLOCK) {
+        if (sense == SENSE_GENERIC) {
+            throw std::runtime_error("Generic path must have a phase block");
+        } else if (sense == SENSE_REFERENCE) {
+            throw std::runtime_error("Reference path must have a phase block");
+        }
+        name_builder << SEPARATOR << phase_block;
+    } else {
+        if (sense == SENSE_HAPLOTYPE) {
+            throw std::runtime_error("Haplotype path must have a phase block");
+        }
+    }
+    if (subrange != NO_SUBRANGE) {
+        // Everything can have a subrange.
+        name_builder << RANGE_START_SEPARATOR << subrange.first;
+        if (subrange.second != NO_END_POSITION) {
+            name_builder << RANGE_END_SEPARATOR << subrange.second;
+        }
+        name_builder << RANGE_TERMINATOR;
+    }
+    
+    return name_builder.str();
 }
 
 bool PathMetadata::for_each_path_of_sense_impl(const Sense& sense, const std::function<bool(const path_handle_t&)>& iteratee) const {

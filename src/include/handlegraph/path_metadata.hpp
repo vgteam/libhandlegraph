@@ -104,6 +104,46 @@ public:
     static const int64_t NO_END_POSITION;
     
     ////////////////////////////////////////////////////////////////////////////
+    // Tools for converting back and forth with single-string path names
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /// Extract the sense of a path from the given formatted path name, if
+    /// possible. If not possible, return SENSE_GENERIC.
+    static Sense parse_sense(const std::string& path_name);
+    
+    /// Get the name of the sample or assembly embedded in the given formatted
+    /// path name, or NO_SAMPLE_NAME if it does not belong to one.
+    static std::string parse_sample_name(const std::string& path_name);
+    
+    /// Get the name of the contig or gene  embedded in the given formatted
+    /// path name, or NO_LOCUS_NAME if it does not belong to one.
+    static std::string parse_locus_name(const std::string& path_name);
+    
+    /// Get the haplotype number (0 or 1, for diploid) embedded in the given
+    /// formatted path name, or NO_HAPLOTYPE if it does not belong to one.
+    static int64_t parse_haplotype(const std::string& path_name);
+    
+    /// Get the phase block number (contiguously phased region of a sample,
+    /// contig, and haplotype) embedded in the given formatted path name, or
+    /// NO_PHASE_BLOCK if it does not belong to one.
+    static int64_t parse_phase_block(const std::string& path_name);
+    
+    /// Get the bounds embedded in the given formatted path name, or
+    /// NO_SUBRANGE if they are absent. If no end position is stored,
+    /// NO_END_POSITION may be returned for the end position.
+    static std::pair<int64_t, int64_t> parse_subrange(const std::string& path_name);
+    
+    /// Compose a formatted path name for the given metadata. Any item can be
+    /// the corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME,
+    /// PathMetadata::NO_PHASE_BLOCK, etc.).
+    static std::string create_path_name(const PathMetadata::Sense& sense,
+                                        const std::string& sample,
+                                        const std::string& locus,
+                                        const int64_t& haplotype,
+                                        const int64_t& phase_block,
+                                        const std::pair<int64_t, int64_t>& subrange);
+    
+    ////////////////////////////////////////////////////////////////////////////
     // Stock interface that uses backing virtual methods
     ////////////////////////////////////////////////////////////////////////////
     
@@ -181,6 +221,13 @@ private:
     static const size_t PHASE_BLOCK_MATCH;
     static const size_t RANGE_START_MATCH;
     static const size_t RANGE_END_MATCH;
+    
+    /// Separator used to separate path name components
+    static const char SEPARATOR;
+    // Ranges are set off with some additional characters.
+    static const char RANGE_START_SEPARATOR;
+    static const char RANGE_END_SEPARATOR;
+    static const char RANGE_TERMINATOR;
 };
 
 ////////////////////////////////////////////////////////////////////////////

@@ -29,11 +29,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     
     /**
-     * Add a path with the given metadata. Any item can be the
-     *  corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME, PathMetadata::NO_PHASE_BLOCK, etc.).
+     * Add a path with the given metadata. Any item can be the corresponding
+     * unset sentinel (PathMetadata::NO_LOCUS_NAME,
+     * PathMetadata::NO_PHASE_BLOCK, etc.).
      * 
-     *  Implementations may refuse to store paths-or-threads of certain senses
-     *  when relevant fields are unset.
+     * Implementations may refuse to store paths-or-threads of certain senses
+     * when relevant fields are unset.
      * 
      * Handles to other paths must
      * remain valid.
@@ -61,19 +62,6 @@ protected:
     virtual path_handle_t create_path_handle(const std::string& name,
                                              bool is_circular = false) = 0;
                                              
-private:
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Internal machinery for path name mini-format
-    ////////////////////////////////////////////////////////////////////////////
-
-    /// Separator used to separate path name components
-    static const char SEPARATOR;
-    // Ranges are set off with some additional characters.
-    static const char RANGE_START_SEPARATOR;
-    static const char RANGE_END_SEPARATOR;
-    static const char RANGE_TERMINATOR;
-    
 };
 
 }
