@@ -133,6 +133,15 @@ public:
     /// NO_END_POSITION may be returned for the end position.
     static std::pair<int64_t, int64_t> parse_subrange(const std::string& path_name);
     
+    /// Decompose a formatted path name into metadata.
+    static void parse_path_name(const std::string& path_name,
+                                PathMetadata::Sense& sense,
+                                std::string& sample,
+                                std::string& locus,
+                                int64_t& haplotype,
+                                int64_t& phase_block,
+                                std::pair<int64_t, int64_t>& subrange);
+
     /// Compose a formatted path name for the given metadata. Any item can be
     /// the corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME,
     /// PathMetadata::NO_PHASE_BLOCK, etc.).

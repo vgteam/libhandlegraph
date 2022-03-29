@@ -185,6 +185,76 @@ std::pair<int64_t, int64_t> PathMetadata::parse_subrange(const std::string& path
     return to_return;
 }
 
+void PathMetadata::parse_path_name(const std::string& path_name,
+                                   PathMetadata::Sense& sense,
+                                   std::string& sample,
+                                   std::string& locus,
+                                   int64_t& haplotype,
+                                   int64_t& phase_block,
+                                   std::pair<int64_t, int64_t>& subrange) {
+
+    std::smatch result;
+    auto matched = std::regex_match(path_name, result, FORMAT);
+    
+    // Parse out each piece.
+    // TODO: can we unify this with the other places we parse out from the
+    // regex? With yet a third set of functions?
+    if (matched) {
+        if (result[PHASE_BLOCK_MATCH].matched) {
+            sense = SENSE_HAPLOTYPE;
+        } else {
+            sense = SENSE_REFERENCE;
+        }
+        
+        if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+            // There's a phase and a locus and a sample
+            sample = result[ASSEMBLY_OR_NAME_MATCH].str();
+            locus = result[LOCUS_MATCH_WITH_HAPLOTYPE].str();
+            haplotype = std::stoll(result[HAPLOTYPE_MATCH].str());
+        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched) {
+            // There's a locus but no phase, and a sample
+            sample = result[ASSEMBLY_OR_NAME_MATCH].str();
+            locus = result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].str();
+            haplotype = NO_HAPLOTYPE;
+        } else {
+            // There's nothing but the locus and maybe a range.
+            sample = NO_SAMPLE_NAME;
+            locus = result[ASSEMBLY_OR_NAME_MATCH].str();
+            haplotype = NO_HAPLOTYPE;
+        }
+        
+        if (result[PHASE_BLOCK_MATCH].matched) {
+            // There's a phase block.
+            // We just assume it's actually a number.
+            phase_block = std::stoll(result[PHASE_BLOCK_MATCH].str());
+        } else {
+            // No phase block is stored
+            phase_block = NO_PHASE_BLOCK;
+        }
+        
+        if (result[RANGE_START_MATCH].matched) {
+            // There is a range start, so pasre it
+            subrange.first = std::stoll(result[RANGE_START_MATCH].str());
+            if (result[RANGE_END_MATCH].matched) {
+                // There is also an end, so parse that too
+                subrange.second = std::stoll(result[RANGE_END_MATCH].str());
+            } else {
+                subrange.second = NO_END_POSITION;
+            }
+        } else {
+            subrange = NO_SUBRANGE;
+        }
+    } else {
+        // Just a generic path where the locus is all of it.
+        sense = SENSE_GENERIC;
+        sample = NO_SAMPLE_NAME;
+        locus = path_name;
+        haplotype = NO_HAPLOTYPE;
+        phase_block = NO_PHASE_BLOCK;
+        subrange = NO_SUBRANGE;
+    }
+}
+
 std::string PathMetadata::create_path_name(const PathMetadata::Sense& sense,
                                            const std::string& sample,
                                            const std::string& locus,
