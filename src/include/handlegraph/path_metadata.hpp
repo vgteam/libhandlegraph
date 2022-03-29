@@ -10,6 +10,7 @@
 #include <utility>
 #include <string>
 #include <regex>
+#include <unordered_set>
 
 namespace handlegraph {
 
@@ -161,6 +162,20 @@ public:
     template<typename Iteratee>
     bool for_each_path_of_sense(const Sense& sense, const Iteratee& iteratee) const;
     
+    /// Loop through all the paths with the given sample name.
+    /// Returns false and stops if the iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const;
+    
+    /// Loop through all the paths matching the given query. Query elements
+    /// which are null match everything. Returns false and stops if the
+    /// iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_matching(const std::unordered_set<PathMetadata::Sense>* senses,
+                                const std::unordered_set<std::string>* samples,
+                                const std::unordered_set<std::string>* loci,
+                                const Iteratee& iteratee) const;
+    
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
     /// TODO: Take the opportunity to make steps track orientation better?
@@ -178,9 +193,13 @@ protected:
     // If those are implemented to elide haplotype paths, these need to be
     // implemented to allow them to be retrieved.
     
-    /// Loop through all the paths with the given sense. Returns false and
-    /// stops if the iteratee returns false.
-    virtual bool for_each_path_of_sense_impl(const Sense& sense, const std::function<bool(const path_handle_t&)>& iteratee) const;
+    /// Loop through all the paths matching the given query. Query elements
+    /// which are null match everything. Returns false and stops if the
+    /// iteratee returns false.
+    virtual bool for_each_path_matching_impl(const std::unordered_set<PathMetadata::Sense>* senses,
+                                             const std::unordered_set<std::string>* samples,
+                                             const std::unordered_set<std::string>* loci,
+                                             const std::function<bool(const path_handle_t&)>& iteratee) const;
     
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
@@ -245,7 +264,22 @@ private:
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sense(const Sense& sense, const Iteratee& iteratee) const {
-    return for_each_path_of_sense_impl(sense, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    std::unordered_set<PathMetadata::Sense> senses{sense};
+    return for_each_path_matching_impl(&senses, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const {
+    std::unordered_set<std::string> samples{sample};
+    return for_each_path_matching_impl(nullptr, &samples, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata::Sense>* senses,
+                                          const std::unordered_set<std::string>* samples,
+                                          const std::unordered_set<std::string>* loci,
+                                          const Iteratee& iteratee) const {
+    return for_each_path_matching_impl(senses, samples, loci, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>

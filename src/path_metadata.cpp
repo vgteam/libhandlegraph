@@ -315,10 +315,21 @@ std::string PathMetadata::create_path_name(const PathMetadata::Sense& sense,
     return name_builder.str();
 }
 
-bool PathMetadata::for_each_path_of_sense_impl(const Sense& sense, const std::function<bool(const path_handle_t&)>& iteratee) const {
+bool PathMetadata::for_each_path_matching_impl(const std::unordered_set<PathMetadata::Sense>* senses,
+                                               const std::unordered_set<std::string>* samples,
+                                               const std::unordered_set<std::string>* loci,
+                                               const std::function<bool(const path_handle_t&)>& iteratee) const {
     return for_each_path_handle_impl([&](const path_handle_t& handle) {
-        if (get_sense(handle) != sense) {
-            // Skip this non-matching handle
+        if (senses && !senses->count(get_sense(handle))) {
+            // Wrong sense
+            return true;
+        }
+        if (samples && !samples->count(get_sample_name(handle))) {
+            // Wrong sample
+            return true;
+        }
+        if (loci && !loci->count(get_locus_name(handle))) {
+            // Wrong sample
             return true;
         }
         // And emit any matching handles
