@@ -280,7 +280,7 @@ std::string PathMetadata::create_path_name(const PathMetadata::Sense& sense,
         if (sense == SENSE_GENERIC) {
             throw std::runtime_error("Generic path cannot have a haplotype number");
         }
-        name_builder << SEPARATOR << haplotype;
+        name_builder << haplotype << SEPARATOR;
     } else {
         if (sense == SENSE_HAPLOTYPE) {
             throw std::runtime_error("Haplotype path must have a haplotype number");
