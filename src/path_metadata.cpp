@@ -78,9 +78,12 @@ PathMetadata::Sense PathMetadata::parse_sense(const std::string& path_name) {
         if (result[PHASE_BLOCK_MATCH].matched) {
             // It's a haplotype because it has a phase block
             return SENSE_HAPLOTYPE;
-        } else {
-            // It's a reference
+        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+            // It's a reference because it has a locus and a sample
             return SENSE_REFERENCE;
+        } else {
+            // It's just a one-piece generic name
+            return SENSE_GENERIC;
         }
     } else {
         // We can't parse this at all.
@@ -201,9 +204,14 @@ void PathMetadata::parse_path_name(const std::string& path_name,
     // regex? With yet a third set of functions?
     if (matched) {
         if (result[PHASE_BLOCK_MATCH].matched) {
+            // It's a haplotype because it has a phase block.
             sense = SENSE_HAPLOTYPE;
-        } else {
+        } if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+            // It's a reference because it has a locus and a sample
             sense = SENSE_REFERENCE;
+        } else {
+            // It's just a one-piece generic name
+            sense = SENSE_GENERIC;
         }
         
         if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
