@@ -38,6 +38,8 @@ add_library(handlegraph_objs OBJECT
   src/deletable_handle_graph.cpp
   src/handle_graph.cpp
   src/mutable_handle_graph.cpp
+  src/path_metadata.cpp
+  src/mutable_path_metadata.cpp 
   src/path_handle_graph.cpp 
   src/path_position_handle_graph.cpp
   src/mutable_path_handle_graph.cpp

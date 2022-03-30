@@ -6,6 +6,7 @@
  */
 
 #include "handlegraph/path_handle_graph.hpp"
+#include "handlegraph/mutable_path_metadata.hpp"
 
 namespace handlegraph {
 
@@ -16,7 +17,7 @@ namespace handlegraph {
  * MutablePathMutableHandleGraph interface.
  * TODO: This is a very limited interface at the moment. It will probably need to be extended.
  */
-class MutablePathHandleGraph : virtual public PathHandleGraph {
+class MutablePathHandleGraph : virtual public PathHandleGraph, virtual public MutablePathMetadata {
 public:
     
     virtual ~MutablePathHandleGraph() = default;
