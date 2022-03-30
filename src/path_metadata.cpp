@@ -3,6 +3,7 @@
  */
 
 #include "handlegraph/path_metadata.hpp"
+#include <sstream>
 
 namespace handlegraph {
 
