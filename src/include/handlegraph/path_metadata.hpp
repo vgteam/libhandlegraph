@@ -176,6 +176,15 @@ public:
                                 const std::unordered_set<std::string>* loci,
                                 const Iteratee& iteratee) const;
     
+    /// Loop through all the paths matching the given query. Query elements
+    /// which are empty match everything. Returns false and stops if the
+    /// iteratee returns false.                            
+    template<typename Iteratee>
+    bool for_each_path_matching(const std::unordered_set<PathMetadata::Sense>& senses,
+                                const std::unordered_set<std::string>& samples,
+                                const std::unordered_set<std::string>& loci,
+                                const Iteratee& iteratee) const;
+    
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
     /// TODO: Take the opportunity to make steps track orientation better?
@@ -280,6 +289,17 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata:
                                           const std::unordered_set<std::string>* loci,
                                           const Iteratee& iteratee) const {
     return for_each_path_matching_impl(senses, samples, loci, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata::Sense>& senses,
+                                          const std::unordered_set<std::string>& samples,
+                                          const std::unordered_set<std::string>& loci,
+                                          const Iteratee& iteratee) const {
+    return for_each_path_matching(senses.empty() ? nullptr : &senses,
+                                  samples.empty() ? nullptr : &samples,
+                                  loci.empty() ? nullptr : &loci,
+                                  BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
