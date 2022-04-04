@@ -299,7 +299,7 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata:
     return for_each_path_matching(senses.empty() ? nullptr : &senses,
                                   samples.empty() ? nullptr : &samples,
                                   loci.empty() ? nullptr : &loci,
-                                  BoolReturningWrapper<Iteratee>::wrap(iteratee));
+                                  iteratee);
 }
 
 template<typename Iteratee>
