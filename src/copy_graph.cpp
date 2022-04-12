@@ -53,22 +53,30 @@ void copy_path_handle_graph(const PathHandleGraph* from, MutablePathMutableHandl
     }
 }
 
-void copy_path(const PathHandleGraph* from, const path_handle_t& path,
+void copy_path(const PathHandleGraph* from, const path_handle_t& from_path,
                MutablePathHandleGraph* into) {
     
-    // We know that the new path metadata API is there, so use it
-    path_handle_t copied = into->create_path(from->get_sense(path),
-                                             from->get_sample_name(path),
-                                             from->get_locus_name(path),
-                                             from->get_haplotype(path),
-                                             from->get_phase_block(path),
-                                             from->get_subrange(path),
-                                             from->get_is_circular(path));
+    // Make a new path with the same metadata as the old path
+    path_handle_t into_path = into->create_path(from->get_sense(from_path),
+                                                from->get_sample_name(from_path),
+                                                from->get_locus_name(from_path),
+                                                from->get_haplotype(from_path),
+                                                from->get_phase_block(from_path),
+                                                from->get_subrange(from_path),
+                                                from->get_is_circular(from_path));
+    
+    // Copy all the steps over
+    copy_path(from, from_path, into, into_path);
+}
+
+void copy_path(const PathHandleGraph* from, const path_handle_t& from_path,
+               MutablePathHandleGraph* into, const path_handle_t& into_path) {
     
     // copy steps
-    for (handle_t handle : from->scan_path(path)) {
-        into->append_step(copied, into->get_handle(from->get_id(handle), from->get_is_reverse(handle)));
+    for (handle_t handle : from->scan_path(from_path)) {
+        into->append_step(into_path, into->get_handle(from->get_id(handle), from->get_is_reverse(handle)));
     }
 }
+
 }
 }
