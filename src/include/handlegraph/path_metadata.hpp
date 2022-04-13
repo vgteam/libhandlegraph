@@ -124,12 +124,12 @@ public:
     
     /// Get the haplotype number (0 or 1, for diploid) embedded in the given
     /// formatted path name, or NO_HAPLOTYPE if it does not belong to one.
-    static int64_t parse_haplotype(const std::string& path_name);
+    static size_t parse_haplotype(const std::string& path_name);
     
     /// Get the phase block number (contiguously phased region of a sample,
     /// contig, and haplotype) embedded in the given formatted path name, or
     /// NO_PHASE_BLOCK if it does not belong to one.
-    static int64_t parse_phase_block(const std::string& path_name);
+    static size_t parse_phase_block(const std::string& path_name);
     
     /// Get the bounds embedded in the given formatted path name, or
     /// NO_SUBRANGE if they are absent. If no end position is stored,
@@ -141,8 +141,8 @@ public:
                                 PathSense& sense,
                                 std::string& sample,
                                 std::string& locus,
-                                int64_t& haplotype,
-                                int64_t& phase_block,
+                                size_t& haplotype,
+                                size_t& phase_block,
                                 subrange_t& subrange);
 
     /// Compose a formatted path name for the given metadata. Any item can be
@@ -151,8 +151,8 @@ public:
     static std::string create_path_name(const PathSense& sense,
                                         const std::string& sample,
                                         const std::string& locus,
-                                        const int64_t& haplotype,
-                                        const int64_t& phase_block,
+                                        const size_t& haplotype,
+                                        const size_t& phase_block,
                                         const subrange_t& subrange);
     
     ////////////////////////////////////////////////////////////////////////////

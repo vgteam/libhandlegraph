@@ -133,7 +133,7 @@ std::string PathMetadata::parse_locus_name(const std::string& path_name) {
 }
 
 
-int64_t PathMetadata::parse_haplotype(const std::string& path_name) {
+size_t PathMetadata::parse_haplotype(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -152,7 +152,7 @@ int64_t PathMetadata::parse_haplotype(const std::string& path_name) {
 }
 
 
-int64_t PathMetadata::parse_phase_block(const std::string& path_name) {
+size_t PathMetadata::parse_phase_block(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
@@ -193,8 +193,8 @@ void PathMetadata::parse_path_name(const std::string& path_name,
                                    PathSense& sense,
                                    std::string& sample,
                                    std::string& locus,
-                                   int64_t& haplotype,
-                                   int64_t& phase_block,
+                                   size_t& haplotype,
+                                   size_t& phase_block,
                                    subrange_t& subrange) {
 
     std::smatch result;
@@ -267,8 +267,8 @@ void PathMetadata::parse_path_name(const std::string& path_name,
 std::string PathMetadata::create_path_name(const PathSense& sense,
                                            const std::string& sample,
                                            const std::string& locus,
-                                           const int64_t& haplotype,
-                                           const int64_t& phase_block,
+                                           const size_t& haplotype,
+                                           const size_t& phase_block,
                                            const subrange_t& subrange) {
     
     std::stringstream name_builder;
