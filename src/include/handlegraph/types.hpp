@@ -20,15 +20,20 @@ namespace handlegraph {
 typedef long long int nid_t;
 static_assert(std::numeric_limits<nid_t>::digits == std::numeric_limits<int64_t>::digits, "Can only build on a system where long long int is 64 bits");
 
-    
 [[deprecated("id_t collides with a standard type, use nid_t instead")]]
 typedef nid_t id_t;
-    
+
 /// Represents an offset
-typedef std::size_t off_t;
-    
+typedef std::size_t offset_t;
+
+[[deprecated("off_t collides with a POSIX type, use offset_t instead")]]
+typedef offset_t off_t;
+
+/// Represents a range of offsets, 0-based, end-exclusive
+typedef std::pair<offset_t, offset_t> subrange_t;
+
 /// Represents a position
-typedef std::tuple<nid_t, bool, off_t> pos_t;
+typedef std::tuple<nid_t, bool, offset_t> pos_t;
     
 /// Represents a traversal of a node in a graph in a particular direction
 struct handle_t { char data[sizeof(nid_t)]; };
@@ -38,6 +43,13 @@ typedef std::pair<handle_t, handle_t> edge_t;
     
 /// Represents the internal id of a path entity
 struct path_handle_t { char data[sizeof(int64_t)]; };
+
+/// Represents a sense that a path can have
+enum class PathSense {
+    GENERIC,
+    REFERENCE,
+    HAPLOTYPE
+};
     
 /// A step handle is an opaque reference to a single step of an oriented node on a path in a graph
 struct step_handle_t { char data[2 * sizeof(int64_t)]; };

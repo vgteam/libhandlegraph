@@ -58,19 +58,31 @@ public:
     
     virtual ~PathMetadata() = default;
     
-    /// Each path always has just one sense.
-    enum Sense {
-        SENSE_GENERIC,
-        SENSE_REFERENCE,
-        SENSE_HAPLOTYPE
-    };
+    // Note that we can't use int64_t on the interface because it causes
+    // problems with binder. When we generate the bindings on Linux it's
+    // "long", but when we build them on Mac it's "long long".
+    // Instead we have size_t and off_t from our types header
+    
+    // We used to keep the sense type in here as an enum. Now we keep it in the
+    // handlegraph namespace as a scoped class enum.
+    // Keep the values around for old code.
+    
+    [[deprecated("PathMetadata::Sense is now handlegraph::PathSense")]]
+    typedef PathSense Sense;
+    [[deprecated("PathMetadata::SENSE_GENERIC is now PathSense::GENERIC")]]
+    static const PathSense SENSE_GENERIC = PathSense::GENERIC;
+    [[deprecated("PathMetadata::SENSE_REFERENCE is now PathSense::REFERENCE")]]
+    static const PathSense SENSE_REFERENCE = PathSense::REFERENCE;
+    [[deprecated("PathMetadata::SENSE_HAPLOTYPE is now PathSense::HAPLOTYPE")]]
+    static const PathSense SENSE_HAPLOTYPE = PathSense::HAPLOTYPE;
+    
     
     ////////////////////////////////////////////////////////////////////////////
     // Path metadata interface that has a default implementation
     ////////////////////////////////////////////////////////////////////////////
     
     /// What is the given path meant to be representing?
-    virtual Sense get_sense(const path_handle_t& handle) const;
+    virtual PathSense get_sense(const path_handle_t& handle) const;
     
     /// Get the name of the sample or assembly asociated with the
     /// path-or-thread, or NO_SAMPLE_NAME if it does not belong to one.
@@ -84,14 +96,14 @@ public:
     
     /// Get the haplotype number (0 or 1, for diploid) of the path-or-thread,
     /// or NO_HAPLOTYPE if it does not belong to one.
-    virtual int64_t get_haplotype(const path_handle_t& handle) const;
-    static const int64_t NO_HAPLOTYPE;
+    virtual size_t get_haplotype(const path_handle_t& handle) const;
+    static const size_t NO_HAPLOTYPE;
     
     /// Get the phase block number (contiguously phased region of a sample,
     /// contig, and haplotype) of the path-or-thread, or NO_PHASE_BLOCK if it
     /// does not belong to one.
-    virtual int64_t get_phase_block(const path_handle_t& handle) const;
-    static const int64_t NO_PHASE_BLOCK;
+    virtual size_t get_phase_block(const path_handle_t& handle) const;
+    static const size_t NO_PHASE_BLOCK;
     
     /// Get the bounds of the path-or-thread that are actually represented
     /// here. Should be NO_SUBRANGE if the entirety is represented here, and
@@ -100,9 +112,9 @@ public:
     ///
     /// If no end position is stored, NO_END_POSITION may be returned for the
     /// end position.
-    virtual std::pair<int64_t, int64_t> get_subrange(const path_handle_t& handle) const;
-    static const std::pair<int64_t, int64_t> NO_SUBRANGE;
-    static const int64_t NO_END_POSITION;
+    virtual subrange_t get_subrange(const path_handle_t& handle) const;
+    static const subrange_t NO_SUBRANGE;
+    static const offset_t NO_END_POSITION;
     
     ////////////////////////////////////////////////////////////////////////////
     // Tools for converting back and forth with single-string path names
@@ -110,7 +122,7 @@ public:
     
     /// Extract the sense of a path from the given formatted path name, if
     /// possible. If not possible, return SENSE_GENERIC.
-    static Sense parse_sense(const std::string& path_name);
+    static PathSense parse_sense(const std::string& path_name);
     
     /// Get the name of the sample or assembly embedded in the given formatted
     /// path name, or NO_SAMPLE_NAME if it does not belong to one.
@@ -132,26 +144,26 @@ public:
     /// Get the bounds embedded in the given formatted path name, or
     /// NO_SUBRANGE if they are absent. If no end position is stored,
     /// NO_END_POSITION may be returned for the end position.
-    static std::pair<int64_t, int64_t> parse_subrange(const std::string& path_name);
+    static subrange_t parse_subrange(const std::string& path_name);
     
     /// Decompose a formatted path name into metadata.
     static void parse_path_name(const std::string& path_name,
-                                PathMetadata::Sense& sense,
+                                PathSense& sense,
                                 std::string& sample,
                                 std::string& locus,
                                 int64_t& haplotype,
                                 int64_t& phase_block,
-                                std::pair<int64_t, int64_t>& subrange);
+                                subrange_t& subrange);
 
     /// Compose a formatted path name for the given metadata. Any item can be
     /// the corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME,
     /// PathMetadata::NO_PHASE_BLOCK, etc.).
-    static std::string create_path_name(const PathMetadata::Sense& sense,
+    static std::string create_path_name(const PathSense& sense,
                                         const std::string& sample,
                                         const std::string& locus,
                                         const int64_t& haplotype,
                                         const int64_t& phase_block,
-                                        const std::pair<int64_t, int64_t>& subrange);
+                                        const subrange_t& subrange);
     
     ////////////////////////////////////////////////////////////////////////////
     // Stock interface that uses backing virtual methods
@@ -160,7 +172,7 @@ public:
     /// Loop through all the paths with the given sense. Returns false and
     /// stops if the iteratee returns false.
     template<typename Iteratee>
-    bool for_each_path_of_sense(const Sense& sense, const Iteratee& iteratee) const;
+    bool for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const;
     
     /// Loop through all the paths with the given sample name.
     /// Returns false and stops if the iteratee returns false.
@@ -171,7 +183,7 @@ public:
     /// which are null match everything. Returns false and stops if the
     /// iteratee returns false.
     template<typename Iteratee>
-    bool for_each_path_matching(const std::unordered_set<PathMetadata::Sense>* senses,
+    bool for_each_path_matching(const std::unordered_set<PathSense>* senses,
                                 const std::unordered_set<std::string>* samples,
                                 const std::unordered_set<std::string>* loci,
                                 const Iteratee& iteratee) const;
@@ -180,7 +192,7 @@ public:
     /// which are empty match everything. Returns false and stops if the
     /// iteratee returns false.                            
     template<typename Iteratee>
-    bool for_each_path_matching(const std::unordered_set<PathMetadata::Sense>& senses,
+    bool for_each_path_matching(const std::unordered_set<PathSense>& senses,
                                 const std::unordered_set<std::string>& samples,
                                 const std::unordered_set<std::string>& loci,
                                 const Iteratee& iteratee) const;
@@ -189,7 +201,7 @@ public:
     /// sense. Returns false and stops if the iteratee returns false.
     /// TODO: Take the opportunity to make steps track orientation better?
     template<typename Iteratee>
-    bool for_each_step_of_sense(const handle_t& visited, const Sense& sense, const Iteratee& iteratee) const;
+    bool for_each_step_of_sense(const handle_t& visited, const PathSense& sense, const Iteratee& iteratee) const;
     
 protected:
     
@@ -205,14 +217,14 @@ protected:
     /// Loop through all the paths matching the given query. Query elements
     /// which are null match everything. Returns false and stops if the
     /// iteratee returns false.
-    virtual bool for_each_path_matching_impl(const std::unordered_set<PathMetadata::Sense>* senses,
+    virtual bool for_each_path_matching_impl(const std::unordered_set<PathSense>* senses,
                                              const std::unordered_set<std::string>* samples,
                                              const std::unordered_set<std::string>* loci,
                                              const std::function<bool(const path_handle_t&)>& iteratee) const;
     
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
-    virtual bool for_each_step_of_sense_impl(const handle_t& visited, const Sense& sense, const std::function<bool(const step_handle_t&)>& iteratee) const;
+    virtual bool for_each_step_of_sense_impl(const handle_t& visited, const PathSense& sense, const std::function<bool(const step_handle_t&)>& iteratee) const;
     
     ////////////////////////////////////////////////////////////////////////////
     // Backing methods that need to be implemented for default implementation
@@ -272,8 +284,8 @@ private:
 ////////////////////////////////////////////////////////////////////////////
 
 template<typename Iteratee>
-bool PathMetadata::for_each_path_of_sense(const Sense& sense, const Iteratee& iteratee) const {
-    std::unordered_set<PathMetadata::Sense> senses{sense};
+bool PathMetadata::for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const {
+    std::unordered_set<PathSense> senses{sense};
     return for_each_path_matching_impl(&senses, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
@@ -284,7 +296,7 @@ bool PathMetadata::for_each_path_of_sample(const std::string& sample, const Iter
 }
 
 template<typename Iteratee>
-bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata::Sense>* senses,
+bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>* senses,
                                           const std::unordered_set<std::string>* samples,
                                           const std::unordered_set<std::string>* loci,
                                           const Iteratee& iteratee) const {
@@ -292,7 +304,7 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata:
 }
 
 template<typename Iteratee>
-bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata::Sense>& senses,
+bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>& senses,
                                           const std::unordered_set<std::string>& samples,
                                           const std::unordered_set<std::string>& loci,
                                           const Iteratee& iteratee) const {
@@ -303,7 +315,7 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathMetadata:
 }
 
 template<typename Iteratee>
-bool PathMetadata::for_each_step_of_sense(const handle_t& visited, const Sense& sense, const Iteratee& iteratee) const {
+bool PathMetadata::for_each_step_of_sense(const handle_t& visited, const PathSense& sense, const Iteratee& iteratee) const {
     return for_each_step_of_sense_impl(visited, sense, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
