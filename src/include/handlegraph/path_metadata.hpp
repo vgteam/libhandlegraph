@@ -67,16 +67,6 @@ public:
     // handlegraph namespace as a scoped class enum.
     // Keep the values around for old code.
     
-    [[deprecated("PathMetadata::Sense is now handlegraph::PathSense")]]
-    typedef PathSense Sense;
-    [[deprecated("PathMetadata::SENSE_GENERIC is now PathSense::GENERIC")]]
-    static const PathSense SENSE_GENERIC = PathSense::GENERIC;
-    [[deprecated("PathMetadata::SENSE_REFERENCE is now PathSense::REFERENCE")]]
-    static const PathSense SENSE_REFERENCE = PathSense::REFERENCE;
-    [[deprecated("PathMetadata::SENSE_HAPLOTYPE is now PathSense::HAPLOTYPE")]]
-    static const PathSense SENSE_HAPLOTYPE = PathSense::HAPLOTYPE;
-    
-    
     ////////////////////////////////////////////////////////////////////////////
     // Path metadata interface that has a default implementation
     ////////////////////////////////////////////////////////////////////////////
