@@ -57,7 +57,8 @@ public:
     // your own FD-to-C++-stream wrapper. We don't include one in
     // libhandlegraph to avoid dependencies and duplicate code with libvgio.
     
-    //Serialize as blocks of data shown to the given function. The pointer must not be null.
+    /// Serialize as blocks of data shown to the given function. The pointer
+    /// must not be null. The blocks must include the magic number.
     virtual void serialize(const std::function<void(const void*, size_t)>& iteratee) const = 0;
     
     /// Write the contents of this object to an open file descriptor. Makes
@@ -118,13 +119,15 @@ public:
     /// Dump the magic number and user data to the given stream. Does not
     /// affect any backing file link.
     virtual void serialize(std::ostream& out) const;
-    /// Dump the magic number and user data to the given stream. Does not
-    /// affect any backing file link.
+    /// Dump the magic number and user data to the given stream. May result in
+    /// a write-back link to a file opened as standard output or standard error
+    /// if those streams are passed.
     virtual void serialize(std::ostream& out);
     /// Sets the contents of this object to the contents of a serialized object
     /// from an istream. The serialized object must be from the same
     /// implementation of the interface as is calling deserialize(). Can only
-    /// be called on an empty object.
+    /// be called on an empty object. May result in a write-back link to a file
+    /// opened as standard input if that stream is passed.
     virtual void deserialize(std::istream& in);
 
 protected:

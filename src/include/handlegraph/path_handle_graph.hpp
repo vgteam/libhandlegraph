@@ -6,6 +6,7 @@
  */
 
 #include "handlegraph/handle_graph.hpp"
+#include "handlegraph/path_metadata.hpp"
 
 #include <vector>
 
@@ -17,7 +18,7 @@ class PathForEachSocket;
 /**
  * This is the interface for a handle graph that stores embedded paths.
  */
-class PathHandleGraph : virtual public HandleGraph {
+class PathHandleGraph : virtual public HandleGraph, virtual public PathMetadata {
 public:
     
     virtual ~PathHandleGraph() = default;
@@ -98,12 +99,20 @@ public:
     /// Execute a function on each path_handle_t in the graph. If it returns bool, and
     /// it returns false, stop iteration. Returns true if we finished and false if we
     /// stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths and properly
+    /// implements for_each_path_of_sense to retrieve them, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_path_handle(const Iteratee& iteratee) const;
     
     /// Execute a function on each step (step_handle_t) of a handle
     /// in any path. If it returns bool and returns false, stop iteration.
     /// Returns true if we finished and false if we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths and properly
+    /// implements for_each_step_of_sense to find them, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
     
@@ -115,11 +124,19 @@ protected:
     
     /// Execute a function on each path in the graph. If it returns false, stop
     /// iteration. Returns true if we finished and false if we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths and properly
+    /// implements for_each_path_of_sense to retrieve them, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_path_handle_impl(const std::function<bool(const path_handle_t&)>& iteratee) const = 0;
     
     /// Execute a function on each step of a handle in any path. If it
     /// returns false, stop iteration. Returns true if we finished and false if
     /// we stopped early.
+    ///
+    /// If the graph contains compressed haplotype paths and properly
+    /// implements for_each_step_of_sense to find them, they should not be
+    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_step_on_handle_impl(const handle_t& handle,
         const std::function<bool(const step_handle_t&)>& iteratee) const = 0;
 
@@ -161,19 +178,19 @@ public:
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_path_handle(const Iteratee& iteratee) const {
-    return for_each_path_handle_impl(BoolReturningWrapper<Iteratee, path_handle_t>::wrap(iteratee));
+    return for_each_path_handle_impl(BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
-    return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee));
+    return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Iteratee& iteratee) const {
 
-    auto wrapped = BoolReturningWrapper<Iteratee, step_handle_t>::wrap(iteratee);
+    auto wrapped = BoolReturningWrapper<Iteratee>::wrap(iteratee);
 
     // We break in the case that the path is empty
     if (get_step_count(path) == 0) return true;

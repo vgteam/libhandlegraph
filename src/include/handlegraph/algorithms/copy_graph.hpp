@@ -24,8 +24,13 @@ void copy_path_handle_graph(const PathHandleGraph* from, MutablePathMutableHandl
 
 /// Copies a path from one graph to another. Nodes and edges to support
 /// the path must already exist.
-void copy_path(const PathHandleGraph* from, const path_handle_t& path,
+void copy_path(const PathHandleGraph* from, const path_handle_t& from_path,
                MutablePathHandleGraph* into);
+               
+/// Copies a path from one graph into the given empty path in the other graph.
+/// Nodes and edges to support the path must already exist.
+void copy_path(const PathHandleGraph* from, const path_handle_t& from_path,
+               MutablePathHandleGraph* into, const path_handle_t& into_path);
 
 }
 }
