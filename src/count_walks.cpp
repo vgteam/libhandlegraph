@@ -19,13 +19,10 @@ tuple<vector<handle_t>, unordered_map<handle_t, size_t>, bool> count_walks_throu
     
     // identify sources and sinks
     graph->for_each_handle([&](const handle_t& handle) {
-        bool is_source = true, is_sink = true;
-        graph->follow_edges(handle, true, [&](const handle_t& prev) {
-            is_source = false;
+        bool is_source = !graph->follow_edges(handle, true, [&](const handle_t& prev) {
             return false;
         });
-        graph->follow_edges(handle, false, [&](const handle_t& next) {
-            is_sink = false;
+        bool is_sink = !graph->follow_edges(handle, false, [&](const handle_t& next) {
             return false;
         });
         
@@ -45,6 +42,7 @@ tuple<vector<handle_t>, unordered_map<handle_t, size_t>, bool> count_walks_throu
             size_t& count_next = count[next];
             if (numeric_limits<size_t>::max() - count_here < count_next) {
                 overflowed = true;
+                break;
             }
             else {
                 count_next += count_here;
@@ -69,6 +67,9 @@ size_t count_walks(const HandleGraph* graph){
     // total up the walks at the sinks
     size_t total_count = 0;
     for (handle_t& sink : sinks) {
+        if (numeric_limits<size_t>::max() - total_count < count[sink]) {
+            return numeric_limits<size_t>::max();
+        }
         total_count += count[sink];
     }
     return total_count;
