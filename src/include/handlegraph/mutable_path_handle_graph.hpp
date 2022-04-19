@@ -24,7 +24,7 @@ public:
     /**
      * Destroy the given path. Invalidates handles to the path and its steps.
      */
-    virtual void destroy_path(const path_handle_t& path) = 0;
+    virtual void destroy_path(const path_handle_t& path_handle) = 0;
 
     /**
      * Create a path with the given name. The caller must ensure that no path
@@ -38,7 +38,7 @@ public:
     /**
      * Renames a path. Existing path_handle_t's may become invalidated..
      */
-    virtual path_handle_t rename_path(const path_handle_t& path_handle_t,
+    virtual path_handle_t rename_path(const path_handle_t& path_handle,
                                       const std::string& new_name);
     
     /**
