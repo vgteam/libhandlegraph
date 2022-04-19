@@ -42,7 +42,6 @@ tuple<vector<handle_t>, unordered_map<handle_t, size_t>, bool> count_walks_throu
             size_t& count_next = count[next];
             if (numeric_limits<size_t>::max() - count_here < count_next) {
                 overflowed = true;
-                break;
             }
             else {
                 count_next += count_here;
