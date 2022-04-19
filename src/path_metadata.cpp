@@ -31,7 +31,7 @@ const subrange_t PathMetadata::NO_SUBRANGE{PathMetadata::NO_END_POSITION, PathMe
 // Possibly a bracket-bounded non-capturing group at the end
 // Which has a number, and possibly a dash-led non-capturing group with a number.
 // Match number:                         1           2             3             4           5        6
-const std::regex PathMetadata::FORMAT(R"(([^[#]*)(?:#([^[#]*))?(?:#([^[#]*))?(?:#(\d+))?(?:\[(\d+)(?:-(\d+))\])?)");
+const std::regex PathMetadata::FORMAT(R"(([^[#]*)(?:#([^[#]*))?(?:#([^[#]*))?(?:#(\d+))?(?:\[(\d+)(?:-(\d+))?\])?)");
 const size_t PathMetadata::ASSEMBLY_OR_NAME_MATCH = 1;
 const size_t PathMetadata::LOCUS_MATCH_WITHOUT_HAPLOTYPE = 2;
 const size_t PathMetadata::HAPLOTYPE_MATCH = 2;
