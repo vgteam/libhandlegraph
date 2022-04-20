@@ -19,10 +19,10 @@ tuple<vector<handle_t>, unordered_map<handle_t, size_t>, bool> count_walks_throu
     
     // identify sources and sinks
     graph->for_each_handle([&](const handle_t& handle) {
-        bool is_source = !graph->follow_edges(handle, true, [&](const handle_t& prev) {
+        bool is_source = graph->follow_edges(handle, true, [&](const handle_t& prev) {
             return false;
         });
-        bool is_sink = !graph->follow_edges(handle, false, [&](const handle_t& next) {
+        bool is_sink = graph->follow_edges(handle, false, [&](const handle_t& next) {
             return false;
         });
         
