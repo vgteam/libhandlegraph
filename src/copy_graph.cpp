@@ -45,7 +45,7 @@ void copy_path_handle_graph(const PathHandleGraph* from, MutablePathMutableHandl
     //        }
     
     // For every sense of path
-    for (auto& sense : {PathMetadata::SENSE_REFERENCE, PathMetadata::SENSE_GENERIC, PathMetadata::SENSE_HAPLOTYPE}) {
+    for (auto& sense : {PathSense::REFERENCE, PathSense::GENERIC, PathSense::HAPLOTYPE}) {
         // copy paths of that sense
         from->for_each_path_of_sense(sense, [&](const path_handle_t& path_handle) {
             copy_path(from, path_handle, into);

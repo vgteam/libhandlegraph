@@ -39,12 +39,12 @@ public:
      * Handles to other paths must
      * remain valid.
      */
-    virtual path_handle_t create_path(const PathMetadata::Sense& sense,
+    virtual path_handle_t create_path(const PathSense& sense,
                                       const std::string& sample,
                                       const std::string& locus,
-                                      const int64_t& haplotype,
-                                      const int64_t& phase_block,
-                                      const std::pair<int64_t, int64_t>& subrange,
+                                      const size_t& haplotype,
+                                      const size_t& phase_block,
+                                      const subrange_t& subrange,
                                       bool is_circular = false);
 
 protected:
