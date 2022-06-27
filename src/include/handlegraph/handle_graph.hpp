@@ -11,9 +11,12 @@
 #include <functional>
 #include <string>
 #include <iostream>
+#include <vector>
 
 namespace handlegraph {
 
+class HandleForEachSocket;
+class EdgeForEachSocket;
 
 /**
  * This is the interface that a graph that uses handles needs to support.
@@ -151,6 +154,30 @@ public:
     template<typename Iteratee>
     bool for_each_edge(const Iteratee& iteratee, bool parallel = false) const;
     
+    /// Returns a class with an STL-style iterator interface that can be used directly
+    /// in a for each loop like:
+    /// for (handle_t handle : graph->scan_handles())  {  }
+    /// Iterates over all handles in the graph.
+    HandleForEachSocket scan_handles() const;
+    
+    /// Returns a class with an STL-style iterator interface that can be used directly
+    /// in a for each loop like:
+    /// for (handle_t handle : graph->scan_neighbors(handle, false))  {  }
+    /// Iterates over the neighbors of one handle.
+    HandleForEachSocket scan_neighbors(const handle_t& handle, bool go_left) const;
+    
+    /// Returns a class with an STL-style iterator interface that can be used directly
+    /// in a for each loop like:
+    /// for (edge_t edge : graph->scan_edges())  {  }
+    /// Iterates over all edges in the graph.
+    EdgeForEachSocket scan_edges() const;
+    
+    /// Returns a class with an STL-style iterator interface that can be used directly
+    /// in a for each loop like:
+    /// for (edge_t edge : graph->scan_edges_of_handle(handle, true, true))  {  }
+    /// Iterates over all edges on one or both sides of a handle.
+    EdgeForEachSocket scan_edges_of_handle(const handle_t& handle, bool to_left, bool to_right) const;
+    
     ////////////////////////////////////////////////////////////////////////////
     // Backing protected virtual methods that need to be implemented
     ////////////////////////////////////////////////////////////////////////////
@@ -221,6 +248,78 @@ public:
     virtual size_t edge_index(const edge_t& edge) const = 0;
 };
 
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+/// Socket declarations
+////////////////////////////////////////////////////////////////////////////
+
+/*
+ * A backing implementation for simple for each sockets
+ */
+template<typename T>
+class GenericForEachSocket {
+public:
+    /**
+     * Iterator object over template class
+     */
+    class iterator {
+    public:
+        
+        // define all the methods of the unidirectional iterator interface
+        
+        iterator(const iterator& other) = default;
+        iterator& operator=(const iterator& other) = default;
+        iterator& operator++();
+        T operator*() const;
+        bool operator==(const iterator& other) const;
+        bool operator!=(const iterator& other) const;
+        
+        ~iterator() = default;
+    private:
+        
+        iterator() = delete;
+        iterator(typename std::vector<T>::const_iterator it);
+        
+        /// the item in the generic iterator
+        typename std::vector<T>::const_iterator item;
+        
+        friend class GenericForEachSocket<T>;
+    };
+    
+    // Get iterator to the first item
+    iterator begin() const;
+    
+    // Get the iterator to the past-the-last item
+    iterator end() const;
+    
+    ~GenericForEachSocket() = default;
+    
+protected:
+        
+    GenericForEachSocket() = default;
+    
+    std::vector<T> to_iterate;
+};
+/*
+ * A specialization socket for handle_t's
+ */
+class HandleForEachSocket : public GenericForEachSocket<handle_t> {
+    
+    friend class HandleGraph;
+};
+
+/*
+ * A specialization socket for edge_t's
+ */
+class EdgeForEachSocket : public GenericForEachSocket<edge_t> {
+    
+    friend class HandleGraph;
+};
+
 ////////////////////////////////////////////////////////////////////////////
 // Template Implementations
 ////////////////////////////////////////////////////////////////////////////
@@ -264,6 +363,42 @@ bool HandleGraph::for_each_edge(const Iteratee& iteratee, bool parallel) const {
         
         return keep_going;
     }, parallel);
+}
+
+template<typename T>
+typename GenericForEachSocket<T>::iterator GenericForEachSocket<T>::begin() const {
+    return GenericForEachSocket<T>::iterator(to_iterate.begin());
+}
+
+template<typename T>
+typename GenericForEachSocket<T>::iterator GenericForEachSocket<T>::end() const {
+    return GenericForEachSocket<T>::iterator(to_iterate.end());
+}
+
+template<typename T>
+GenericForEachSocket<T>::iterator::iterator(typename std::vector<T>::const_iterator it) : item(it) {
+    
+}
+
+template<typename T>
+typename GenericForEachSocket<T>::iterator& GenericForEachSocket<T>::iterator::operator++() {
+    ++item;
+    return *this;
+}
+
+template<typename T>
+T GenericForEachSocket<T>::iterator::operator*() const {
+    return *item;
+}
+
+template<typename T>
+bool GenericForEachSocket<T>::iterator::operator==(const GenericForEachSocket<T>::iterator& other) const {
+    return item == other.item;
+}
+
+template<typename T>
+bool GenericForEachSocket<T>::iterator::operator!=(const GenericForEachSocket<T>::iterator& other) const {
+    return item != other.item;
 }
 
 

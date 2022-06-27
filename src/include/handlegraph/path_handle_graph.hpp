@@ -14,6 +14,7 @@ namespace handlegraph {
 
 // Forward declaration, full declaration below
 class PathForEachSocket;
+class PathHandleForEachSocket;
     
 /**
  * This is the interface for a handle graph that stores embedded paths.
@@ -157,10 +158,17 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     // Concrete utility methods
     ////////////////////////////////////////////////////////////////////////////
-
+    ///
+    /// Returns a class with an STL-style iterator interface that can be used directly
+    /// in a for each loop like:
+    /// for (path_handle_t path_handle : graph->scan_paths()) { }
+    /// Iterates over all steps in a path
+    PathHandleForEachSocket scan_paths() const;
+    
     /// Returns a class with an STL-style iterator interface that can be used directly
     /// in a for each loop like:
     /// for (handle_t handle : graph->scan_path(path)) { }
+    /// Iterates over all steps in a path
     PathForEachSocket scan_path(const path_handle_t& path) const;
     
     /// Loop over all the steps (step_handle_t) along a path. In a non-circular
@@ -282,7 +290,20 @@ private:
     
     friend class PathHandleGraph;
 };
+
+/*
+ * A specialization socket for edge_t's
+ */
+class PathHandleForEachSocket : public GenericForEachSocket<path_handle_t> {
     
+//    ~PathHandleForEachSocket();
+//
+//private:
+//
+//    PathHandleForEachSocket();
+    
+    friend class PathHandleGraph;
+};
 
 }
 

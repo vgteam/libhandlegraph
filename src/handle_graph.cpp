@@ -94,6 +94,49 @@ std::string HandleGraph::get_subsequence(const handle_t& handle, size_t index, s
     return get_sequence(handle).substr(index, size);
 }
 
+HandleForEachSocket HandleGraph::scan_handles() const {
+    HandleForEachSocket socket;
+    for_each_handle([&](const handle_t& handle) {
+        socket.to_iterate.push_back(handle);
+    });
+    return socket;
+}
+
+HandleForEachSocket HandleGraph::scan_neighbors(const handle_t& handle, bool go_left) const {
+    HandleForEachSocket socket;
+    follow_edges(handle, go_left, [&](const handle_t& neighbor) {
+        socket.to_iterate.push_back(neighbor);
+    });
+    return socket;
+}
+
+EdgeForEachSocket HandleGraph::scan_edges() const {
+    EdgeForEachSocket socket;
+    for_each_edge([&](const edge_t& edge) {
+        socket.to_iterate.push_back(edge);
+    });
+    return socket;
+}
+
+EdgeForEachSocket HandleGraph::scan_edges_of_handle(const handle_t& handle, bool to_left, bool to_right) const {
+    EdgeForEachSocket socket;
+    if (to_left) {
+        follow_edges(handle, true, [&](const handle_t& neighbor) {
+            socket.to_iterate.push_back(edge_handle(neighbor, handle));
+        });
+    }
+    if (to_right) {
+        follow_edges(handle, false, [&](const handle_t& neighbor) {
+            if (neighbor != handle || !to_left) {
+                socket.to_iterate.push_back(edge_handle(handle, neighbor));
+            }
+        });
+    }
+    
+    return socket;
+}
+
+
 }
 
 

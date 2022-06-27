@@ -36,6 +36,14 @@ bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
     // But some implementations may have an expensive length query and a cheaper emptiness one
     return get_step_count(path_handle) == 0;
 }
+
+PathHandleForEachSocket PathHandleGraph::scan_paths() const {
+    PathHandleForEachSocket socket;
+    for_each_path_handle([&](const path_handle_t& path_handle) {
+        socket.to_iterate.push_back(path_handle);
+    });
+    return socket;
+}
     
 PathForEachSocket PathHandleGraph::scan_path(const path_handle_t& path) const {
     return PathForEachSocket(this, path);
@@ -76,6 +84,8 @@ bool PathForEachSocket::iterator::operator==(const PathForEachSocket::iterator& 
 bool PathForEachSocket::iterator::operator!=(const PathForEachSocket::iterator& other) const {
     return !(*this == other);
 }
+
+
 
 }
 
