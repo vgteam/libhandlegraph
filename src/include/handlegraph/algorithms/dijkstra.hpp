@@ -8,6 +8,7 @@
  */
 
 #include <unordered_set>
+#include <unordered_map>
 
 #include "handlegraph/handle_graph.hpp"
 
