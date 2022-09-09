@@ -8,6 +8,7 @@
  */
 
 #include <unordered_set>
+#include <unordered_map>
 
 #include "handlegraph/handle_graph.hpp"
 
@@ -39,7 +40,12 @@ bool dijkstra(const HandleGraph* g, const std::unordered_set<handle_t>& starts,
               std::function<bool(const handle_t&, size_t)> reached_callback,
               bool traverse_leftward = false);
                                                       
+/// Run iteratee on each handle and distance in the shortest path from start to end. 
+/// The iteratee function must return true to continue the search, and
+/// false to abort it early.
+void for_each_handle_in_shortest_path(const HandleGraph* g, handle_t start, handle_t end, std::function<bool(const handle_t&, size_t)> iteratee);
 }
+
 }
 
 #endif
