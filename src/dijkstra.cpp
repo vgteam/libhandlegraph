@@ -15,7 +15,7 @@ using namespace std;
 
 bool dijkstra(const HandleGraph* g, handle_t start,
               function<bool(const handle_t&, size_t)> reached_callback,
-              bool traverse_leftward, bool prune) {
+              bool traverse_leftward, bool prune, bool cycle_to_start) {
               
     unordered_set<handle_t> starts;
     starts.insert(start);          
@@ -27,7 +27,7 @@ bool dijkstra(const HandleGraph* g, handle_t start,
 
 bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
               function<bool(const handle_t&, size_t)> reached_callback,
-              bool traverse_leftward, bool prune) {
+              bool traverse_leftward, bool prune, bool cycle_to_start) {
 
     // We keep a priority queue so we can visit the handle with the shortest
     // distance next. We put handles in here whenever we see them with shorter
@@ -41,6 +41,12 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
     // We need to know if we stopped early
     bool stopped_early = false;
     
+    // And for allowing visiting the starts by cycle, we need to discount the first time we see them, at distance 0
+    unordered_set<handle_t> unseen_starts;
+    if (cycle_to_start) {
+        unseen_starts = starts;
+    }
+    
     // We need a custom ordering for the queue
     struct IsFirstGreater {
         IsFirstGreater() = default;
@@ -51,7 +57,6 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
     };
     
     priority_queue<Record, vector<Record>, IsFirstGreater> queue;
-    unordered_set<handle_t> dequeued;
     
     // We keep a current handle
     handle_t current;
@@ -64,42 +69,48 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
         // While there are things in the queue, get the first.
         tie(distance, current) = queue.top();
         queue.pop();
-        if (dequeued.count(current)) {
-            continue;
-        }
-        else {
-            dequeued.insert(current);
-        }
         
+        if (cycle_to_start && unseen_starts.count(current)) {
+            // This is the very first visit to this start, so don't count it as
+            // visited.
 #ifdef debug_vg_algorithms
-        cerr << "Visit " << g->get_id(current) << " " << g->get_is_reverse(current) << " at distance " << distance << endl;
-#endif    
-
-        // Remember that we made it here.
-        visited.emplace(current);
-
-        // Emit the handle as being at the given distance
-        if (!reached_callback(current, distance)) {
-            // The user told us to stop.
-            
-            if (prune) {
-                // Just continue with whatever is next, and don't expand this
-                // node.
-#ifdef debug_vg_algorithms
-                cerr << "\tPrune search" << endl;
+            cerr << "Expand start " << g->get_id(current) << " " << g->get_is_reverse(current) << " at distance " << distance << endl;
 #endif
-                stopped_early = true;
+            unseen_starts.erase(current); 
+        } else {
+            if (visited.count(current)) {
                 continue;
             } else {
-                // Stop right away.
-            
-                // Return that we stopped early.
+                visited.insert(current);
+            }
             
 #ifdef debug_vg_algorithms
-                cerr << "\tAbort search" << endl;
+            cerr << "Visit " << g->get_id(current) << " " << g->get_is_reverse(current) << " at distance " << distance << endl;
+#endif    
+
+            // Emit the handle as being at the given distance
+            if (!reached_callback(current, distance)) {
+                // The user told us to stop.
+                
+                if (prune) {
+                    // Just continue with whatever is next, and don't expand this
+                    // node.
+#ifdef debug_vg_algorithms
+                    cerr << "\tPrune search" << endl;
+#endif
+                    stopped_early = true;
+                    continue;
+                } else {
+                    // Stop right away.
+                
+                    // Return that we stopped early.
+                
+#ifdef debug_vg_algorithms
+                    cerr << "\tAbort search" << endl;
 #endif  
-            
-                return false;
+                
+                    return false;
+                }
             }
         }
         
