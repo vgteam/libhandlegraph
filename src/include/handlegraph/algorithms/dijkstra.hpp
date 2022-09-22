@@ -27,17 +27,21 @@ namespace algorithms {
 /// reached_callback function must return true to continue the search, and
 /// false to abort it early.
 ///
+/// If prune is true, aborts the search by pruining out edges away from the
+/// current node and continuing with the next node in the queue. If it is
+/// false, the whole search stops as soon as the callback returns false.
+///
 /// Returns true if the search terminated normally, and false if it was
 /// aborted.
 bool dijkstra(const HandleGraph* g, handle_t start,
               std::function<bool(const handle_t&, size_t)> reached_callback,
-              bool traverse_leftward = false);
+              bool traverse_leftward = false, bool prune = false);
 
 /// Same as the single-start version, except allows starting from multiple
 /// handles, all at distance 0.
 bool dijkstra(const HandleGraph* g, const std::unordered_set<handle_t>& starts,
               std::function<bool(const handle_t&, size_t)> reached_callback,
-              bool traverse_leftward = false);
+              bool traverse_leftward = false, bool prune = false);
                                                       
 }
 }
