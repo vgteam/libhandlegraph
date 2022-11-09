@@ -207,7 +207,7 @@ void PathMetadata::parse_path_name(const std::string& path_name,
         if (result[PHASE_BLOCK_MATCH].matched) {
             // It's a haplotype because it has a phase block.
             sense = PathSense::HAPLOTYPE;
-        } if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
             // It's a reference because it has a locus and a sample
             sense = PathSense::REFERENCE;
         } else {
