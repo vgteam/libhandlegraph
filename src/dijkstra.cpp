@@ -13,21 +13,30 @@ namespace algorithms {
 
 using namespace std;
 
+//#define debug_vg_algorithms
+
 bool dijkstra(const HandleGraph* g, handle_t start,
               function<bool(const handle_t&, size_t)> reached_callback,
-              bool traverse_leftward) {
+              bool traverse_leftward, bool prune, bool cycle_to_start) {
               
     unordered_set<handle_t> starts;
     starts.insert(start);          
     
     // Implement single-start search in terms of multi-start search
-    return dijkstra(g, starts, reached_callback, traverse_leftward);
+    return dijkstra(g, starts, reached_callback, traverse_leftward, prune, cycle_to_start);
               
 }
 
 bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
               function<bool(const handle_t&, size_t)> reached_callback,
-              bool traverse_leftward) {
+              bool traverse_leftward, bool prune, bool cycle_to_start) {
+
+#ifdef debug_vg_algorithms
+    cerr << "Doing Dijkstra traversal from " << starts.size() << " start points, "
+        << (traverse_leftward ? "left" : "right")
+        << ", with pruning " << (prune ? "on" : "off")
+        << " and cycle visits to starts " << (cycle_to_start ? "on" : "off") << endl;
+#endif
 
     // We keep a priority queue so we can visit the handle with the shortest
     // distance next. We put handles in here whenever we see them with shorter
@@ -37,6 +46,15 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
     
     // We filter out handles that have already been visited.
     unordered_set<handle_t> visited;
+    
+    // We need to know if we stopped early
+    bool stopped_early = false;
+    
+    // And for allowing visiting the starts by cycle, we need to discount the first time we see them, at distance 0
+    unordered_set<handle_t> unseen_starts;
+    if (cycle_to_start) {
+        unseen_starts = starts;
+    }
     
     // We need a custom ordering for the queue
     struct IsFirstGreater {
@@ -48,7 +66,6 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
     };
     
     priority_queue<Record, vector<Record>, IsFirstGreater> queue;
-    unordered_set<handle_t> dequeued;
     
     // We keep a current handle
     handle_t current;
@@ -61,31 +78,50 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
         // While there are things in the queue, get the first.
         tie(distance, current) = queue.top();
         queue.pop();
-        if (dequeued.count(current)) {
-            continue;
-        }
-        else {
-            dequeued.insert(current);
-        }
         
+        if (cycle_to_start && unseen_starts.count(current)) {
+            // This is the very first visit to this start, so don't count it as
+            // visited.
 #ifdef debug_vg_algorithms
-        cerr << "Visit " << g->get_id(current) << " " << g->get_is_reverse(current) << " at distance " << distance << endl;
+            cerr << "Expand start " << g->get_id(current) << " " << g->get_is_reverse(current) << " at distance " << distance << endl;
+#endif
+            unseen_starts.erase(current); 
+        } else {
+            if (visited.count(current)) {
+                continue;
+            } else {
+                visited.insert(current);
+            }
+            
+#ifdef debug_vg_algorithms
+            cerr << "Visit " << g->get_id(current) << " " << g->get_is_reverse(current) << " at distance " << distance << endl;
 #endif    
 
-
-        // Emit the handle as being at the given distance
-        if (!reached_callback(current, distance)) {
-            // The user told us to stop. Return that we stopped early.
-            
+            // Emit the handle as being at the given distance
+            if (!reached_callback(current, distance)) {
+                // The user told us to stop.
+                
+                if (prune) {
+                    // Just continue with whatever is next, and don't expand this
+                    // node.
 #ifdef debug_vg_algorithms
-            cerr << "\tAbort search" << endl;
+                    cerr << "\tPrune search" << endl;
+#endif
+                    stopped_early = true;
+                    continue;
+                } else {
+                    // Stop right away.
+                
+                    // Return that we stopped early.
+                
+#ifdef debug_vg_algorithms
+                    cerr << "\tAbort search" << endl;
 #endif  
-            
-            return false;
+                
+                    return false;
+                }
+            }
         }
-        
-        // Remember that we made it here.
-        visited.emplace(current);
         
         if (!starts.count(current)) {
             // Up the distance with the node's length. We don't do this for the
@@ -115,8 +151,8 @@ bool dijkstra(const HandleGraph* g, const unordered_set<handle_t>& starts,
         });
     }
 
-    // If we made it here, we finished the entire graph.
-    return true;
+    // Return whether we avoided needing to prune.
+    return !stopped_early;
 
 }
 
