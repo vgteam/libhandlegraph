@@ -57,7 +57,7 @@ vector<unordered_set<nid_t>> strongly_connected_components(const HandleGraph* ha
     // TODO: why do we produce duplicate components in the first place?
     unordered_set<nid_t> already_used;
     
-    internal::dfs(*handle_graph,
+    handlegraph::algorithms::internal::dfs(*handle_graph,
         [&](const handle_t& trav) {
         // When a NodeTraversal is first visited
 #ifdef debug

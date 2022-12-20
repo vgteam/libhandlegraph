@@ -1,5 +1,14 @@
 #include "handlegraph/algorithms/internal/dfs.hpp"
 
+#include <unordered_map>
+#include <deque>
+
+namespace handlegraph {
+namespace algorithms {
+namespace internal {
+
+using namespace std;
+
 // TODO: I don't love this DFS implementation, which is too confusing to
 // be all that repurposeable. Hiding it in the cpp for now.
 
@@ -231,4 +240,9 @@ void dfs(const HandleGraph& graph,
         edge_noop,
         empty_sources,
         empty_sinks);
+}
+
+
+}
+}
 }

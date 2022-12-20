@@ -14,6 +14,7 @@
 #include "handlegraph/algorithms/is_single_stranded.hpp"
 #include "handlegraph/algorithms/strongly_connected_components.hpp"
 #include "handlegraph/algorithms/eades_algorithm.hpp"
+#include "handlegraph/algorithms/internal/dfs.hpp"
 
 namespace handlegraph {
 namespace algorithms {
@@ -496,7 +497,7 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
     std::unordered_map<nid_t, std::vector<nid_t>> start_id_to_new_ids;
     for (auto& kv : new_id_to_old_id) {
         if (start_nodes.count(kv.second)) {
-            start_id_to_new_id[kv.second].push_back(kv.first);
+            start_id_to_new_ids[kv.second].push_back(kv.first);
         }
     }
     
@@ -505,7 +506,7 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
     for (auto& h : start_handles) {
         auto id = graph->get_id(h);
         auto is_rev = graph->get_is_reverse(h);
-        for (auto& new_id : start_id_to_new_id[id]) {
+        for (auto& new_id : start_id_to_new_ids[id]) {
             // We know the orientations of the duplicated nodes are the same, so we just pass orientation along.
             into_start_handles.push_back(into->get_handle(new_id, is_rev));
         }
@@ -514,7 +515,7 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
     // Tag all the nodes we can reach on oriented walks from the starting
     // handles' copies.
     std::unordered_set<nid_t> visited_nodes;
-    internal::dfs(
+    handlegraph::algorithms::internal::dfs(
         into,
         [&](const handle_t& h) -> void {
             // Called when node orientation is first encountered.
@@ -522,11 +523,6 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
             visited_nodes.insert(into->get_id(h));
         },
         [](const handle_t& ignored) -> void {},
-        []() -> bool { return false; },
-        [](const edge_t& ignored) -> void {},
-        [](const edge_t& ignored) -> void {},
-        [](const edge_t& ignored) -> void {},
-        [](const edge_t& ignored) -> void {},
         into_start_handles,
         {}
     );

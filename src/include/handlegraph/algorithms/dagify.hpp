@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "handlegraph/mutable_handle_graph.hpp"
-#include "handlegraph/algorithms/find_tips.hpp"
+#include "handlegraph/deletable_handle_graph.hpp"
 
 #include "handlegraph/algorithms/dagify.hpp"
 
