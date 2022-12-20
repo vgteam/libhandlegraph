@@ -36,6 +36,7 @@ set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 add_library(handlegraph_objs OBJECT
   src/deletable_handle_graph.cpp
+  src/dfs.cpp
   src/handle_graph.cpp
   src/mutable_handle_graph.cpp
   src/path_metadata.cpp
@@ -98,6 +99,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/algorithms/chop.hpp
   src/include/handlegraph/algorithms/weakly_connected_components.hpp
   src/include/handlegraph/algorithms/extend.hpp
+  src/include/handlegraph/algorithms/internal/dfs.hpp
   )
 
 # Use the include directory when building the objects.
