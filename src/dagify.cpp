@@ -516,7 +516,7 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
     // handles' copies.
     std::unordered_set<nid_t> visited_nodes;
     handlegraph::algorithms::internal::dfs(
-        into,
+        *into,
         [&](const handle_t& h) -> void {
             // Called when node orientation is first encountered.
             // Mark the node as reachable.
