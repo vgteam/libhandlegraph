@@ -527,15 +527,21 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
         {}
     );
     
+    // TODO: We're supposed to be able to destroy the current handle as we loop
+    // over it, but HashGraph can't handle that.
+    std::vector<handle_t> to_remove;
     into->for_each_handle([&](const handle_t& h) {
         auto node_id = into->get_id(h);
         if (!visited_nodes.count(node_id)) {
             // Destroy each handle not visited on such a walk.
-            into->destroy_handle(h);
+            to_remove.push_back(h);
             // And the translation from it
             new_id_to_old_id.erase(node_id);
         }
     });
+    for (auto& h : to_remove) {
+         into->destroy_handle(h);
+    }
     
     return new_id_to_old_id;
 }
