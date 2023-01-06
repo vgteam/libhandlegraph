@@ -14,6 +14,7 @@
 #include "handlegraph/algorithms/is_single_stranded.hpp"
 #include "handlegraph/algorithms/strongly_connected_components.hpp"
 #include "handlegraph/algorithms/eades_algorithm.hpp"
+#include "handlegraph/algorithms/internal/dfs.hpp"
 
 namespace handlegraph {
 namespace algorithms {
@@ -474,6 +475,75 @@ unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph, MutableHandleGraph*
     
     // return the ID translator
     return translator;
+}
+
+std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
+                                             std::vector<handle_t> start_handles,
+                                             DeletableHandleGraph* into,
+                                             size_t min_preserved_path_length) {
+    
+    // Cheating implementation
+    
+    // Dagify the *entire* graph, creating some nodes not reachable from the starting points.
+    auto new_id_to_old_id = dagify(graph, into, min_preserved_path_length);
+    
+    // Find all the node IDs we have start handles on
+    std::unordered_set<nid_t> start_nodes;
+    for (auto& h : start_handles) {
+        start_nodes.insert(graph->get_id(h));
+    }
+    
+    // Invert enough of the ID mapping so we can translate our start handles
+    std::unordered_map<nid_t, std::vector<nid_t>> start_id_to_new_ids;
+    for (auto& kv : new_id_to_old_id) {
+        if (start_nodes.count(kv.second)) {
+            start_id_to_new_ids[kv.second].push_back(kv.first);
+        }
+    }
+    
+    // Translate all our start handles into the into graph.
+    std::vector<handle_t> into_start_handles;
+    for (auto& h : start_handles) {
+        auto id = graph->get_id(h);
+        auto is_rev = graph->get_is_reverse(h);
+        for (auto& new_id : start_id_to_new_ids[id]) {
+            // We know the orientations of the duplicated nodes are the same, so we just pass orientation along.
+            into_start_handles.push_back(into->get_handle(new_id, is_rev));
+        }
+    }
+    
+    // Tag all the nodes we can reach on oriented walks from the starting
+    // handles' copies.
+    std::unordered_set<nid_t> visited_nodes;
+    handlegraph::algorithms::internal::dfs(
+        *into,
+        [&](const handle_t& h) -> void {
+            // Called when node orientation is first encountered.
+            // Mark the node as reachable.
+            visited_nodes.insert(into->get_id(h));
+        },
+        [](const handle_t& ignored) -> void {},
+        into_start_handles,
+        {}
+    );
+    
+    // TODO: We're supposed to be able to destroy the current handle as we loop
+    // over it, but HashGraph can't handle that.
+    std::vector<handle_t> to_remove;
+    into->for_each_handle([&](const handle_t& h) {
+        auto node_id = into->get_id(h);
+        if (!visited_nodes.count(node_id)) {
+            // Destroy each handle not visited on such a walk.
+            to_remove.push_back(h);
+            // And the translation from it
+            new_id_to_old_id.erase(node_id);
+        }
+    });
+    for (auto& h : to_remove) {
+         into->destroy_handle(h);
+    }
+    
+    return new_id_to_old_id;
 }
 
 }
