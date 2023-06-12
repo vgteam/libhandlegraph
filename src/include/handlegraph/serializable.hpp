@@ -1,6 +1,8 @@
 #ifndef HANDLEGRAPH_SERIALIZABLE_HPP_INCLUDED
 #define HANDLEGRAPH_SERIALIZABLE_HPP_INCLUDED
 
+#include <cstdint>
+
 /** \file 
  * Defines an interface for objects that are saveable and loadable. 
  */
