@@ -254,9 +254,9 @@ private:
     
     static const std::regex FORMAT;
     static const size_t ASSEMBLY_OR_NAME_MATCH;
-    static const size_t LOCUS_MATCH_WITHOUT_HAPLOTYPE;
+    static const size_t LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE;
     static const size_t HAPLOTYPE_MATCH;
-    static const size_t LOCUS_MATCH_WITH_HAPLOTYPE;
+    static const size_t LOCUS_MATCH_ANY;
     static const size_t PHASE_BLOCK_MATCH;
     static const size_t RANGE_START_MATCH;
     static const size_t RANGE_END_MATCH;
