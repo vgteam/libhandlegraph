@@ -99,7 +99,7 @@ std::string PathMetadata::parse_sample_name(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
-        if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_ANY].matched || ) {
+        if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_ANY].matched) {
             // There's a locus later, so the first thing doesn't have to be locus, so it can be sample.
             return result[ASSEMBLY_OR_NAME_MATCH].str();
         } else {
