@@ -204,64 +204,75 @@ void PathMetadata::parse_path_name(const std::string& path_name,
     // TODO: can we unify this with the other places we parse out from the
     // regex? With yet a third set of functions?
     if (matched) {
-        if (result[PHASE_BLOCK_MATCH].matched) {
-            // It's a haplotype because it has a phase block.
-            sense = PathSense::HAPLOTYPE;
-        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
-            // It's a reference because it has a locus and a sample
-            sense = PathSense::REFERENCE;
-        } else {
-            // It's just a one-piece generic name
-            sense = PathSense::GENERIC;
-        }
-        
-        if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
-            // There's a phase and a locus and a sample
-            sample = result[ASSEMBLY_OR_NAME_MATCH].str();
-            locus = result[LOCUS_MATCH_WITH_HAPLOTYPE].str();
-            haplotype = std::stoll(result[HAPLOTYPE_MATCH].str());
-        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched) {
-            // There's a locus but no phase, and a sample
-            sample = result[ASSEMBLY_OR_NAME_MATCH].str();
-            locus = result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].str();
-            haplotype = NO_HAPLOTYPE;
-        } else {
-            // There's nothing but the locus and maybe a range.
-            sample = NO_SAMPLE_NAME;
-            locus = result[ASSEMBLY_OR_NAME_MATCH].str();
-            haplotype = NO_HAPLOTYPE;
-        }
-        
-        if (result[PHASE_BLOCK_MATCH].matched) {
-            // There's a phase block.
-            // We just assume it's actually a number.
-            phase_block = std::stoll(result[PHASE_BLOCK_MATCH].str());
-        } else {
-            // No phase block is stored
-            phase_block = NO_PHASE_BLOCK;
-        }
-        
-        if (result[RANGE_START_MATCH].matched) {
-            // There is a range start, so pasre it
-            subrange.first = std::stoll(result[RANGE_START_MATCH].str());
-            if (result[RANGE_END_MATCH].matched) {
-                // There is also an end, so parse that too
-                subrange.second = std::stoll(result[RANGE_END_MATCH].str());
+        try {
+            if (result[PHASE_BLOCK_MATCH].matched) {
+                // It's a haplotype because it has a phase block.
+                sense = PathSense::HAPLOTYPE;
+            } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+                // It's a reference because it has a locus and a sample
+                sense = PathSense::REFERENCE;
             } else {
-                subrange.second = NO_END_POSITION;
+                // It's just a one-piece generic name
+                sense = PathSense::GENERIC;
             }
-        } else {
-            subrange = NO_SUBRANGE;
+            
+            if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+                // There's a phase and a locus and a sample
+                sample = result[ASSEMBLY_OR_NAME_MATCH].str();
+                locus = result[LOCUS_MATCH_WITH_HAPLOTYPE].str();
+                haplotype = std::stoll(result[HAPLOTYPE_MATCH].str());
+            } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched) {
+                // There's a locus but no phase, and a sample
+                sample = result[ASSEMBLY_OR_NAME_MATCH].str();
+                locus = result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].str();
+                haplotype = NO_HAPLOTYPE;
+            } else {
+                // There's nothing but the locus and maybe a range.
+                sample = NO_SAMPLE_NAME;
+                locus = result[ASSEMBLY_OR_NAME_MATCH].str();
+                haplotype = NO_HAPLOTYPE;
+            }
+            
+            if (result[PHASE_BLOCK_MATCH].matched) {
+                // There's a phase block.
+                // We just assume it's actually a number.
+                phase_block = std::stoll(result[PHASE_BLOCK_MATCH].str());
+            } else {
+                // No phase block is stored
+                phase_block = NO_PHASE_BLOCK;
+            }
+            
+            if (result[RANGE_START_MATCH].matched) {
+                // There is a range start, so pasre it
+                subrange.first = std::stoll(result[RANGE_START_MATCH].str());
+                if (result[RANGE_END_MATCH].matched) {
+                    // There is also an end, so parse that too
+                    subrange.second = std::stoll(result[RANGE_END_MATCH].str());
+                } else {
+                    subrange.second = NO_END_POSITION;
+                }
+            } else {
+                subrange = NO_SUBRANGE;
+            }
+
+            return;
+        } catch (std::invalid_argument& e) {
+            // std::stoll will throw this when we don't actually have a number.
+            // If we don't have a number where we expected a number, we should
+            // handle that by treating the path as if it isn't really panSN.
+            //
+            // So do nothing.
         }
-    } else {
-        // Just a generic path where the locus is all of it.
-        sense = PathSense::GENERIC;
-        sample = NO_SAMPLE_NAME;
-        locus = path_name;
-        haplotype = NO_HAPLOTYPE;
-        phase_block = NO_PHASE_BLOCK;
-        subrange = NO_SUBRANGE;
     }
+
+    // If there's no match or a match but we can't successfully finish parsing,
+    // say it's just a generic path where the locus is all of it.
+    sense = PathSense::GENERIC;
+    sample = NO_SAMPLE_NAME;
+    locus = path_name;
+    haplotype = NO_HAPLOTYPE;
+    phase_block = NO_PHASE_BLOCK;
+    subrange = NO_SUBRANGE;
 }
 
 std::string PathMetadata::create_path_name(const PathSense& sense,
