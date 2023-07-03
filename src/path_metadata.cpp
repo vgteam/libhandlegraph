@@ -28,14 +28,15 @@ const subrange_t PathMetadata::NO_SUBRANGE{PathMetadata::NO_END_POSITION, PathMe
 // So we match a regex for:
 // One separator-free name component
 // Up to 3 other optional separator-free name components, led by separators tacked on by non-capturing groups. Last one must be a number.
+// Haplotype one must also always be a number, or we aren't allowed to match (or we will crash trying to parse the number).
 // Possibly a bracket-bounded non-capturing group at the end
 // Which has a number, and possibly a dash-led non-capturing group with a number.
 // Match number:                         1           2             3             4           5        6
-const std::regex PathMetadata::FORMAT(R"(([^[#]*)(?:#([^[#]*))?(?:#([^[#]*))?(?:#(\d+))?(?:\[(\d+)(?:-(\d+))?\])?)");
+const std::regex PathMetadata::FORMAT(R"(([^[#]*)(?:#(\d+))?(?:#([^[#]*))?(?:#(\d+))?(?:\[(\d+)(?:-(\d+))?\])?)");
 const size_t PathMetadata::ASSEMBLY_OR_NAME_MATCH = 1;
-const size_t PathMetadata::LOCUS_MATCH_WITHOUT_HAPLOTYPE = 2;
+const size_t PathMetadata::LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE = 2;
 const size_t PathMetadata::HAPLOTYPE_MATCH = 2;
-const size_t PathMetadata::LOCUS_MATCH_WITH_HAPLOTYPE = 3;
+const size_t PathMetadata::LOCUS_MATCH_ANY = 3;
 const size_t PathMetadata::PHASE_BLOCK_MATCH = 4;
 const size_t PathMetadata::RANGE_START_MATCH = 5;
 const size_t PathMetadata::RANGE_END_MATCH = 6;
@@ -79,7 +80,7 @@ PathSense PathMetadata::parse_sense(const std::string& path_name) {
         if (result[PHASE_BLOCK_MATCH].matched) {
             // It's a haplotype because it has a phase block
             return PathSense::HAPLOTYPE;
-        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+        } else if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_ANY].matched) {
             // It's a reference because it has a locus and a sample
             return PathSense::REFERENCE;
         } else {
@@ -98,7 +99,7 @@ std::string PathMetadata::parse_sample_name(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
-        if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched || result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched) {
+        if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_ANY].matched) {
             // There's a locus later, so the first thing doesn't have to be locus, so it can be sample.
             return result[ASSEMBLY_OR_NAME_MATCH].str();
         } else {
@@ -116,12 +117,13 @@ std::string PathMetadata::parse_locus_name(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
-        if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
-            // There's a phase and a locus
-            return result[LOCUS_MATCH_WITH_HAPLOTYPE].str();
-        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched) {
-            // There's a locus but no phase
-            return result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].str();
+        if (result[LOCUS_MATCH_ANY].matched) {
+            // There's a locus and maybe a haplotype
+            return result[LOCUS_MATCH_ANY].str();
+        } else if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched) {
+            // The locus wasn't pushed into its any slot, so we might have a
+            // strictly numerical one here and no haplotype
+            return result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].str();
         } else {
             // There's nothing but the locus and maybe a range.
             return result[ASSEMBLY_OR_NAME_MATCH].str();
@@ -137,12 +139,11 @@ size_t PathMetadata::parse_haplotype(const std::string& path_name) {
     // Match the regex
     std::smatch result;
     if (std::regex_match(path_name, result, FORMAT)) {
-        if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
-            // There's a haplotype.
-            // We just assume it's actually a number.
+        if (result[LOCUS_MATCH_ANY].matched && result[HAPLOTYPE_MATCH].matched) {
+            // There's a locus and a haplotype, and we know the haplotype is a number.
             return std::stoll(result[HAPLOTYPE_MATCH].str());
         } else {
-            // No haplotype is stored
+            // No haplotype is stored; if LOCUS_MATCH_ANY is empty and haplotype appears full, it's really the locus.
             return NO_HAPLOTYPE;
         }
     } else {
@@ -158,7 +159,7 @@ size_t PathMetadata::parse_phase_block(const std::string& path_name) {
     if (std::regex_match(path_name, result, FORMAT)) {
         if (result[PHASE_BLOCK_MATCH].matched) {
             // There's a phase block.
-            // We just assume it's actually a number.
+            // We know it is a number.
             return std::stoll(result[PHASE_BLOCK_MATCH].str());
         } else {
             // No phase block is stored
@@ -207,7 +208,7 @@ void PathMetadata::parse_path_name(const std::string& path_name,
         if (result[PHASE_BLOCK_MATCH].matched) {
             // It's a haplotype because it has a phase block.
             sense = PathSense::HAPLOTYPE;
-        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched || result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
+        } else if (result[LOCUS_MATCH_ANY].matched || result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched) {
             // It's a reference because it has a locus and a sample
             sense = PathSense::REFERENCE;
         } else {
@@ -215,15 +216,15 @@ void PathMetadata::parse_path_name(const std::string& path_name,
             sense = PathSense::GENERIC;
         }
         
-        if (result[LOCUS_MATCH_WITH_HAPLOTYPE].matched) {
-            // There's a phase and a locus and a sample
+        if (result[LOCUS_MATCH_ANY].matched && result[HAPLOTYPE_MATCH].matched) {
+            // There's a haplotype and a locus and a sample
             sample = result[ASSEMBLY_OR_NAME_MATCH].str();
-            locus = result[LOCUS_MATCH_WITH_HAPLOTYPE].str();
+            locus = result[LOCUS_MATCH_ANY].str();
             haplotype = std::stoll(result[HAPLOTYPE_MATCH].str());
-        } else if (result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].matched) {
-            // There's a locus but no phase, and a sample
+        } else if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched) {
+            // There's a locus but no haplotype, and a sample
             sample = result[ASSEMBLY_OR_NAME_MATCH].str();
-            locus = result[LOCUS_MATCH_WITHOUT_HAPLOTYPE].str();
+            locus = result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].str();
             haplotype = NO_HAPLOTYPE;
         } else {
             // There's nothing but the locus and maybe a range.
@@ -234,7 +235,7 @@ void PathMetadata::parse_path_name(const std::string& path_name,
         
         if (result[PHASE_BLOCK_MATCH].matched) {
             // There's a phase block.
-            // We just assume it's actually a number.
+            // We know it is a number.
             phase_block = std::stoll(result[PHASE_BLOCK_MATCH].str());
         } else {
             // No phase block is stored
