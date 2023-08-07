@@ -222,9 +222,14 @@ void PathMetadata::parse_path_name(const std::string& path_name,
             locus = result[LOCUS_MATCH_ANY].str();
             haplotype = std::stoll(result[HAPLOTYPE_MATCH].str());
         } else if (result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].matched) {
-            // There's a locus but no haplotype, and a sample
+            // There's a numerical locus but no haplotype, and a sample
             sample = result[ASSEMBLY_OR_NAME_MATCH].str();
             locus = result[LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE].str();
+            haplotype = NO_HAPLOTYPE;
+        } else if (result[LOCUS_MATCH_ANY].matched) {
+            // There's a non-numerical locus but no haplotype, and a sample
+            sample = result[ASSEMBLY_OR_NAME_MATCH].str();
+            locus = result[LOCUS_MATCH_ANY].str();
             haplotype = NO_HAPLOTYPE;
         } else {
             // There's nothing but the locus and maybe a range.
