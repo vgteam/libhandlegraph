@@ -110,12 +110,15 @@ target_include_directories(handlegraph_objs PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}
 set_target_properties(handlegraph_objs PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 # Make static and shared versions with the same base name.
-# Make sure to give them interface include directories that depending targets can use.
-# We don't need to set target_include_directories because install(INCLUDES DESTINATION) does that.
+# Make sure to give them interface include directories that depending targets
+# can use, depending on if they need to depend on us before or after
+# installation.
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
+target_include_directories(handlegraph_shared INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
+target_include_directories(handlegraph_static INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 
 # Set up for installability
 # Make sure to put all the targets in an export set
