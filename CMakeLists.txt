@@ -111,19 +111,62 @@ set_target_properties(handlegraph_objs PROPERTIES POSITION_INDEPENDENT_CODE TRUE
 
 # Make static and shared versions with the same base name.
 # Make sure to give them interface include directories that depending targets can use.
+# We don't need to set target_include_directories because install(INCLUDES DESTINATION) does that.
 add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
-target_include_directories(handlegraph_shared INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
-target_include_directories(handlegraph_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 # Set up for installability
-install(TARGETS handlegraph_shared handlegraph_static 
+# Make sure to put all the targets in an export set
+install(TARGETS handlegraph_shared handlegraph_static EXPORT libhandlegraphTargets 
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+# We still have to also say to actually install the headers; install(INCLUDES DESTINATION) doesn't do it.
+# TODO: Use file sets here when we can use CMake 3.23+
 install(DIRECTORY src/include/handlegraph
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FILES_MATCHING PATTERN "*.hpp"
   )
+
+# Set up CMake config files to be installed so that find_package(libhandlegraph) works.
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphConfigVersion.cmake"
+  VERSION 1.0
+  COMPATIBILITY AnyNewerVersion
+)
+
+# Write all the targets we make, to be imported in a libhandlegraph:: namespace
+# when the package is found.
+export(EXPORT libhandlegraphTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphTargets.cmake"
+  NAMESPACE libhandlegraph::
+)
+# We don't use configure_package_config_file because we *only* provide targets, not any variables.
+configure_file(cmake/libhandlegraphConfig.cmake
+  "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphConfig.cmake"
+  COPYONLY
+)
+
+set(ConfigPackageLocation lib/cmake/libhandlegraph)
+# Make an exports file that gets installed and lists all the targets from the export set
+install(EXPORT libhandlegraphTargets
+  FILE
+    libhandlegraphTargets.cmake
+  NAMESPACE
+    libhandlegraph::
+  DESTINATION
+    ${ConfigPackageLocation}
+)
+install(
+  FILES
+    cmake/libhandlegraphConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphConfigVersion.cmake"
+  DESTINATION
+    ${ConfigPackageLocation}
+  COMPONENT
+    Devel
+)
