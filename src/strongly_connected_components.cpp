@@ -141,7 +141,7 @@ vector<unordered_set<nid_t>> strongly_connected_components(const HandleGraph* ha
                 // use one node ID to mark this component as finished
                 already_used.insert(*component.begin());
                 // add it to the return valuse
-                components.emplace_back(move(component));
+                components.emplace_back(std::move(component));
             }
         }
     },
