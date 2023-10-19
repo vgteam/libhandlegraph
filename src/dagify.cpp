@@ -439,7 +439,7 @@ unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph, MutableHandleGraph*
 #endif
             
             // initialize the DP structures for the next iteration
-            distances = move(next_distances);
+            distances = std::move(next_distances);
             next_distances.assign(distances.size(), numeric_limits<int64_t>::max());
         }
     }
