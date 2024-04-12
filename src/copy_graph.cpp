@@ -61,7 +61,6 @@ void copy_path(const PathHandleGraph* from, const path_handle_t& from_path,
                                                 from->get_sample_name(from_path),
                                                 from->get_locus_name(from_path),
                                                 from->get_haplotype(from_path),
-                                                from->get_phase_block(from_path),
                                                 from->get_subrange(from_path),
                                                 from->get_is_circular(from_path));
     

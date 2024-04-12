@@ -36,7 +36,17 @@ bool PathHandleGraph::is_empty(const path_handle_t& path_handle) const {
     // But some implementations may have an expensive length query and a cheaper emptiness one
     return get_step_count(path_handle) == 0;
 }
-    
+
+size_t PathHandleGraph::get_path_length(const path_handle_t& path_handle) const {
+    // By default we scan the path to compute the length.
+    // PathPositionHandleGraph makes this abstract again so you must provide a real implementation.
+    size_t length = 0;
+    for (handle_t node : scan_path(path_handle)) {
+        length += get_length(node);
+    }
+    return length;
+}
+
 PathForEachSocket PathHandleGraph::scan_path(const path_handle_t& path) const {
     return PathForEachSocket(this, path);
 }

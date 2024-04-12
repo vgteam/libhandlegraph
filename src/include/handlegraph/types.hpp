@@ -9,6 +9,8 @@
 #include <utility>
 #include <functional>
 #include <limits>
+#include <ostream>
+#include <string>
 
 namespace handlegraph {
 
@@ -29,8 +31,27 @@ typedef std::size_t offset_t;
 [[deprecated("off_t collides with a POSIX type, use offset_t instead")]]
 typedef offset_t off_t;
 
-/// Represents a range of offsets, 0-based, end-exclusive
+/// Represents a range of offsets, 0-based, end-exclusive.
+/// The end may be PathMetadata::NO_END_POSITION.
 typedef std::pair<offset_t, offset_t> subrange_t;
+
+/// Represents a position or range on a named scaffold. May partially cover
+/// zero or more paths with subranges in a graph. Its subrange must always have
+/// a start and an end set.
+typedef std::pair<std::string, subrange_t> region_t;
+
+/// Parse a region_t from user-facing one-based end-inclusive coordinates.
+/// Raises std::invalid_argument if the provided string is not understandable
+/// as a region. The region must include an end coordinate.
+region_t parse_region(const std::string& region_text);
+
+/// Turn a region_t into a user-facing one-based end-inclusive coordinate
+/// string. The region must include an end coordinate.
+std::string to_string(const region_t& region);
+
+/// Write a region_t to a stream as a user-facing one-based end-inclusive
+/// coordinate string. The region must include an end coordinate.
+std::ostream& operator<<(std::ostream& out, const region_t region);
 
 /// Represents a position
 typedef std::tuple<nid_t, bool, offset_t> pos_t;
