@@ -30,8 +30,7 @@ public:
     
     /**
      * Add a path with the given metadata. Any item can be the corresponding
-     * unset sentinel (PathMetadata::NO_LOCUS_NAME,
-     * PathMetadata::NO_PHASE_BLOCK, etc.).
+     * unset sentinel (PathMetadata::NO_LOCUS_NAME, etc.).
      * 
      * Implementations may refuse to store paths-or-threads of certain senses
      * when relevant fields are unset.
@@ -43,7 +42,6 @@ public:
                                       const std::string& sample,
                                       const std::string& locus,
                                       const size_t& haplotype,
-                                      const size_t& phase_block,
                                       const subrange_t& subrange,
                                       bool is_circular = false);
 

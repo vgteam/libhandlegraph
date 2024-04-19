@@ -115,7 +115,7 @@ public:
     /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
-    
+
     ////////////////////////////////////////////////////////////////////////////
     // Backing protected virtual methods that need to be implemented
     ////////////////////////////////////////////////////////////////////////////
@@ -154,6 +154,9 @@ public:
     /// Returns true if the given path is empty, and false otherwise
     virtual bool is_empty(const path_handle_t& path_handle) const;
 
+    /// Measure the length of a path.
+    virtual size_t get_path_length(const path_handle_t& path_handle) const;
+
     ////////////////////////////////////////////////////////////////////////////
     // Concrete utility methods
     ////////////////////////////////////////////////////////////////////////////
@@ -185,7 +188,6 @@ template<typename Iteratee>
 bool PathHandleGraph::for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
     return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
-
 
 template<typename Iteratee>
 bool PathHandleGraph::for_each_step_in_path(const path_handle_t& path, const Iteratee& iteratee) const {
