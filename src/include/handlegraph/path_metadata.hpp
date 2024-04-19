@@ -80,7 +80,7 @@ public:
     virtual std::string get_locus_name(const path_handle_t& handle) const;
     static const std::string NO_LOCUS_NAME;
     
-    /// Get the haplotype number (0 or 1, for diploid) of the path-or-thread,
+    /// Get the haplotype number (0 for haploid, 1 or 2 for diploid) of the path-or-thread,
     /// or NO_HAPLOTYPE if it does not belong to one.
     virtual size_t get_haplotype(const path_handle_t& handle) const;
     static const size_t NO_HAPLOTYPE;
@@ -120,7 +120,7 @@ public:
     /// path name, or NO_LOCUS_NAME if it does not belong to one.
     static std::string parse_locus_name(const std::string& path_name);
     
-    /// Get the haplotype number (0 or 1, for diploid) embedded in the given
+    /// Get the haplotype number (0 for haploid, 1 or 2 for diploid) embedded in the given
     /// formatted path name, or NO_HAPLOTYPE if it does not belong to one.
     static size_t parse_haplotype(const std::string& path_name);
     
