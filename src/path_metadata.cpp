@@ -237,8 +237,13 @@ void PathMetadata::parse_path_name(const std::string& path_name,
         }
         
         if (result[RANGE_START_MATCH].matched) {
-            // There is a range start, so pasre it
+            // There is a range start, so parse it
             subrange.first = std::stoll(result[RANGE_START_MATCH].str());
+            // Make sure to convert it to 0-based, end-exclusive coordinates.
+            if (subrange.first == 0) {
+                throw std::invalid_argument("Expected 1-based indexing in " + path_name);
+            }
+            subrange.first--;
             if (result[RANGE_END_MATCH].matched) {
                 // There is also an end, so parse that too
                 subrange.second = std::stoll(result[RANGE_END_MATCH].str());
@@ -357,7 +362,8 @@ std::string PathMetadata::create_path_name(const PathSense& sense,
     }
     if (subrange != NO_SUBRANGE) {
         // Everything can have a subrange.
-        name_builder << RANGE_START_SEPARATOR << subrange.first;
+        // Make sure to convert to 1-based, end-inclusive coordinates.
+        name_builder << RANGE_START_SEPARATOR << subrange.first + 1;
         if (subrange.second != NO_END_POSITION) {
             name_builder << RANGE_END_SEPARATOR << subrange.second;
         }

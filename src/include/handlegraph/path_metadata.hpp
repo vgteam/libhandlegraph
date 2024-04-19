@@ -130,6 +130,8 @@ public:
     static subrange_t parse_subrange(const std::string& path_name);
     
     /// Decompose a formatted path name into metadata.
+    /// Expects 1-based, end-inclusive coordinates in subranges in the name,
+    /// and emits 0-based, end-exclusive coordinates.
     static void parse_path_name(const std::string& path_name,
                                 PathSense& sense,
                                 std::string& sample,
@@ -145,6 +147,8 @@ public:
 
     /// Compose a formatted path name for the given metadata. Any item can be
     /// the corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME, etc.).
+    /// Expects 0-based, end-exclusive coordinates and procudes 1-based,
+    /// end-inclusive coordinates in the name.
     static std::string create_path_name(const PathSense& sense,
                                         const std::string& sample,
                                         const std::string& locus,
