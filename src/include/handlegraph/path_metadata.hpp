@@ -22,13 +22,13 @@ namespace handlegraph {
  *
  * Our model is that paths come in different "senses":
  *
- * - SENSE_GENERIC: a generic named path. Has a "locus" name.
+ * - PathSense::GENERIC: a generic named path. Has a "locus" name.
  *
- * - SENSE_REFERENCE: a part of a reference assembly. Has a "sample" name, a
- *   "locus" name, and a haplotype number.
+ * - PathSense::REFERENCE: a part of a reference assembly. Has a "sample" name,
+ *   a "locus" name, and a haplotype number.
  *
- * - SENSE_HAPLOTYPE: a haplotype from a particular individual. Has a "sample"
- *   name, a "locus" name, a haplotype number.
+ * - PathSense::HAPLOTYPE: a haplotype from a particular individual. Has a
+ *   "sample" name, a "locus" name, a haplotype number.
  *
  * Paths of all sneses can represent subpaths, with bounds.
  *
@@ -109,7 +109,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     
     /// Extract the sense of a path from the given formatted path name, if
-    /// possible. If not possible, return SENSE_GENERIC.
+    /// possible. If not possible, return PathSense::GENERIC.
     static PathSense parse_sense(const std::string& path_name);
     
     /// Get the name of the sample or assembly embedded in the given formatted
