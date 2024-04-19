@@ -369,6 +369,7 @@ std::string PathMetadata::create_path_name(const PathSense& sense,
 bool PathMetadata::for_each_path_matching_impl(const std::unordered_set<PathSense>* senses,
                                                const std::unordered_set<std::string>* samples,
                                                const std::unordered_set<std::string>* loci,
+                                               const std::unordered_set<size_t>* haplotypes,
                                                const std::function<bool(const path_handle_t&)>& iteratee) const {
     return for_each_path_handle_impl([&](const path_handle_t& handle) {
         if (senses && !senses->count(get_sense(handle))) {
@@ -383,22 +384,11 @@ bool PathMetadata::for_each_path_matching_impl(const std::unordered_set<PathSens
             // Wrong sample
             return true;
         }
-        // And emit any matching handles
-        return iteratee(handle);
-    });
-}
-
-bool PathMetadata::for_each_path_matching_impl(const std::unordered_set<PathSense>* senses,
-                                               const std::unordered_set<std::string>* samples,
-                                               const std::unordered_set<std::string>* loci,
-                                               const std::unordered_set<size_t>* haplotypes,
-                                               const std::function<bool(const path_handle_t&)>& iteratee) const {
-    return for_each_path_matching_impl(senses, samples, loci, [&](const path_handle_t& handle) {
         if (haplotypes && !haplotypes->count(get_haplotype(handle))) {
             // Wrong haplotype
             return true;
         }
-        // Emit any matching handles
+        // And emit any matching handles
         return iteratee(handle);
     });
 }

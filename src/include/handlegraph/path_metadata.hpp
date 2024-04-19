@@ -232,14 +232,6 @@ protected:
     virtual bool for_each_path_matching_impl(const std::unordered_set<PathSense>* senses,
                                              const std::unordered_set<std::string>* samples,
                                              const std::unordered_set<std::string>* loci,
-                                             const std::function<bool(const path_handle_t&)>& iteratee) const;
-
-    /// Loop through all the paths matching the given query. Query elements
-    /// which are null match everything. Returns false and stops if the
-    /// iteratee returns false.
-    virtual bool for_each_path_matching_impl(const std::unordered_set<PathSense>* senses,
-                                             const std::unordered_set<std::string>* samples,
-                                             const std::unordered_set<std::string>* loci,
                                              const std::unordered_set<size_t>* haplotypes,
                                              const std::function<bool(const path_handle_t&)>& iteratee) const;
 
@@ -314,13 +306,13 @@ private:
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const {
     std::unordered_set<PathSense> senses{sense};
-    return for_each_path_matching_impl(&senses, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    return for_each_path_matching_impl(&senses, nullptr, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const {
     std::unordered_set<std::string> samples{sample};
-    return for_each_path_matching_impl(nullptr, &samples, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    return for_each_path_matching_impl(nullptr, &samples, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
@@ -328,7 +320,7 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>* s
                                           const std::unordered_set<std::string>* samples,
                                           const std::unordered_set<std::string>* loci,
                                           const Iteratee& iteratee) const {
-    return for_each_path_matching_impl(senses, samples, loci, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    return for_each_path_matching_impl(senses, samples, loci, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
