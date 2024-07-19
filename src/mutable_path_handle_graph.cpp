@@ -6,6 +6,12 @@
 
 namespace handlegraph {
 
+void MutablePathHandleGraph::destroy_paths(const std::vector<path_handle_t>& paths) {
+    for (const auto& path : paths) {
+        destroy_path(path);
+    }
+}
+
 void MutablePathHandleGraph::pop_front_step(const path_handle_t& path_handle) {
     step_handle_t begin = path_begin(path_handle);
     step_handle_t next = get_next_step(begin);

@@ -26,6 +26,11 @@ public:
      * Destroy the given path. Invalidates handles to the path and its steps.
      */
     virtual void destroy_path(const path_handle_t& path_handle) = 0;
+    
+    /**
+     * Destroy the given set of paths. Invalidates handles to all the paths and their steps.
+     */
+    virtual void destroy_paths(const std::vector<path_handle_t>& paths);
 
     /**
      * Create a path with the given name. The caller must ensure that no path
