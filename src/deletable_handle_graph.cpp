@@ -18,6 +18,27 @@ handle_t DeletableHandleGraph::truncate_handle(const handle_t& handle, bool trun
     }
 }
 
+handle_t DeletableHandleGraph::change_sequence(const handle_t& handle, const std::string& sequence) {
+    // new handle with the new sequence
+    handle_t new_handle = create_handle(sequence);
+    
+    // copy its edges
+    follow_edges(handle, false, [&](const handle_t& next) {
+        create_edge(new_handle, next);
+    });
+    follow_edges(handle, true, [&](const handle_t& prev) {
+        // ensure that we don't double add a non-reversing self-edge
+        if (get_id(prev) != get_id(handle) || get_is_reverse(prev)) {
+            create_edge(prev, new_handle);
+        }
+    });
+    
+    // clear the original
+    destroy_handle(handle);
+    
+    return new_handle;
+}
+
 }
 
 
