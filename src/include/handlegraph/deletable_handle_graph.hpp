@@ -30,9 +30,10 @@ public:
     /// May **NOT** be called during iteration along a path, if it could destroy that path.
     virtual void destroy_handle(const handle_t& handle) = 0;
     
-    /// Change the sequence of handle's forward orientation to a new sequence. Returns a (possibly
-    /// handle to the node with the new sequence. May invalidate the existing handle. Updates
-    /// alterered) paths if called through a class inheriting a MutablePathHandleGraph interface.
+    /// Change the sequence of handle's forward orientation to a new sequence. Returns a (possibly altered)
+    /// handle to the node with the new sequence. The returned handle has the same orientation as the
+    /// handle provided as an argument. May invalidate existing handles to the node. Updates paths to
+    /// follow the new node if called through a class inheriting a MutablePathHandleGraph interface.
     virtual handle_t change_sequence(const handle_t& handle, const std::string& sequence);
     
     /// Remove the edge connecting the given handles in the given order and orientations.

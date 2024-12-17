@@ -21,6 +21,9 @@ handle_t DeletableHandleGraph::truncate_handle(const handle_t& handle, bool trun
 handle_t DeletableHandleGraph::change_sequence(const handle_t& handle, const std::string& sequence) {
     // new handle with the new sequence
     handle_t new_handle = create_handle(sequence);
+    if (get_is_reverse(handle)) {
+        new_handle = flip(new_handle);
+    }
     
     // copy its edges
     follow_edges(handle, false, [&](const handle_t& next) {
