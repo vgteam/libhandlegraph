@@ -191,8 +191,10 @@ handle_t SubHandleGraph::get_underlying_handle(const handle_t& handle) const {
 
 // TODO: SubHandleGraph port over
 
-unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph, MutableHandleGraph* into,
-                                   size_t min_preserved_path_length) {
+/// Internal implementation that exposes the ID translation back to the original graph and the injection into the dagified graph, with all copies in order. 
+static std::pair<std::unordered_map<nid_t, nid_t>, unordered_map<handle_t, vector<handle_t>>> dagify_internal(const HandleGraph* graph,
+                                                                                                              MutableHandleGraph* into,
+                                                                                                              size_t min_preserved_path_length) {
     
     // initialize the translator from the dagified graph back to the original graph
     unordered_map<nid_t, nid_t> translator;
@@ -460,6 +462,7 @@ unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph, MutableHandleGraph*
                            canonical_edge);
             
             // connect the last copy of the first node to all copies of the second
+            // TODO: Why the asymmetry?
             const handle_t& from = injector[edge.first].back();
             for (const handle_t& to : injector[edge.second]) {
                 into->create_edge(from, to);
@@ -473,19 +476,27 @@ unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph, MutableHandleGraph*
         return true;
     });
     
-    // return the ID translator
-    return translator;
+    // return the ID translator and the handle injector
+    return {translator, injector};
 }
 
-std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
-                                             std::vector<handle_t> start_handles,
-                                             DeletableHandleGraph* into,
-                                             size_t min_preserved_path_length) {
+unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph, MutableHandleGraph* into,
+                                   size_t min_preserved_path_length) {
+    
+    return dagify_internal(graph, into, min_preserved_path_length).first;
+}
+
+std::pair<std::unordered_map<nid_t, nid_t>, std::vector<handle_t>> dagify_from(const HandleGraph* graph,
+                                                                               std::vector<handle_t> start_handles,
+                                                                               DeletableHandleGraph* into,
+                                                                               size_t min_preserved_path_length) {
     
     // Cheating implementation
     
     // Dagify the *entire* graph, creating some nodes not reachable from the starting points.
-    auto new_id_to_old_id = dagify(graph, into, min_preserved_path_length);
+    auto dagification_result = dagify_internal(graph, into, min_preserved_path_length);
+    auto& new_id_to_old_id = dagification_result.first;
+    auto& old_handle_to_new_handles = dagification_result.second;
     
     // Find all the node IDs we have start handles on
     std::unordered_set<nid_t> start_nodes;
@@ -493,22 +504,27 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
         start_nodes.insert(graph->get_id(h));
     }
     
-    // Invert enough of the ID mapping so we can translate our start handles
-    std::unordered_map<nid_t, std::vector<nid_t>> start_id_to_new_ids;
-    for (auto& kv : new_id_to_old_id) {
-        if (start_nodes.count(kv.second)) {
-            start_id_to_new_ids[kv.second].push_back(kv.first);
-        }
-    }
-    
-    // Translate all our start handles into the into graph.
+    // Translate all our start handles into the into graph to get their copies
+    // that have all paths going right from their starts.
     std::vector<handle_t> into_start_handles;
     for (auto& h : start_handles) {
-        auto id = graph->get_id(h);
-        auto is_rev = graph->get_is_reverse(h);
-        for (auto& new_id : start_id_to_new_ids[id]) {
-            // We know the orientations of the duplicated nodes are the same, so we just pass orientation along.
-            into_start_handles.push_back(into->get_handle(new_id, is_rev));
+        auto found = old_handle_to_new_handles.find(h);
+        if (found == old_handle_to_new_handles.end()) {
+            // We must be holding this handle in the opposite orientation from
+            // its assigned one.
+            
+            // It must exist in the other orientation.
+            auto& copies = old_handle_to_new_handles.at(graph->flip(h));
+
+            // We want all paths to the right, so we need to find the last copy
+            // (so we have all paths to the left) and flip it.
+            into_start_handles.push_back(into->flip(copies.back()));
+        } else {
+            // We are holding this handle in the assigned orientation. We want
+            // all paths going right and that's what we have from the first
+            // copy.
+            auto& copies = found->second;
+            into_start_handles.push_back(copies.front());
         }
     }
     
@@ -527,6 +543,8 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
         {}
     );
     
+    // Drop all the un-tagged nodes.
+
     // TODO: We're supposed to be able to destroy the current handle as we loop
     // over it, but HashGraph can't handle that.
     std::vector<handle_t> to_remove;
@@ -543,7 +561,7 @@ std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
          into->destroy_handle(h);
     }
     
-    return new_id_to_old_id;
+    return {new_id_to_old_id, into_start_handles};
 }
 
 }
