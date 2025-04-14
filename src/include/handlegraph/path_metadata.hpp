@@ -22,13 +22,13 @@ namespace handlegraph {
  *
  * Our model is that paths come in different "senses":
  *
- * - SENSE_GENERIC: a generic named path. Has a "locus" name.
+ * - PathSense::GENERIC: a generic named path. Has a "locus" name.
  *
- * - SENSE_REFERENCE: a part of a reference assembly. Has a "sample" name, a
- *   "locus" name, and a haplotype number.
+ * - PathSense::REFERENCE: a part of a reference assembly. Has a "sample" name,
+ *   a "locus" name, and a haplotype number.
  *
- * - SENSE_HAPLOTYPE: a haplotype from a particular individual. Has a "sample"
- *   name, a "locus" name, a haplotype number, and a phase block identifier.
+ * - PathSense::HAPLOTYPE: a haplotype from a particular individual. Has a
+ *   "sample" name, a "locus" name, a haplotype number.
  *
  * Paths of all sneses can represent subpaths, with bounds.
  *
@@ -43,15 +43,11 @@ namespace handlegraph {
  *   represented. GFA uses a convention where the presence of a haplotype 0
  *   implies that only one haplotype is present.
  *
- * - Phase block identifier: Distinguishes fragments of a haplotype that are
- *   phased but not necessarily part of a single self-consistent scaffold (often
- *   due to self-contradictory VCF information). Must be unique within a sample,
- *   locus, and haplotype. May be a number or a start coordinate.
+ * - Subrange, for when a path as stored gives only a sub-range of a conceptually
+ *   longer scaffold. Multiple items can be stored with identical metadata in the
+ *   other fields if their subranges are non-overlapping. For haplotypes, the
+ *   subrange coordinates may be synthetic.
  *
- * - Bounds, for when a path as stored gives only a sub-range of a conceptually
- *   longer path. Multiple items can be stored with identical metadata in the
- *   other fields if their bounds are non-overlapping.
- * TODO: Interaction with phase block in GBWT???
  */
 class PathMetadata {
 public:
@@ -84,16 +80,10 @@ public:
     virtual std::string get_locus_name(const path_handle_t& handle) const;
     static const std::string NO_LOCUS_NAME;
     
-    /// Get the haplotype number (0 or 1, for diploid) of the path-or-thread,
+    /// Get the haplotype number (0 for haploid, 1 or 2 for diploid) of the path-or-thread,
     /// or NO_HAPLOTYPE if it does not belong to one.
     virtual size_t get_haplotype(const path_handle_t& handle) const;
     static const size_t NO_HAPLOTYPE;
-    
-    /// Get the phase block number (contiguously phased region of a sample,
-    /// contig, and haplotype) of the path-or-thread, or NO_PHASE_BLOCK if it
-    /// does not belong to one.
-    virtual size_t get_phase_block(const path_handle_t& handle) const;
-    static const size_t NO_PHASE_BLOCK;
     
     /// Get the bounds of the path-or-thread that are actually represented
     /// here. Should be NO_SUBRANGE if the entirety is represented here, and
@@ -105,13 +95,21 @@ public:
     virtual subrange_t get_subrange(const path_handle_t& handle) const;
     static const subrange_t NO_SUBRANGE;
     static const offset_t NO_END_POSITION;
+
+    /// Get the name of the scaffold that the path is on. This is the path name
+    /// without any subrange information.
+    virtual std::string get_path_scaffold_name(const path_handle_t& handle) const;
+
+    /// Get the region that a path covers on its scaffold. Will compute the end
+    /// coordinate if not stored.
+    virtual region_t get_path_region(const path_handle_t& handle) const;
     
     ////////////////////////////////////////////////////////////////////////////
     // Tools for converting back and forth with single-string path names
     ////////////////////////////////////////////////////////////////////////////
     
     /// Extract the sense of a path from the given formatted path name, if
-    /// possible. If not possible, return SENSE_GENERIC.
+    /// possible. If not possible, return PathSense::GENERIC.
     static PathSense parse_sense(const std::string& path_name);
     
     /// Get the name of the sample or assembly embedded in the given formatted
@@ -122,14 +120,9 @@ public:
     /// path name, or NO_LOCUS_NAME if it does not belong to one.
     static std::string parse_locus_name(const std::string& path_name);
     
-    /// Get the haplotype number (0 or 1, for diploid) embedded in the given
+    /// Get the haplotype number (0 for haploid, 1 or 2 for diploid) embedded in the given
     /// formatted path name, or NO_HAPLOTYPE if it does not belong to one.
     static size_t parse_haplotype(const std::string& path_name);
-    
-    /// Get the phase block number (contiguously phased region of a sample,
-    /// contig, and haplotype) embedded in the given formatted path name, or
-    /// NO_PHASE_BLOCK if it does not belong to one.
-    static size_t parse_phase_block(const std::string& path_name);
     
     /// Get the bounds embedded in the given formatted path name, or
     /// NO_SUBRANGE if they are absent. If no end position is stored,
@@ -137,22 +130,29 @@ public:
     static subrange_t parse_subrange(const std::string& path_name);
     
     /// Decompose a formatted path name into metadata.
+    /// Expects 1-based, end-inclusive coordinates in subranges in the name,
+    /// and emits 0-based, end-exclusive coordinates.
     static void parse_path_name(const std::string& path_name,
                                 PathSense& sense,
                                 std::string& sample,
                                 std::string& locus,
                                 size_t& haplotype,
-                                size_t& phase_block,
                                 subrange_t& subrange);
 
+    /// Decompose a scaffold name (without range) into metadata (without sense)
+    static void parse_scaffold_name(const std::string& scaffold_name,
+                                    std::string& sample,
+                                    std::string& locus,
+                                    size_t& haplotype); 
+
     /// Compose a formatted path name for the given metadata. Any item can be
-    /// the corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME,
-    /// PathMetadata::NO_PHASE_BLOCK, etc.).
+    /// the corresponding unset sentinel (PathMetadata::NO_LOCUS_NAME, etc.).
+    /// Expects 0-based, end-exclusive coordinates and procudes 1-based,
+    /// end-inclusive coordinates in the name.
     static std::string create_path_name(const PathSense& sense,
                                         const std::string& sample,
                                         const std::string& locus,
                                         const size_t& haplotype,
-                                        const size_t& phase_block,
                                         const subrange_t& subrange);
     
     ////////////////////////////////////////////////////////////////////////////
@@ -177,6 +177,16 @@ public:
                                 const std::unordered_set<std::string>* samples,
                                 const std::unordered_set<std::string>* loci,
                                 const Iteratee& iteratee) const;
+
+    /// Loop through all the paths matching the given query. Query elements
+    /// which are null match everything. Returns false and stops if the
+    /// iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_matching(const std::unordered_set<PathSense>* senses,
+                                const std::unordered_set<std::string>* samples,
+                                const std::unordered_set<std::string>* loci,
+                                const std::unordered_set<size_t>* haplotypes,
+                                const Iteratee& iteratee) const;
     
     /// Loop through all the paths matching the given query. Query elements
     /// which are empty match everything. Returns false and stops if the
@@ -186,6 +196,22 @@ public:
                                 const std::unordered_set<std::string>& samples,
                                 const std::unordered_set<std::string>& loci,
                                 const Iteratee& iteratee) const;
+
+    /// Loop through all the paths matching the given query. Query elements
+    /// which are empty match everything. Returns false and stops if the
+    /// iteratee returns false.                            
+    template<typename Iteratee>
+    bool for_each_path_matching(const std::unordered_set<PathSense>& senses,
+                                const std::unordered_set<std::string>& samples,
+                                const std::unordered_set<std::string>& loci,
+                                const std::unordered_set<size_t>& haplotypes,
+                                const Iteratee& iteratee) const;
+
+    /// Loop through all the paths on the scaffold with the given name. Paths
+    /// are not necessarily visited in order.                     
+    template<typename Iteratee>
+    bool for_each_path_on_scaffold(const std::string& scaffold_name,
+                                   const Iteratee& iteratee) const;
     
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
@@ -210,7 +236,13 @@ protected:
     virtual bool for_each_path_matching_impl(const std::unordered_set<PathSense>* senses,
                                              const std::unordered_set<std::string>* samples,
                                              const std::unordered_set<std::string>* loci,
+                                             const std::unordered_set<size_t>* haplotypes,
                                              const std::function<bool(const path_handle_t&)>& iteratee) const;
+
+    /// Loop through the handles of paths that are on the given scaffold. Paths
+    /// are not necessarily visited in order. Returns false and stops if the
+    /// iteratee returns false.
+    virtual bool for_each_path_on_scaffold_impl(const std::string& scaffold, const std::function<bool(const path_handle_t&)>& iteratee) const;
     
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
@@ -224,6 +256,9 @@ protected:
     
     /// Look up the name of a path from a handle to it
     virtual std::string get_path_name(const path_handle_t& path_handle) const = 0;
+
+    /// Measure the length of a path.
+    virtual size_t get_path_length(const path_handle_t& path_handle) const = 0;
     
     /// Returns a handle to the path that an step is on
     virtual path_handle_t get_path_handle_of_step(const step_handle_t& step_handle) const = 0;
@@ -253,11 +288,11 @@ private:
     ////////////////////////////////////////////////////////////////////////////
     
     static const std::regex FORMAT;
+    static const std::regex SCAFFOLD_FORMAT;
     static const size_t ASSEMBLY_OR_NAME_MATCH;
     static const size_t LOCUS_MATCH_NUMERICAL_WITHOUT_HAPLOTYPE;
     static const size_t HAPLOTYPE_MATCH;
     static const size_t LOCUS_MATCH_ANY;
-    static const size_t PHASE_BLOCK_MATCH;
     static const size_t RANGE_START_MATCH;
     static const size_t RANGE_END_MATCH;
     
@@ -266,7 +301,6 @@ private:
     // Ranges are set off with some additional characters.
     static const char RANGE_START_SEPARATOR;
     static const char RANGE_END_SEPARATOR;
-    static const char RANGE_TERMINATOR;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -276,13 +310,13 @@ private:
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const {
     std::unordered_set<PathSense> senses{sense};
-    return for_each_path_matching_impl(&senses, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    return for_each_path_matching_impl(&senses, nullptr, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const {
     std::unordered_set<std::string> samples{sample};
-    return for_each_path_matching_impl(nullptr, &samples, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    return for_each_path_matching_impl(nullptr, &samples, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
@@ -290,7 +324,16 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>* s
                                           const std::unordered_set<std::string>* samples,
                                           const std::unordered_set<std::string>* loci,
                                           const Iteratee& iteratee) const {
-    return for_each_path_matching_impl(senses, samples, loci, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+    return for_each_path_matching_impl(senses, samples, loci, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>* senses,
+                                          const std::unordered_set<std::string>* samples,
+                                          const std::unordered_set<std::string>* loci,
+                                          const std::unordered_set<size_t>* haplotypes,
+                                          const Iteratee& iteratee) const {
+    return for_each_path_matching_impl(senses, samples, loci, haplotypes, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
@@ -302,6 +345,24 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>& s
                                   samples.empty() ? nullptr : &samples,
                                   loci.empty() ? nullptr : &loci,
                                   iteratee);
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>& senses,
+                                          const std::unordered_set<std::string>& samples,
+                                          const std::unordered_set<std::string>& loci,
+                                          const std::unordered_set<size_t>& haplotypes,
+                                          const Iteratee& iteratee) const {
+    return for_each_path_matching(senses.empty() ? nullptr : &senses,
+                                  samples.empty() ? nullptr : &samples,
+                                  loci.empty() ? nullptr : &loci,
+                                  haplotypes.empty() ? nullptr : &haplotypes,
+                                  iteratee);
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_on_scaffold(const std::string& scaffold_name, const Iteratee& iteratee) const {
+    return for_each_path_on_scaffold_impl(scaffold_name, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
