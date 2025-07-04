@@ -39,13 +39,13 @@ bool operator!=(const step_handle_t& a, const step_handle_t& b) {
 }
 
 /// Define equality on net handles
-bool operator==(const net_handle_t& a, const net_handle_t& b) {
-    return as_integer(a) == as_integer(b);
+bool net_handle_t::operator==(const net_handle_t& other) const {
+    return as_integer(*this) == as_integer(other);
 }
 
 /// Define inequality on net handles
-bool operator!=(const net_handle_t& a, const net_handle_t& b) {
-    return !(a == b);
+bool net_handle_t::operator!=(const net_handle_t& other) const {
+    return as_integer(*this) != as_integer(other);
 }
 
 }
