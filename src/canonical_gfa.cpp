@@ -96,6 +96,7 @@ void canonical_gfa(const HandleGraph& graph, std::ostream& out, bool integer_ids
             }
         }
     }
+    out.flush();
 }
 
 //-----------------------------------------------------------------------------
