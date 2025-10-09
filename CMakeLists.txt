@@ -69,6 +69,7 @@ add_library(handlegraph_objs OBJECT
   src/chop.cpp
   src/weakly_connected_components.cpp
   src/extend.cpp
+  src/canonical_gfa.cpp
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
@@ -81,6 +82,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
+  src/include/handlegraph/algorithms/canonical_gfa.hpp
   src/include/handlegraph/algorithms/copy_graph.hpp
   src/include/handlegraph/algorithms/append_graph.hpp
   src/include/handlegraph/algorithms/are_equivalent.hpp
