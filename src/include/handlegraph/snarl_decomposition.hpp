@@ -171,13 +171,13 @@ public:
      * Returns false if iteration was stopped early, and true otherwise.
      */
     template<typename Iteratee>
-    bool for_each_child(const net_handle_t& parent, const Iteratee& iteratee) const;
+    bool for_each_child(const net_handle_t& parent, const Iteratee& iteratee, bool parallel = false) const;
     
 protected:
     /**
      * Internal implementation for for_each_child.
      */
-    virtual bool for_each_child_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee) const = 0;
+    virtual bool for_each_child_impl(const net_handle_t& traversal, const std::function<bool(const net_handle_t&)>& iteratee, bool parallel = false) const = 0;
 public:
     
     /**
@@ -363,8 +363,8 @@ public:
 ////////////////////////////////////////////////////////////////////////////
 
 template<typename Iteratee>
-bool SnarlDecomposition::for_each_child(const net_handle_t& parent, const Iteratee& iteratee) const {
-    return for_each_child_impl(parent, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+bool SnarlDecomposition::for_each_child(const net_handle_t& parent, const Iteratee& iteratee, bool parallel) const {
+    return for_each_child_impl(parent, BoolReturningWrapper<Iteratee>::wrap(iteratee), parallel);
 }
 
 template<typename Iteratee>
