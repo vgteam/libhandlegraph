@@ -340,33 +340,22 @@ bool PathMetadata::for_each_path_matching_impl(const std::unordered_set<PathSens
                                                const std::unordered_set<std::string>* samples,
                                                const std::unordered_set<std::string>* loci,
                                                const std::function<bool(const path_handle_t&)>& iteratee) const {
-
-    //If senses was not specified, do this for all senses
-    std::unordered_set<PathSense> all_senses = {PathSense::GENERIC, PathSense::REFERENCE, PathSense::HAPLOTYPE};
-    if (!senses) {
-        senses = &all_senses;
-    }
-
-    bool result = true;
-    for (const auto& sense : *senses) {
-        result &= for_each_path_of_sense(sense, [&](const path_handle_t& handle) {
-            if (samples && !samples->count(get_sample_name(handle))) {
-                // Wrong sample
-                return true;
-            }
-            if (loci && !loci->count(get_locus_name(handle))) {
-                // Wrong sample
-                return true;
-            }
-            // And emit any matching handles
-            return iteratee(handle);
-        });
-        if (!result) {
-            return result;
+    return for_each_path_handle_impl([&](const path_handle_t& handle) {
+        if (senses && !senses->count(get_sense(handle))) {
+            // Wrong sense
+            return true;
         }
-    }
-    return result;
-
+        if (samples && !samples->count(get_sample_name(handle))) {
+            // Wrong sample
+            return true;
+        }
+        if (loci && !loci->count(get_locus_name(handle))) {
+            // Wrong sample
+            return true;
+        }
+        // And emit any matching handles
+        return iteratee(handle);
+    });
 }
     
 bool PathMetadata::for_each_step_of_sense_impl(const handle_t& visited, const PathSense& sense, const std::function<bool(const step_handle_t&)>& iteratee) const {
