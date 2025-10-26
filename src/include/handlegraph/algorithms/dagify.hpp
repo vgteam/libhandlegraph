@@ -7,8 +7,6 @@
 #include "handlegraph/mutable_handle_graph.hpp"
 #include "handlegraph/deletable_handle_graph.hpp"
 
-#include "handlegraph/algorithms/dagify.hpp"
-
 namespace handlegraph {
 namespace algorithms {
 
@@ -40,11 +38,14 @@ std::unordered_map<nid_t, nid_t> dagify(const HandleGraph* graph,
 /// Input HandleGraph must have a single stranded orientation. Consider
 /// checking this property with has_single_stranded_orientation() before using.
 ///
-/// Returns a mapping from the node IDs of into to the node IDs in graph.
-std::unordered_map<nid_t, nid_t> dagify_from(const HandleGraph* graph,
-                                             std::vector<handle_t> start_handles,
-                                             DeletableHandleGraph* into,
-                                             size_t min_preserved_path_length);
+/// Returns a mapping from the node IDs of into to the node IDs in graph, and
+/// the subgraph versions of the start copies of the start handles (not any
+/// duplicate copies that can be reached from other start nodes). The returned
+/// handles have all paths reading rightwards out of them preserved.
+std::pair<std::unordered_map<nid_t, nid_t>, std::vector<handle_t>> dagify_from(const HandleGraph* graph,
+                                                                               std::vector<handle_t> start_handles,
+                                                                               DeletableHandleGraph* into,
+                                                                               size_t min_preserved_path_length);
 }
 }
 
