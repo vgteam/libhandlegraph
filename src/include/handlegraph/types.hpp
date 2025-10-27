@@ -70,7 +70,17 @@ struct step_handle_t { char data[2 * sizeof(int64_t)]; };
  *
  * For single nodes, we only have forward and reverse.
  */
-struct net_handle_t { char data[sizeof(nid_t)]; };
+struct net_handle_t { 
+    char data[sizeof(nid_t)]; 
+    
+    // Define equality here so that it can be used in python bindings
+
+    /// Define equality on net handles
+    bool operator==(const net_handle_t& other) const;
+
+    /// Define inequality on net handles
+    bool operator!=(const net_handle_t& other) const;
+};
 
 /// Define equality on handles
 bool operator==(const handle_t& a, const handle_t& b);
@@ -81,8 +91,6 @@ bool operator!=(const handle_t& a, const handle_t& b);
 /// Define equality on path handles
 bool operator==(const path_handle_t& a, const path_handle_t& b);
 
-/// Define equality on net handles
-bool operator==(const net_handle_t& a, const net_handle_t& b);
 
 /// Define inequality on path handles
 bool operator!=(const path_handle_t& a, const path_handle_t& b);
@@ -92,10 +100,6 @@ bool operator==(const step_handle_t& a, const step_handle_t& b);
 
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b);
-
-/// Define inequality on net handles
-bool operator!=(const net_handle_t& a, const net_handle_t& b);
-
 }
 
 // Hashes need to be in the std namespace
