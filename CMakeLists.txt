@@ -123,6 +123,10 @@ add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_static INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 
+# Add an alias so that library can be used inside the build tree, e.g. when testing
+add_library(libhandlegraph::handlegraph_shared ALIAS handlegraph_shared)
+add_library(libhandlegraph::handlegraph_static ALIAS handlegraph_static)
+
 # Set up for installability
 # Make sure to put all the targets in an export set
 install(TARGETS handlegraph_shared handlegraph_static EXPORT libhandlegraphTargets 
