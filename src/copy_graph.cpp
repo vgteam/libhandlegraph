@@ -44,13 +44,10 @@ void copy_path_handle_graph(const PathHandleGraph* from, MutablePathMutableHandl
     //            throw runtime_error("error:[copy_handle_graph] cannot copy into a non-empty graph");
     //        }
     
-    // For every sense of path
-    for (auto& sense : {PathSense::REFERENCE, PathSense::GENERIC, PathSense::HAPLOTYPE}) {
-        // copy paths of that sense
-        from->for_each_path_of_sense(sense, [&](const path_handle_t& path_handle) {
-            copy_path(from, path_handle, into);
-        });
-    }
+    // copy paths of every sense of path
+    from->for_each_path_of_sense({PathSense::REFERENCE, PathSense::GENERIC, PathSense::HAPLOTYPE}, [&](const path_handle_t& path_handle) {
+        copy_path(from, path_handle, into);
+    });
 }
 
 void copy_path(const PathHandleGraph* from, const path_handle_t& from_path,
