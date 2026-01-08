@@ -285,7 +285,13 @@ private:
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const {
-    return for_each_path_of_sense({sense}, iteratee);
+    // TODO: If we try and call just on {sense} here, we *don't* successfully
+    // call the other overload but we also don't infinitely recurse at runtime;
+    // the iteratee just never sees anything. What's really going on???
+    //
+    // Anyway, we need to manually make a set to ensure we delegate to the other overload.
+    std::unordered_set<PathSense> senses{sense};
+    return for_each_path_of_sense(senses, iteratee);
 }
 
 template<typename Iteratee>
