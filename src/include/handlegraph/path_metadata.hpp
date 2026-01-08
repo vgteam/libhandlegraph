@@ -163,11 +163,21 @@ public:
     /// stops if the iteratee returns false.
     template<typename Iteratee>
     bool for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const;
+
+    /// Loop through all the paths with any of the given senses. Returns false and
+    /// stops if the iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_of_sense(const std::unordered_set<PathSense>& senses, const Iteratee& iteratee) const;
     
     /// Loop through all the paths with the given sample name.
     /// Returns false and stops if the iteratee returns false.
     template<typename Iteratee>
     bool for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const;
+
+    /// Loop through all the paths with any of the given sample names.
+    /// Returns false and stops if the iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_of_sample(const std::unordered_set<std::string>& samples, const Iteratee& iteratee) const;
     
     /// Loop through all the paths matching the given query. Query elements
     /// which are null match everything. Returns false and stops if the
@@ -275,13 +285,22 @@ private:
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const {
-    std::unordered_set<PathSense> senses{sense};
+    return for_each_path_of_sense({sense}, iteratee);
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_of_sense(const std::unordered_set<PathSense>& senses, const Iteratee& iteratee) const {
     return for_each_path_matching_impl(&senses, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const {
     std::unordered_set<std::string> samples{sample};
+    return for_each_path_of_sample(samples, iteratee);
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_of_sample(const std::unordered_set<std::string>& samples, const Iteratee& iteratee) const {
     return for_each_path_matching_impl(nullptr, &samples, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
