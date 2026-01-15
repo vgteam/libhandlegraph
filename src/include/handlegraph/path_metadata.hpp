@@ -30,7 +30,7 @@ namespace handlegraph {
  * - SENSE_HAPLOTYPE: a haplotype from a particular individual. Has a "sample"
  *   name, a "locus" name, a haplotype number, and a phase block identifier.
  *
- * Paths of all sneses can represent subpaths, with bounds.
+ * Paths of all senses can represent subpaths, with bounds.
  *
  * Depending on sense, a path might have:
  *
