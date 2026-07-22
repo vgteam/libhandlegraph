@@ -163,11 +163,21 @@ public:
     /// stops if the iteratee returns false.
     template<typename Iteratee>
     bool for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const;
+
+    /// Loop through all the paths with any of the given senses. Returns false and
+    /// stops if the iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_of_sense(const std::unordered_set<PathSense>& senses, const Iteratee& iteratee) const;
     
     /// Loop through all the paths with the given sample name.
     /// Returns false and stops if the iteratee returns false.
     template<typename Iteratee>
     bool for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const;
+
+    /// Loop through all the paths with any of the given sample names.
+    /// Returns false and stops if the iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_path_of_sample(const std::unordered_set<std::string>& samples, const Iteratee& iteratee) const;
     
     /// Loop through all the paths matching the given query. Query elements
     /// which are null match everything. Returns false and stops if the
@@ -192,6 +202,11 @@ public:
     /// TODO: Take the opportunity to make steps track orientation better?
     template<typename Iteratee>
     bool for_each_step_of_sense(const handle_t& visited, const PathSense& sense, const Iteratee& iteratee) const;
+
+    /// Loop through all steps on the given handle for paths with any of the
+    /// given senses. Returns false and stops if the iteratee returns false.
+    template<typename Iteratee>
+    bool for_each_step_of_sense(const handle_t& visited, const std::unordered_set<PathSense>& senses, const Iteratee& iteratee) const;
     
 protected:
     
@@ -215,6 +230,10 @@ protected:
     /// Loop through all steps on the given handle for paths with the given
     /// sense. Returns false and stops if the iteratee returns false.
     virtual bool for_each_step_of_sense_impl(const handle_t& visited, const PathSense& sense, const std::function<bool(const step_handle_t&)>& iteratee) const;
+
+    /// Loop through all steps on the given handle for paths with any of the
+    /// given senses. Returns false and stops if the iteratee returns false.
+    virtual bool for_each_step_of_sense_impl(const handle_t& visited, const std::unordered_set<PathSense>& senses, const std::function<bool(const step_handle_t&)>& iteratee) const;
     
     ////////////////////////////////////////////////////////////////////////////
     // Backing methods that need to be implemented for default implementation
@@ -230,19 +249,11 @@ protected:
     
     /// Execute a function on each path in the graph. If it returns false, stop
     /// iteration. Returns true if we finished and false if we stopped early.
-    ///
-    /// If the graph contains compressed haplotype paths and properly
-    /// implements for_each_path_of_sense to retrieve them, they should not be
-    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_path_handle_impl(const std::function<bool(const path_handle_t&)>& iteratee) const = 0;
     
     /// Execute a function on each step of a handle in any path. If it
     /// returns false, stop iteration. Returns true if we finished and false if
     /// we stopped early.
-    ///
-    /// If the graph contains compressed haplotype paths and properly
-    /// implements for_each_step_of_sense to find them, they should not be
-    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_step_on_handle_impl(const handle_t& handle,
         const std::function<bool(const step_handle_t&)>& iteratee) const = 0;
     
@@ -275,13 +286,28 @@ private:
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sense(const PathSense& sense, const Iteratee& iteratee) const {
+    // TODO: If we try and call just on {sense} here, we *don't* successfully
+    // call the other overload but we also don't infinitely recurse at runtime;
+    // the iteratee just never sees anything. What's really going on???
+    //
+    // Anyway, we need to manually make a set to ensure we delegate to the other overload.
     std::unordered_set<PathSense> senses{sense};
+    return for_each_path_of_sense(senses, iteratee);
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_of_sense(const std::unordered_set<PathSense>& senses, const Iteratee& iteratee) const {
     return for_each_path_matching_impl(&senses, nullptr, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 template<typename Iteratee>
 bool PathMetadata::for_each_path_of_sample(const std::string& sample, const Iteratee& iteratee) const {
     std::unordered_set<std::string> samples{sample};
+    return for_each_path_of_sample(samples, iteratee);
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_path_of_sample(const std::unordered_set<std::string>& samples, const Iteratee& iteratee) const {
     return for_each_path_matching_impl(nullptr, &samples, nullptr, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
@@ -307,6 +333,11 @@ bool PathMetadata::for_each_path_matching(const std::unordered_set<PathSense>& s
 template<typename Iteratee>
 bool PathMetadata::for_each_step_of_sense(const handle_t& visited, const PathSense& sense, const Iteratee& iteratee) const {
     return for_each_step_of_sense_impl(visited, sense, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+}
+
+template<typename Iteratee>
+bool PathMetadata::for_each_step_of_sense(const handle_t& visited, const std::unordered_set<PathSense>& senses, const Iteratee& iteratee) const {
+    return for_each_step_of_sense_impl(visited, senses, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 }

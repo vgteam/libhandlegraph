@@ -369,5 +369,16 @@ bool PathMetadata::for_each_step_of_sense_impl(const handle_t& visited, const Pa
     });
 }
 
+bool PathMetadata::for_each_step_of_sense_impl(const handle_t& visited, const std::unordered_set<PathSense>& senses, const std::function<bool(const step_handle_t&)>& iteratee) const {
+    return for_each_step_on_handle_impl(visited, [&](const step_handle_t& handle) {
+        if (!senses.count(get_sense(get_path_handle_of_step(handle)))) {
+            // Skip this non-matching path's step
+            return true;
+        }
+        // And emit any steps on matching paths
+        return iteratee(handle);
+    });
+}
+
 }
 
