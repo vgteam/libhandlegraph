@@ -118,6 +118,46 @@ inline bool operator<(const step_handle_t& a, const step_handle_t& b) {
 }
 
 //
+// Oriented step handles
+//
+
+/// Pack a step together with a flag for whether we are looking at it facing
+/// backward along its path, and unpack the two back out.
+///
+/// An oriented_step_handle_t managed with this packing is laid out as the
+/// bytes of a step_handle_t followed by one flag byte.
+struct step_bool_packing {
+
+    /// Byte at which the backward-along-path flag lives, past the step's bytes.
+    static const size_t FLAG_OFFSET = 2 * sizeof(int64_t);
+
+    /// Extract the step that an oriented step handle is an orientation of.
+    inline static step_handle_t unpack_step(const oriented_step_handle_t& oriented_step_handle) {
+        return reinterpret_cast<const step_handle_t&>(oriented_step_handle);
+    }
+
+    /// Extract whether an oriented step handle faces backward along its path.
+    inline static bool unpack_bit(const oriented_step_handle_t& oriented_step_handle) {
+        return oriented_step_handle.data[FLAG_OFFSET] != 0;
+    }
+
+    /// Pack a step and a backward-along-path flag into an oriented step handle.
+    inline static oriented_step_handle_t pack(const step_handle_t& step_handle, const bool& bit) {
+        oriented_step_handle_t oriented_step_handle;
+        reinterpret_cast<step_handle_t&>(oriented_step_handle) = step_handle;
+        oriented_step_handle.data[FLAG_OFFSET] = bit ? 1 : 0;
+        return oriented_step_handle;
+    }
+
+    /// Toggle the backward-along-path flag and return a new oriented step handle.
+    inline static oriented_step_handle_t toggle_bit(const oriented_step_handle_t& oriented_step_handle) {
+        oriented_step_handle_t result = oriented_step_handle;
+        result.data[FLAG_OFFSET] = unpack_bit(oriented_step_handle) ? 0 : 1;
+        return result;
+    }
+};
+
+//
 // Net handles
 //
 

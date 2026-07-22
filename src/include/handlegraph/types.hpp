@@ -62,7 +62,10 @@ struct step_handle_t { char data[2 * sizeof(int64_t)]; };
 /// along a path in a graph.
 ///
 /// That step is itself to a particular orientation of a node.
-struct oriented_step_handle_t { char data[2 * sizeof(int64_t) + sizeof(int8_t)]; };
+///
+/// The leading bytes are able to hold a step_handle_t, so we align like one to
+/// let that step be read back out in place.
+struct alignas(int64_t) oriented_step_handle_t { char data[2 * sizeof(int64_t) + sizeof(int8_t)]; };
 
 /**
  * A net handle is an opaque reference to a category of traversals of a single
@@ -110,6 +113,12 @@ bool operator==(const step_handle_t& a, const step_handle_t& b);
 
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b);
+
+/// Define equality on oriented step handles
+bool operator==(const oriented_step_handle_t& a, const oriented_step_handle_t& b);
+
+/// Define inequality on oriented step handles
+bool operator!=(const oriented_step_handle_t& a, const oriented_step_handle_t& b);
 }
 
 // Hashes need to be in the std namespace
@@ -152,6 +161,19 @@ public:
         size_t hsh1 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&step_handle)[0]);
         size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&step_handle)[1]);
         return combine_hashes(hsh1, hsh2);
+    }
+};
+
+/**
+ * Define hashes for oriented step handles.
+ */
+template<> struct hash<handlegraph::oriented_step_handle_t> {
+public:
+    inline size_t operator()(const handlegraph::oriented_step_handle_t& oriented_step_handle) const {
+        size_t hsh1 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&oriented_step_handle)[0]);
+        size_t hsh2 = std::hash<int64_t>()(reinterpret_cast<const int64_t*>(&oriented_step_handle)[1]);
+        size_t hsh3 = std::hash<int8_t>()(oriented_step_handle.data[2 * sizeof(int64_t)]);
+        return combine_hashes(combine_hashes(hsh1, hsh2), hsh3);
     }
 };
 

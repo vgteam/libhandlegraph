@@ -164,13 +164,13 @@ public:
     /// Get a handle to the node visited by an oriented step.
     ///
     /// The handle will be facing along the path in the same orientation as the
-    /// oriented step. 
-    virtual handle_t get_handle_of_oriented_step(const oriented_handle_t& oriented_step_handle) const;
+    /// oriented step.
+    virtual handle_t get_handle_of_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
 
     /// Get the path that an oriented step belongs to.
     ///
     /// TODO: Implement a notion of an oriented path or path-strand in libhandlegraph.
-    virtual path_handle_t get_path_handle_of_oriented_step(const oriented_handle_t& oriented_step_handle) const;
+    virtual path_handle_t get_path_handle_of_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
 
     /// Returns true if the given oriented step is facing backward along its
     /// path, ans false otherwise.
@@ -232,6 +232,11 @@ bool PathHandleGraph::for_each_path_handle(const Iteratee& iteratee) const {
 template<typename Iteratee>
 bool PathHandleGraph::for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
     return for_each_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee>::wrap(iteratee));
+}
+
+template<typename Iteratee>
+bool PathHandleGraph::for_each_oriented_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const {
+    return for_each_oriented_step_on_handle_impl(handle, BoolReturningWrapper<Iteratee>::wrap(iteratee));
 }
 
 

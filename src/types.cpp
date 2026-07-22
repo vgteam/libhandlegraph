@@ -2,6 +2,8 @@
 
 #include "handlegraph/util.hpp"
 
+#include <cstring>
+
 /** \file types.cpp
  * Implement operators for libhandlegraph value types
  */
@@ -35,6 +37,16 @@ bool operator==(const step_handle_t& a, const step_handle_t& b) {
 
 /// Define inequality on step handles
 bool operator!=(const step_handle_t& a, const step_handle_t& b) {
+    return !(a == b);
+}
+
+/// Define equality on oriented step handles
+bool operator==(const oriented_step_handle_t& a, const oriented_step_handle_t& b) {
+    return memcmp(&a, &b, sizeof(oriented_step_handle_t)) == 0;
+}
+
+/// Define inequality on oriented step handles
+bool operator!=(const oriented_step_handle_t& a, const oriented_step_handle_t& b) {
     return !(a == b);
 }
 
