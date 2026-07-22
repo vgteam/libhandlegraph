@@ -99,47 +99,47 @@ public:
     /// Execute a function on each path_handle_t in the graph. If it returns bool, and
     /// it returns false, stop iteration. Returns true if we finished and false if we
     /// stopped early.
-    ///
-    /// If the graph contains compressed haplotype paths and properly
-    /// implements for_each_path_of_sense to retrieve them, they should not be
-    /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_path_handle(const Iteratee& iteratee) const;
     
     /// Execute a function on each step (step_handle_t) of a handle
     /// in any path. If it returns bool and returns false, stop iteration.
     /// Returns true if we finished and false if we stopped early.
-    ///
-    /// If the graph contains compressed haplotype paths and properly
-    /// implements for_each_step_of_sense to find them, they should not be
-    /// visible here. Only reference or generic named paths should be visible.
     template<typename Iteratee>
     bool for_each_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
-    
+
+    /// Execute a function on each oriented step (oriented_step_handle_t) of a
+    /// handle in any path. If it returns bool and returns false, stop
+    /// iteration. Returns true if we finished and false if we stopped early.
+    template<typename Iteratee>
+    bool for_each_oriented_step_on_handle(const handle_t& handle, const Iteratee& iteratee) const;
+
+protected:
+
     ////////////////////////////////////////////////////////////////////////////
     // Backing protected virtual methods that need to be implemented
     ////////////////////////////////////////////////////////////////////////////
     
-protected:
-    
     /// Execute a function on each path in the graph. If it returns false, stop
     /// iteration. Returns true if we finished and false if we stopped early.
-    ///
-    /// If the graph contains compressed haplotype paths and properly
-    /// implements for_each_path_of_sense to retrieve them, they should not be
-    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_path_handle_impl(const std::function<bool(const path_handle_t&)>& iteratee) const = 0;
     
     /// Execute a function on each step of a handle in any path. If it
     /// returns false, stop iteration. Returns true if we finished and false if
     /// we stopped early.
-    ///
-    /// If the graph contains compressed haplotype paths and properly
-    /// implements for_each_step_of_sense to find them, they should not be
-    /// visible here. Only reference or generic named paths should be visible.
     virtual bool for_each_step_on_handle_impl(const handle_t& handle,
         const std::function<bool(const step_handle_t&)>& iteratee) const = 0;
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Backing protected virtual methods with a default implementation
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /// Execute a function on each oriented step of a handle in any path. If it
+    /// returns false, stop iteration. Returns true if we finished and false if
+    /// we stopped early.
+    virtual bool for_each_oriented_step_on_handle_impl(const handle_t& handle,
+        const std::function<bool(const oriented_step_handle_t&)>& iteratee) const;
+    
 public:
 
     ////////////////////////////////////////////////////////////////////////////
@@ -153,6 +153,54 @@ public:
 
     /// Returns true if the given path is empty, and false otherwise
     virtual bool is_empty(const path_handle_t& path_handle) const;
+
+    /// Get an oriented step from a step and an orientation relative to its
+    /// containing path.
+    virtual oriented_step_handle_t get_oriented_step(const step_handle_t& step_handle, bool is_reverse_along_path) const;
+
+    /// Reverse the direction of an oriented step along a path.
+    virtual oriented_step_handle_t flip_along_path(const oriented_step_handle_t& oriented_step_handle) const;
+
+    /// Get a handle to the node visited by an oriented step.
+    ///
+    /// The handle will be facing along the path in the same orientation as the
+    /// oriented step. 
+    virtual handle_t get_handle_of_oriented_step(const oriented_handle_t& oriented_step_handle) const;
+
+    /// Get the path that an oriented step belongs to.
+    ///
+    /// TODO: Implement a notion of an oriented path or path-strand in libhandlegraph.
+    virtual path_handle_t get_path_handle_of_oriented_step(const oriented_handle_t& oriented_step_handle) const;
+
+    /// Returns true if the given oriented step is facing backward along its
+    /// path, ans false otherwise.
+    virtual bool get_is_reverse_along_path(const oriented_step_handle_t& oriented_step_handle) const;
+
+    /// Returns true if the oriented step is not the last oriented step in a non-circular path.
+    ///
+    /// Looks forward in the orientation of the step, not in the path.
+    virtual bool has_next_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
+
+    /// Returns true if the oriented step is not the first oriented step in a non-circular path.
+    ///
+    /// Looks backward in the orientation of the step, not in the path.
+    virtual bool has_previous_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
+    
+    /// Returns a handle to the next oriented step on the path. If the given
+    /// step is the final step of a non-circular path, this method has
+    /// undefined behavior. In a circular path, the "last" step will loop
+    /// around to the "first" step.
+    ///
+    /// Looks forward in the orientation of the step, not in the path.
+    virtual oriented_step_handle_t get_next_step(const oriented_step_handle_t& step_handle) const;
+    
+    /// Returns a handle to the previous oriented step on the path. If the
+    /// given step is the first step of a non-circular path, this method has
+    /// undefined behavior. In a circular path, it will loop around from the
+    /// "first" step (i.e. the one returned by path_begin) to the "last" step.
+    ///
+    /// Looks backward in the orientation of the step, not in the path.
+    virtual oriented_step_handle_t get_previous_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
 
     ////////////////////////////////////////////////////////////////////////////
     // Concrete utility methods

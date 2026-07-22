@@ -51,8 +51,18 @@ enum class PathSense {
     HAPLOTYPE
 };
     
-/// A step handle is an opaque reference to a single step of an oriented node on a path in a graph
+/// A step handle is an opaque reference to a single step of an oriented node
+/// on a path in a graph.
+///
+/// Note that this does not itself track the orientation you are looking at the
+/// path in; see oriented_step_handle_t for that.
 struct step_handle_t { char data[2 * sizeof(int64_t)]; };
+
+/// An oriented step handle is an opaque reference to an orientation of a step
+/// along a path in a graph.
+///
+/// That step is itself to a particular orientation of a node.
+struct oriented_step_handle_t { char data[2 * sizeof(int64_t) + sizeof(int8_t)]; };
 
 /**
  * A net handle is an opaque reference to a category of traversals of a single
