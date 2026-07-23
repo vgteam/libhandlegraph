@@ -42,7 +42,9 @@ bool operator!=(const step_handle_t& a, const step_handle_t& b) {
 
 /// Define equality on oriented step handles
 bool operator==(const oriented_step_handle_t& a, const oriented_step_handle_t& b) {
-    return memcmp(&a, &b, sizeof(oriented_step_handle_t)) == 0;
+    // Compare all the data bytes, and no alignment padding that might be
+    // counted in the size of the struct.
+    return memcmp(a.data, b.data, sizeof(oriented_step_handle_t::data)) == 0;
 }
 
 /// Define inequality on oriented step handles

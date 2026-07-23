@@ -36,13 +36,13 @@ typedef std::pair<offset_t, offset_t> subrange_t;
 typedef std::tuple<nid_t, bool, offset_t> pos_t;
     
 /// Represents a traversal of a node in a graph in a particular direction
-struct handle_t { char data[sizeof(nid_t)]; };
+struct alignas(nid_t) handle_t { char data[sizeof(nid_t)]; };
     
 /// Represents an edge in terms of its endpoints
 typedef std::pair<handle_t, handle_t> edge_t;
     
 /// Represents the internal id of a path entity
-struct path_handle_t { char data[sizeof(int64_t)]; };
+struct alignas(int64_t) path_handle_t { char data[sizeof(int64_t)]; };
 
 /// Represents a sense that a path can have
 enum class PathSense {
@@ -56,7 +56,7 @@ enum class PathSense {
 ///
 /// Note that this does not itself track the orientation you are looking at the
 /// path in; see oriented_step_handle_t for that.
-struct step_handle_t { char data[2 * sizeof(int64_t)]; };
+struct alignas(int64_t) step_handle_t { char data[2 * sizeof(int64_t)]; };
 
 /// An oriented step handle is an opaque reference to an orientation of a step
 /// along a path in a graph.
@@ -65,7 +65,7 @@ struct step_handle_t { char data[2 * sizeof(int64_t)]; };
 ///
 /// The leading bytes are able to hold a step_handle_t, so we align like one to
 /// let that step be read back out in place.
-struct alignas(int64_t) oriented_step_handle_t { char data[2 * sizeof(int64_t) + sizeof(int8_t)]; };
+struct alignas(step_handle_t) oriented_step_handle_t { char data[2 * sizeof(int64_t) + sizeof(int8_t)]; };
 
 /**
  * A net handle is an opaque reference to a category of traversals of a single
