@@ -208,7 +208,7 @@ public:
     /// circular path, the "last" step will loop around to the "first" step.
     ///
     /// Looks forward in the orientation of the step, not in the path.
-    virtual oriented_step_handle_t get_next_step(const oriented_step_handle_t& step_handle) const;
+    virtual oriented_step_handle_t get_next_oriented_step(const oriented_step_handle_t& step_handle) const;
 
     /// Returns a handle to the previous oriented step on the path. If the
     /// given step is the first step of a non-circular path, this method

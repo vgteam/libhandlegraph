@@ -90,7 +90,7 @@ bool PathHandleGraph::has_previous_oriented_step(const oriented_step_handle_t& o
     return get_is_reverse_along_path(oriented_step_handle) ? has_next_step(step) : has_previous_step(step);
 }
 
-oriented_step_handle_t PathHandleGraph::get_next_step(const oriented_step_handle_t& oriented_step_handle) const {
+oriented_step_handle_t PathHandleGraph::get_next_oriented_step(const oriented_step_handle_t& oriented_step_handle) const {
     // Stepping forward in our orientation keeps the same orientation but walks
     // the path forward when we face forward and backward when we face backward.
     step_handle_t step = get_step_handle_of_oriented_step(oriented_step_handle);
