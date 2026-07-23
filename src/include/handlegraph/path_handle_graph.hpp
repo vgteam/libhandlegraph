@@ -81,15 +81,17 @@ public:
     /// Returns true if the step is not the first step in a non-circular path.
     virtual bool has_previous_step(const step_handle_t& step_handle) const = 0;
 
-    /// Returns a handle to the next step on the path. If the given step is the final step
-    /// of a non-circular path, this method has undefined behavior. In a circular path,
-    /// the "last" step will loop around to the "first" step.
+    /// Returns a handle to the next step on the path. If the given step is the
+    /// final step of a non-circular path, this method returns path_end() for
+    /// the path. In a circular path, the "last" step will loop around to the
+    /// "first" step.
     virtual step_handle_t get_next_step(const step_handle_t& step_handle) const = 0;
 
-    /// Returns a handle to the previous step on the path. If the given step is the first
-    /// step of a non-circular path, this method has undefined behavior. In a circular path,
-    /// it will loop around from the "first" step (i.e. the one returned by path_begin) to
-    /// the "last" step.
+    /// Returns a handle to the previous step on the path. If the given step is
+    /// the first step of a non-circular path, this method returns
+    /// path_front_end for the path. In a circular path, it will loop around
+    /// from the "first" step (i.e. the one returned by path_begin) to the
+    /// "last" step.
     virtual step_handle_t get_previous_step(const step_handle_t& step_handle) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////
@@ -201,17 +203,18 @@ public:
     virtual bool has_previous_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
 
     /// Returns a handle to the next oriented step on the path. If the given
-    /// step is the final step of a non-circular path, this method has
-    /// undefined behavior. In a circular path, the "last" step will loop
-    /// around to the "first" step.
+    /// step is the final step of a non-circular path, this method returns an
+    /// oriented version of path_end() or path_front_end() as appropriate. In a
+    /// circular path, the "last" step will loop around to the "first" step.
     ///
     /// Looks forward in the orientation of the step, not in the path.
     virtual oriented_step_handle_t get_next_step(const oriented_step_handle_t& step_handle) const;
 
     /// Returns a handle to the previous oriented step on the path. If the
-    /// given step is the first step of a non-circular path, this method has
-    /// undefined behavior. In a circular path, it will loop around from the
-    /// "first" step (i.e. the one returned by path_begin) to the "last" step.
+    /// given step is the first step of a non-circular path, this method
+    /// returns an oriented version of path_end() or path_front_end() as
+    /// appropriate. In a circular path, it will loop around from the "first"
+    /// step (i.e. the one returned by path_begin) to the "last" step.
     ///
     /// Looks backward in the orientation of the step, not in the path.
     virtual oriented_step_handle_t get_previous_oriented_step(const oriented_step_handle_t& oriented_step_handle) const;
