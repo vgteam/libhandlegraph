@@ -1,3 +1,4 @@
+#include "absl/log/absl_log.h"
 #include "handlegraph/serializable.hpp"
 
 #include <fstream>
@@ -52,7 +53,7 @@ void Serializable::deserialize(std::istream& in) {
         
         if (!in) {
             // The stream did not rewind right (or was already at EOF somehow)
-            throw std::runtime_error("Error rewinding to load non-magic-prefixed SerializableHandleGraph");
+            ABSL_LOG(FATAL) << "Error rewinding to load non-magic-prefixed SerializableHandleGraph";
         }
     }
     deserialize_members(in);

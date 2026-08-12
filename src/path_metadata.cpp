@@ -2,6 +2,7 @@
  * Implement PathMetadata interface's default implementation.
  */
 
+#include "absl/log/absl_log.h"
 #include "handlegraph/path_metadata.hpp"
 #include <sstream>
 
@@ -281,47 +282,47 @@ std::string PathMetadata::create_path_name(const PathSense& sense,
     
     if (sample != NO_SAMPLE_NAME) {
         if (sense == PathSense::GENERIC) {
-            throw std::runtime_error("Generic path cannot have a sample");
+            ABSL_LOG(FATAL) << "Generic path cannot have a sample";
         }
         name_builder << sample << SEPARATOR;
     } else {
         if (sense == PathSense::REFERENCE) {
-            throw std::runtime_error("Reference path must have a sample name");
+            ABSL_LOG(FATAL) << "Reference path must have a sample name";
         } else if (sense == PathSense::HAPLOTYPE) {
-            throw std::runtime_error("Haplotype path must have a sample name");
+            ABSL_LOG(FATAL) << "Haplotype path must have a sample name";
         }
     }
     if (haplotype != NO_HAPLOTYPE) {
         if (sense == PathSense::GENERIC) {
-            throw std::runtime_error("Generic path cannot have a haplotype number");
+            ABSL_LOG(FATAL) << "Generic path cannot have a haplotype number";
         }
         name_builder << haplotype << SEPARATOR;
     } else {
         if (sense == PathSense::HAPLOTYPE) {
-            throw std::runtime_error("Haplotype path must have a haplotype number");
+            ABSL_LOG(FATAL) << "Haplotype path must have a haplotype number";
         }
     }
     if (locus != NO_LOCUS_NAME) {
         name_builder << locus;
     } else {
         if (sense == PathSense::GENERIC) {
-            throw std::runtime_error("Generic path must have a locus/name");
+            ABSL_LOG(FATAL) << "Generic path must have a locus/name";
         } else if (sense == PathSense::REFERENCE) {
-            throw std::runtime_error("Reference path must have a locus");
+            ABSL_LOG(FATAL) << "Reference path must have a locus";
         } else if (sense == PathSense::HAPLOTYPE) {
-            throw std::runtime_error("Haplotype path must have a locus");
+            ABSL_LOG(FATAL) << "Haplotype path must have a locus";
         }
     }
     if (phase_block != NO_PHASE_BLOCK) {
         if (sense == PathSense::GENERIC) {
-            throw std::runtime_error("Generic path cannot have a phase block");
+            ABSL_LOG(FATAL) << "Generic path cannot have a phase block";
         } else if (sense == PathSense::REFERENCE) {
-            throw std::runtime_error("Reference path cannot have a phase block");
+            ABSL_LOG(FATAL) << "Reference path cannot have a phase block";
         }
         name_builder << SEPARATOR << phase_block;
     } else {
         if (sense == PathSense::HAPLOTYPE) {
-            throw std::runtime_error("Haplotype path must have a phase block");
+            ABSL_LOG(FATAL) << "Haplotype path must have a phase block";
         }
     }
     if (subrange != NO_SUBRANGE) {

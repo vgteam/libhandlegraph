@@ -1,3 +1,4 @@
+#include "absl/log/absl_log.h"
 #include "handlegraph/algorithms/copy_graph.hpp"
 
 #include <stdexcept>
@@ -9,15 +10,15 @@ void copy_handle_graph(const HandleGraph* from, MutableHandleGraph* into) {
     
     
     if (from == nullptr) {
-        throw std::runtime_error("error:[copy_handle_graph] must supply graph to copy from");
+        ABSL_LOG(FATAL) << "error:[copy_handle_graph] must supply graph to copy from";
     }
     if (into == nullptr) {
-        throw std::runtime_error("error:[copy_handle_graph] must supply graph to copy into");
+        ABSL_LOG(FATAL) << "error:[copy_handle_graph] must supply graph to copy into";
     }
     
     // TODO: some code paths depend on this algorithm for appending one graph onto another
     //        if (into->get_node_count() > 0) {
-    //            throw runtime_error("error:[copy_handle_graph] cannot copy into a non-empty graph");
+    //            ABSL_LOG(FATAL) << "error:[copy_handle_graph] cannot copy into a non-empty graph";
     //        }
     
     // copy nodes
@@ -41,7 +42,7 @@ void copy_path_handle_graph(const PathHandleGraph* from, MutablePathMutableHandl
     
     // TODO: some code paths depend on this algorithm for appending one graph onto another
     //        if (into->get_path_count() > 0) {
-    //            throw runtime_error("error:[copy_handle_graph] cannot copy into a non-empty graph");
+    //            ABSL_LOG(FATAL) << "error:[copy_handle_graph] cannot copy into a non-empty graph";
     //        }
     
     // copy paths of every sense of path

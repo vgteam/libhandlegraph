@@ -5,8 +5,8 @@
  * Defines the MutablePathHandleGraph interface for graphs that can have paths altered.
  */
 
-#include "handlegraph/path_handle_graph.hpp"
-#include "handlegraph/mutable_path_metadata.hpp"
+#include "path_handle_graph.hpp"
+#include "mutable_path_metadata.hpp"
 
 namespace handlegraph {
 

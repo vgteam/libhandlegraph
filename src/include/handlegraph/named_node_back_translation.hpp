@@ -7,7 +7,7 @@
  * nodes in some other graph, where the destination graph nodes have names.
  */
 
-#include "handlegraph/handle_graph.hpp"
+#include "types.hpp"
 
 #include <vector>
 

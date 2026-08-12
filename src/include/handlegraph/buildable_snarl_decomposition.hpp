@@ -5,7 +5,7 @@
  * Defines the base SnarlDecomposition interface.
  */
 
-#include "handlegraph/snarl_decomposition.hpp"
+#include "snarl_decomposition.hpp"
 
 namespace handlegraph {
 

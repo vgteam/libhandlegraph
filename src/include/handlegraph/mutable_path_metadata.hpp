@@ -5,7 +5,7 @@
  * Defines the mutable metadata API for paths
  */
 
-#include "handlegraph/path_metadata.hpp"
+#include "path_metadata.hpp"
 
 #include <vector>
 
