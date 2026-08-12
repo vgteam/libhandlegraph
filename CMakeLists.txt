@@ -13,6 +13,25 @@ set(CMAKE_CXX_STANDARD 14)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
+# By default, libhandlegraph reports fatal errors by throwing C++ exceptions,
+# as it always has. Some embedders (e.g. Google's DeepVariant, which builds
+# with Bazel and -fno-exceptions) need a build that never throws instead.
+option(HANDLEGRAPH_USE_EXCEPTIONS "Report fatal errors by throwing C++ exceptions" ON)
+# When exceptions are off, fatal errors are reported through Abseil's
+# ABSL_LOG(FATAL) if this is on, or through stderr + std::abort() if it is off.
+# It has no effect when HANDLEGRAPH_USE_EXCEPTIONS is on.
+option(HANDLEGRAPH_USE_ABSEIL_LOGGING "Use Abseil logging to report fatal errors when exceptions are off" OFF)
+
+if(NOT HANDLEGRAPH_USE_EXCEPTIONS)
+  message("libhandlegraph: building without C++ exceptions")
+  if(HANDLEGRAPH_USE_ABSEIL_LOGGING)
+    find_package(absl REQUIRED)
+    message("libhandlegraph: fatal errors reported via Abseil ABSL_LOG(FATAL)")
+  else()
+    message("libhandlegraph: fatal errors reported via stderr and std::abort()")
+  endif()
+endif()
+
 # Let cmake decide where to put the output files, allowing for out-of-tree builds.
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -82,6 +101,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
+  src/include/handlegraph/error_handling.hpp
   src/include/handlegraph/algorithms/canonical_gfa.hpp
   src/include/handlegraph/algorithms/copy_graph.hpp
   src/include/handlegraph/algorithms/append_graph.hpp
@@ -109,6 +129,14 @@ add_library(handlegraph_objs OBJECT
 # It can't be picked up via dependency by the other libraries even if it's public.
 target_include_directories(handlegraph_objs PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
+if(NOT HANDLEGRAPH_USE_EXCEPTIONS)
+  target_compile_definitions(handlegraph_objs PRIVATE HANDLEGRAPH_NO_EXCEPTIONS)
+  if(HANDLEGRAPH_USE_ABSEIL_LOGGING)
+    target_compile_definitions(handlegraph_objs PRIVATE HANDLEGRAPH_USE_ABSEIL_LOGGING)
+    target_link_libraries(handlegraph_objs PUBLIC absl::log absl::absl_log)
+  endif()
+endif()
+
 # Build objects position-independent to allow a shared library
 set_target_properties(handlegraph_objs PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
@@ -122,6 +150,14 @@ target_include_directories(handlegraph_shared INTERFACE $<BUILD_INTERFACE:${CMAK
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_static INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
+
+if(NOT HANDLEGRAPH_USE_EXCEPTIONS AND HANDLEGRAPH_USE_ABSEIL_LOGGING)
+  # The object library's PRIVATE link libraries don't propagate through
+  # $<TARGET_OBJECTS:...>, so consumers of these libraries need to see
+  # Abseil too, since the fatal-error path calls into it directly.
+  target_link_libraries(handlegraph_shared PUBLIC absl::log absl::absl_log)
+  target_link_libraries(handlegraph_static PUBLIC absl::log absl::absl_log)
+endif()
 
 # Add an alias so that library can be used inside the build tree, e.g. when testing
 add_library(libhandlegraph::handlegraph_shared ALIAS handlegraph_shared)

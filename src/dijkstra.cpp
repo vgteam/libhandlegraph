@@ -4,8 +4,8 @@
  * Implementation of Dijkstra's Algorithm over the bidirected graph.
  */
 
-#include "absl/log/absl_log.h"
 #include "handlegraph/algorithms/dijkstra.hpp"
+#include "handlegraph/error_handling.hpp"
 
 #include <queue>
 
@@ -272,7 +272,7 @@ unordered_set<handle_t> seen;
 cerr << "At " << g->get_id(current) << (g->get_is_reverse(current) ? "rev" : "fd") << " back to " 
      <<  g->get_id(predecessor.first) << (g->get_is_reverse(predecessor.first) ? "rev" : "fd") << endl;
 if(seen.count(current)){
-    ABSL_LOG(FATAL) << "Already seen this ";
+    HANDLEGRAPH_THROW(runtime_error, "Already seen this ");
 }
 seen.emplace(current);
 #endif
