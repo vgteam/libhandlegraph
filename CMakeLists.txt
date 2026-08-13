@@ -13,13 +13,9 @@ set(CMAKE_CXX_STANDARD 14)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
-# By default, libhandlegraph reports fatal errors by throwing C++ exceptions,
-# as it always has. Some embedders (e.g. Google's DeepVariant, which builds
-# with Bazel and -fno-exceptions) need a build that never throws instead.
+# Some embedders (e.g. Google's DeepVariant) build with -fno-exceptions.
 option(HANDLEGRAPH_USE_EXCEPTIONS "Report fatal errors by throwing C++ exceptions" ON)
-# When exceptions are off, fatal errors are reported through Abseil's
-# ABSL_LOG(FATAL) if this is on, or through stderr + std::abort() if it is off.
-# It has no effect when HANDLEGRAPH_USE_EXCEPTIONS is on.
+# Only takes effect when HANDLEGRAPH_USE_EXCEPTIONS is off.
 option(HANDLEGRAPH_USE_ABSEIL_LOGGING "Use Abseil logging to report fatal errors when exceptions are off" OFF)
 
 if(NOT HANDLEGRAPH_USE_EXCEPTIONS)
@@ -152,9 +148,7 @@ set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_static INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 
 if(NOT HANDLEGRAPH_USE_EXCEPTIONS AND HANDLEGRAPH_USE_ABSEIL_LOGGING)
-  # The object library's PRIVATE link libraries don't propagate through
-  # $<TARGET_OBJECTS:...>, so consumers of these libraries need to see
-  # Abseil too, since the fatal-error path calls into it directly.
+  # PRIVATE link libraries don't propagate through $<TARGET_OBJECTS:...>, so add Abseil explicitly here.
   target_link_libraries(handlegraph_shared PUBLIC absl::log absl::absl_log)
   target_link_libraries(handlegraph_static PUBLIC absl::log absl::absl_log)
 endif()
