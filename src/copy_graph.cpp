@@ -10,10 +10,10 @@ void copy_handle_graph(const HandleGraph* from, MutableHandleGraph* into) {
 
 
     if (from == nullptr) {
-        HANDLEGRAPH_THROW(std::runtime_error, "error:[copy_handle_graph] must supply graph to copy from");
+        HANDLEGRAPH_THROW(std::runtime_error("error:[copy_handle_graph] must supply graph to copy from"));
     }
     if (into == nullptr) {
-        HANDLEGRAPH_THROW(std::runtime_error, "error:[copy_handle_graph] must supply graph to copy into");
+        HANDLEGRAPH_THROW(std::runtime_error("error:[copy_handle_graph] must supply graph to copy into"));
     }
     
     // TODO: some code paths depend on this algorithm for appending one graph onto another

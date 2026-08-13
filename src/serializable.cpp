@@ -53,7 +53,7 @@ void Serializable::deserialize(std::istream& in) {
         
         if (!in) {
             // The stream did not rewind right (or was already at EOF somehow)
-            HANDLEGRAPH_THROW(std::runtime_error, "Error rewinding to load non-magic-prefixed SerializableHandleGraph");
+            HANDLEGRAPH_THROW(std::runtime_error("Error rewinding to load non-magic-prefixed SerializableHandleGraph"));
         }
     }
     deserialize_members(in);

@@ -6,34 +6,30 @@
  * unrecoverable errors, so that the error-reporting mechanism can be selected
  * at build time.
  *
- * By default, HANDLEGRAPH_THROW(ExceptionType, message) throws
- * ExceptionType(message), matching libhandlegraph's traditional behavior.
- * Some environments (notably Bazel builds embedding libhandlegraph in
- * exceptions-free code, such as Google's DeepVariant) need to build with
- * -fno-exceptions. Defining HANDLEGRAPH_NO_EXCEPTIONS at build time switches
- * HANDLEGRAPH_THROW to a non-throwing fatal-error path instead: it logs the
- * message with Abseil's ABSL_LOG(FATAL) if HANDLEGRAPH_USE_ABSEIL_LOGGING is
- * also defined, or otherwise prints it to stderr and calls std::abort().
- * Either way, ExceptionType is not evaluated, so it does not need to be a
- * complete type when exceptions are disabled.
+ * HANDLEGRAPH_THROW(exception) throws the given exception object, unless
+ * HANDLEGRAPH_NO_EXCEPTIONS is defined, in which case it logs exception.what()
+ * and calls std::abort() instead (via Abseil if HANDLEGRAPH_USE_ABSEIL_LOGGING
+ * is set).
  */
+
+// HANDLEGRAPH_THROW always constructs its argument, even when not thrown.
+#include <stdexcept>
 
 #if defined(HANDLEGRAPH_NO_EXCEPTIONS)
 
 #if defined(HANDLEGRAPH_USE_ABSEIL_LOGGING)
 #include "absl/log/absl_log.h"
-#define HANDLEGRAPH_THROW(exception_type, message) ABSL_LOG(FATAL) << (message)
+#define HANDLEGRAPH_THROW(exception) ABSL_LOG(FATAL) << (exception).what()
 #else
 #include <cstdlib>
 #include <iostream>
-#define HANDLEGRAPH_THROW(exception_type, message) \
-    do { std::cerr << (message) << std::endl; std::abort(); } while (0)
+#define HANDLEGRAPH_THROW(exception) \
+    do { std::cerr << (exception).what() << std::endl; std::abort(); } while (0)
 #endif
 
 #else
 
-#include <stdexcept>
-#define HANDLEGRAPH_THROW(exception_type, message) throw exception_type(message)
+#define HANDLEGRAPH_THROW(exception) throw (exception)
 
 #endif
 
