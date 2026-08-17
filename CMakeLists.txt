@@ -82,7 +82,6 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/util.hpp
   src/include/handlegraph/types.hpp
   src/include/handlegraph/iteratee.hpp
-  src/include/handlegraph/error_handling.hpp
   src/include/handlegraph/algorithms/canonical_gfa.hpp
   src/include/handlegraph/algorithms/copy_graph.hpp
   src/include/handlegraph/algorithms/append_graph.hpp

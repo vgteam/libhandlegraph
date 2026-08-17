@@ -1,5 +1,4 @@
 #include "handlegraph/algorithms/copy_graph.hpp"
-#include "handlegraph/error_handling.hpp"
 
 #include <stdexcept>
 
@@ -10,10 +9,10 @@ void copy_handle_graph(const HandleGraph* from, MutableHandleGraph* into) {
 
 
     if (from == nullptr) {
-        HANDLEGRAPH_THROW(std::runtime_error("error:[copy_handle_graph] must supply graph to copy from"));
+        throw (std::runtime_error("error:[copy_handle_graph] must supply graph to copy from"));
     }
     if (into == nullptr) {
-        HANDLEGRAPH_THROW(std::runtime_error("error:[copy_handle_graph] must supply graph to copy into"));
+        throw (std::runtime_error("error:[copy_handle_graph] must supply graph to copy into"));
     }
     
     // TODO: some code paths depend on this algorithm for appending one graph onto another

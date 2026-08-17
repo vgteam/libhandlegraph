@@ -1,5 +1,5 @@
 #include "handlegraph/handle_graph.hpp"
-#include "handlegraph/error_handling.hpp"
+#include <stdexcept>
 
 #include "handlegraph/util.hpp"
 
@@ -55,7 +55,7 @@ handle_t HandleGraph::traverse_edge_handle(const edge_t& edge, const handle_t& l
         return this->flip(edge.first);
     } else {
         // This isn't either handle that the edge actually connects. Something has gone wrong.
-        HANDLEGRAPH_THROW(std::runtime_error("Cannot view edge " +
+        throw (std::runtime_error("Cannot view edge " +
             std::to_string(this->get_id(edge.first)) + " " + std::to_string(this->get_is_reverse(edge.first)) + " -> " +
             std::to_string(this->get_id(edge.second)) + " " + std::to_string(this->get_is_reverse(edge.second)) +
             " from non-participant " + std::to_string(this->get_id(left)) + " " + std::to_string(this->get_is_reverse(left))));

@@ -1,5 +1,5 @@
 #include "handlegraph/serializable.hpp"
-#include "handlegraph/error_handling.hpp"
+#include <stdexcept>
 
 #include <fstream>
 #include <arpa/inet.h>
@@ -53,7 +53,7 @@ void Serializable::deserialize(std::istream& in) {
         
         if (!in) {
             // The stream did not rewind right (or was already at EOF somehow)
-            HANDLEGRAPH_THROW(std::runtime_error("Error rewinding to load non-magic-prefixed SerializableHandleGraph"));
+            throw (std::runtime_error("Error rewinding to load non-magic-prefixed SerializableHandleGraph"));
         }
     }
     deserialize_members(in);

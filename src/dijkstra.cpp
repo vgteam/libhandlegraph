@@ -5,7 +5,7 @@
  */
 
 #include "handlegraph/algorithms/dijkstra.hpp"
-#include "handlegraph/error_handling.hpp"
+#include <stdexcept>
 
 #include <queue>
 
@@ -272,7 +272,7 @@ unordered_set<handle_t> seen;
 cerr << "At " << g->get_id(current) << (g->get_is_reverse(current) ? "rev" : "fd") << " back to " 
      <<  g->get_id(predecessor.first) << (g->get_is_reverse(predecessor.first) ? "rev" : "fd") << endl;
 if(seen.count(current)){
-    HANDLEGRAPH_THROW(runtime_error("Already seen this "));
+    throw (runtime_error("Already seen this "));
 }
 seen.emplace(current);
 #endif

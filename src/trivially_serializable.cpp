@@ -1,5 +1,5 @@
 #include "handlegraph/trivially_serializable.hpp"
-#include "handlegraph/error_handling.hpp"
+#include <stdexcept>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -27,7 +27,7 @@ void TriviallySerializable::serialize(int fd) const {
             auto result = write(fd, (const void*)((const char*) start + written), length - written);
             if (result == -1) {
                 // Can't write at all, something broke.
-                HANDLEGRAPH_THROW(std::runtime_error("Could not write!"));
+                throw (std::runtime_error("Could not write!"));
             }
             written += result;
         }
@@ -93,7 +93,7 @@ int TriviallySerializable::open_fd(const std::string& filename) const {
         auto problem = errno;
         std::stringstream ss;
         ss << "Could not save to file " << filename << ": " << ::strerror(problem);
-        HANDLEGRAPH_THROW(std::runtime_error(ss.str()));
+        throw (std::runtime_error(ss.str()));
     }
     
     return fd;
@@ -106,7 +106,7 @@ void TriviallySerializable::close_fd(int fd) const {
         auto problem = errno;
         std::stringstream ss;
         ss << "Could not close FD: " << ::strerror(problem);
-        HANDLEGRAPH_THROW(std::runtime_error(ss.str()));
+        throw (std::runtime_error(ss.str()));
     }
 }
 
@@ -145,7 +145,7 @@ void TriviallySerializable::deserialize(const std::string& filename) {
         auto problem = errno;
         std::stringstream ss;
         ss << "Could not load from file " << filename << ": " << ::strerror(problem);
-        HANDLEGRAPH_THROW(std::runtime_error(ss.str()));
+        throw (std::runtime_error(ss.str()));
     }
     
     // Deserialize from the file
