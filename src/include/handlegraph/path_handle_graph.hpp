@@ -5,8 +5,8 @@
  * Defines the PathHandleGraph interface for graphs that have embedded paths.
  */
 
-#include "handlegraph/handle_graph.hpp"
-#include "handlegraph/path_metadata.hpp"
+#include "handle_graph.hpp"
+#include "path_metadata.hpp"
 
 #include <vector>
 

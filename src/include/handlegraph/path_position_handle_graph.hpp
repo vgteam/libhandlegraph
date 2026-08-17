@@ -5,8 +5,8 @@
  * Defines the PathPositionHandleGraph interface.
  */
 
-#include "handlegraph/path_handle_graph.hpp"
-#include "handlegraph/iteratee.hpp"
+#include "path_handle_graph.hpp"
+#include "iteratee.hpp"
 
 namespace handlegraph {
 

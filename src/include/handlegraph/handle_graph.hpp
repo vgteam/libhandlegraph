@@ -5,8 +5,8 @@
  * Defines the base HandleGraph interface.
  */
  
-#include "handlegraph/types.hpp"
-#include "handlegraph/iteratee.hpp"
+#include "types.hpp"
+#include "iteratee.hpp"
 
 #include <functional>
 #include <string>

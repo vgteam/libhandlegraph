@@ -5,7 +5,7 @@
  * Defines an interface for objects that us the same representation in memory and on disk. 
  */
 
-#include "handlegraph/serializable.hpp"
+#include "serializable.hpp"
 
 #include <iostream>
 #include <limits>

@@ -1,6 +1,7 @@
 #include "handlegraph/serializable.hpp"
 
 #include <fstream>
+#include <stdexcept>
 #include <arpa/inet.h>
 
 /** \file serializable.cpp

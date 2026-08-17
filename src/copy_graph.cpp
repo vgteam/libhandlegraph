@@ -6,8 +6,8 @@ namespace handlegraph {
 namespace algorithms {
 
 void copy_handle_graph(const HandleGraph* from, MutableHandleGraph* into) {
-    
-    
+
+
     if (from == nullptr) {
         throw std::runtime_error("error:[copy_handle_graph] must supply graph to copy from");
     }

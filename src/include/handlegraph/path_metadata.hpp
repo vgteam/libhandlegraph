@@ -5,7 +5,7 @@
  * Defines the metadata API for paths
  */
 
-#include "handlegraph/handle_graph.hpp"
+#include "handle_graph.hpp"
 
 #include <utility>
 #include <string>

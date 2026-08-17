@@ -5,7 +5,7 @@
  * Defines the base SerializableHandleGraph interface.
  */
 
-#include "handlegraph/serializable.hpp"
+#include "serializable.hpp"
 
 namespace handlegraph {
 

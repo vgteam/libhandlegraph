@@ -5,7 +5,7 @@
  * Tools for handle graph implementers to pack and unpack handles.
  */
 
-#include "handlegraph/types.hpp"
+#include "types.hpp"
 
 #include <cassert>
 

@@ -1,6 +1,7 @@
 #include "handlegraph/handle_graph.hpp"
-
 #include "handlegraph/util.hpp"
+
+#include <stdexcept>
 
 /** \file handle_graphs.cpp
  * Implement handle graph methods.

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <cassert>
 #include <sstream>
+#include <stdexcept>
 
 
 /** \file trivially_serializable.cpp

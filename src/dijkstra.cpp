@@ -7,6 +7,7 @@
 #include "handlegraph/algorithms/dijkstra.hpp"
 
 #include <queue>
+#include <stdexcept>
 
 namespace handlegraph {
 namespace algorithms {

@@ -5,7 +5,7 @@
  * Defines the DeletableHandleGraph interface for graphs that can have material removed.
  */
 
-#include "handlegraph/mutable_handle_graph.hpp"
+#include "mutable_handle_graph.hpp"
 
 namespace handlegraph {
 

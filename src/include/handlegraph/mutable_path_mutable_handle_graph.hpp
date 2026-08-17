@@ -5,8 +5,8 @@
  * Defines the MutablePathMutableHandleGraph interface for graphs that can have paths and graph material changed.
  */
 
-#include "handlegraph/mutable_path_handle_graph.hpp"
-#include "handlegraph/mutable_handle_graph.hpp"
+#include "mutable_path_handle_graph.hpp"
+#include "mutable_handle_graph.hpp"
 
 namespace handlegraph {
 

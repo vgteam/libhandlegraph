@@ -5,7 +5,7 @@
  * Defines the MutableHandleGraph interface for graphs that can be added to.
  */
 
-#include "handlegraph/handle_graph.hpp"
+#include "handle_graph.hpp"
 
 #include <functional>
 #include <vector>

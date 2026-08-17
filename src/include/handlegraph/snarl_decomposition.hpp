@@ -5,11 +5,11 @@
  * Defines the base SnarlDecomposition interface.
  */
 
-#include "handlegraph/types.hpp"
+#include "types.hpp"
 
-#include "handlegraph/handle_graph.hpp"
+#include "handle_graph.hpp"
 
-#include "handlegraph/iteratee.hpp"
+#include "iteratee.hpp"
 
 #include <functional>
 
