@@ -70,6 +70,7 @@ add_library(handlegraph_objs OBJECT
   src/weakly_connected_components.cpp
   src/extend.cpp
   src/canonical_gfa.cpp
+  src/path_length.cpp
   src/include/handlegraph/handle_graph.hpp
   src/include/handlegraph/mutable_handle_graph.hpp
   src/include/handlegraph/deletable_handle_graph.hpp
@@ -102,6 +103,7 @@ add_library(handlegraph_objs OBJECT
   src/include/handlegraph/algorithms/chop.hpp
   src/include/handlegraph/algorithms/weakly_connected_components.hpp
   src/include/handlegraph/algorithms/extend.hpp
+  src/include/handlegraph/algorithms/path_length.hpp
   src/include/handlegraph/algorithms/internal/dfs.hpp
   )
 
