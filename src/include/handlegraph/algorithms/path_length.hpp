@@ -12,8 +12,7 @@
 namespace handlegraph {
 namespace algorithms {
 
-/// Returns the length of a path in bases. Uses the graph's own path length if it
-/// is a PathPositionHandleGraph, and otherwise adds up the lengths of the visited nodes.
+/// Returns the length of a path in bases.
 size_t get_path_length(const PathHandleGraph* graph, const path_handle_t& path);
 
 }
