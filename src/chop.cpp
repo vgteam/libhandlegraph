@@ -15,6 +15,7 @@
 #include <utility>
 #include <cassert>
 #include <algorithm>
+#include <stdexcept>
 
 namespace handlegraph {
 namespace algorithms {
@@ -762,16 +763,26 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
     graph.apply_ordering(handle_order, true);
 }
 
-static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>* record_change) {
+/// Shared implementation of all versions of chop().
+///
+/// get_offsets is called once for each handle visited by for_each_handle()
+/// and must return the offsets at which that node should be divided, relative
+/// to the orientation of the handle it was given. The offsets must be sorted,
+/// distinct, and strictly between 0 and the length of the node. If the
+/// returned vector is empty, the node is not divided.
+static void chop_impl(MutablePathDeletableHandleGraph& graph,
+                      const std::function<std::vector<size_t>(const handle_t&)>& get_offsets,
+                      const std::function<void(nid_t, size_t, size_t, handle_t)>* record_change) {
     // borrowed from https://github.com/vgteam/odgi/blob/master/src/subcommand/chop_main.cpp
     
     std::vector<std::tuple<uint64_t, uint64_t, handle_t>> originalRank_inChoppedNodeRank_handle;
-    std::vector<std::pair<uint64_t, handle_t>> originalRank_handleToChop;
+    std::vector<std::tuple<uint64_t, handle_t, std::vector<size_t>>> originalRank_handleToChop_offsets;
     std::vector<nid_t> originalId;
     uint64_t rank = 0;
     graph.for_each_handle([&](const handle_t& handle) {
-        if (graph.get_length(handle) > max_node_length) {
-            originalRank_handleToChop.push_back(std::make_pair(rank, handle));
+        std::vector<size_t> offsets = get_offsets(handle);
+        if (!offsets.empty()) {
+            originalRank_handleToChop_offsets.emplace_back(rank, handle, std::move(offsets));
         } else {
             originalRank_inChoppedNodeRank_handle.push_back(std::make_tuple(rank, 0, handle));
         }
@@ -784,22 +795,15 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
         rank++;
     });
     
-    if (originalRank_handleToChop.empty()) {
-        // No node is long enough to chop. Do nothing.
+    if (originalRank_handleToChop_offsets.empty()) {
+        // No node needs to be chopped. Do nothing.
         return;
     }
     
-    for (auto rank_handle : originalRank_handleToChop) {
-        // get divide points
-        uint64_t length = graph.get_length(rank_handle.second);
-        std::vector<size_t> offsets;
-        for (uint64_t i = max_node_length; i < length; i += max_node_length) {
-            offsets.push_back(i);
-        }
-        
+    for (auto& rank_handle_offsets : originalRank_handleToChop_offsets) {
         rank = 0;
-        for (auto chopped_handle : graph.divide_handle(rank_handle.second, offsets)) {
-            originalRank_inChoppedNodeRank_handle.emplace_back(rank_handle.first, rank, chopped_handle);
+        for (auto chopped_handle : graph.divide_handle(std::get<1>(rank_handle_offsets), std::get<2>(rank_handle_offsets))) {
+            originalRank_inChoppedNodeRank_handle.emplace_back(std::get<0>(rank_handle_offsets), rank, chopped_handle);
             
             rank++;
         }
@@ -894,14 +898,82 @@ static void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length,
     }
 }
 
+/// Chop points for chop() by maximum node length.
+static std::function<std::vector<size_t>(const handle_t&)> max_length_offsets(const HandleGraph& graph, size_t max_node_length) {
+    if (max_node_length == 0) {
+        throw std::runtime_error("chop: max_node_length must be positive");
+    }
+    return [&graph, max_node_length](const handle_t& handle) {
+        std::vector<size_t> offsets;
+        uint64_t length = graph.get_length(handle);
+        if (length > max_node_length) {
+            for (uint64_t i = max_node_length; i < length; i += max_node_length) {
+                offsets.push_back(i);
+            }
+        }
+        return offsets;
+    };
+}
+
+/// Index and deduplicate valid chop points.
+static std::unordered_map<nid_t, std::vector<size_t>> index_chop_points(
+    const HandleGraph& graph,
+    const std::vector<std::pair<nid_t, std::vector<size_t>>>& chop_points
+) {
+    // Keep only nodes and offsets that exist in the graph.
+    std::unordered_map<nid_t, std::vector<size_t>> result;
+    for (auto& id_offsets : chop_points) {
+        if (!graph.has_node(id_offsets.first)) {
+            continue;
+        }
+        size_t node_length = graph.get_length(graph.get_handle(id_offsets.first));
+        auto& offsets = result[id_offsets.first];
+        for (size_t offset : id_offsets.second) {
+            if (offset > 0 && offset < node_length) {
+                offsets.push_back(offset);
+            }
+        }
+    }
+
+    // Sort and remove duplicate offsets for each node.
+    for (auto& kv : result) {
+        auto& offsets = kv.second;
+        std::sort(offsets.begin(), offsets.end());
+        offsets.erase(std::unique(offsets.begin(), offsets.end()), offsets.end());
+    }
+
+    return result;
+}
+
+/// Chop points for chop() by explicit offsets indexed in the given map.
+static std::function<std::vector<size_t>(const handle_t&)> explicit_offsets(const HandleGraph& graph, const std::unordered_map<nid_t, std::vector<size_t>>& chop_points) {
+    return [&graph, &chop_points](const handle_t& handle) {
+        auto iter = chop_points.find(graph.get_id(handle));
+        if (iter == chop_points.end()) {
+            return std::vector<size_t>();
+        } else {
+            return iter->second;
+        }
+    };
+}
+
 void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length, const std::function<void(nid_t, size_t, size_t, handle_t)>& record_change) {
-    chop(graph, max_node_length, &record_change);
+    chop_impl(graph, max_length_offsets(graph, max_node_length), &record_change);
 }
 
 void chop(MutablePathDeletableHandleGraph& graph, size_t max_node_length) {
-    chop(graph, max_node_length, nullptr);
+    chop_impl(graph, max_length_offsets(graph, max_node_length), nullptr);
 }
 
+void chop(MutablePathDeletableHandleGraph& graph, const std::vector<std::pair<nid_t, std::vector<size_t>>>& chop_points, const std::function<void(nid_t, size_t, size_t, handle_t)>& record_change) {
+    auto index = index_chop_points(graph, chop_points);
+    chop_impl(graph, explicit_offsets(graph, index), &record_change);
+}
+
+void chop(MutablePathDeletableHandleGraph& graph, const std::vector<std::pair<nid_t, std::vector<size_t>>>& chop_points) {
+    auto index = index_chop_points(graph, chop_points);
+    chop_impl(graph, explicit_offsets(graph, index), nullptr);
+}
 
 }
 }
