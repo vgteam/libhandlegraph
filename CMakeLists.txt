@@ -6,6 +6,7 @@ include(GNUInstallDirs)
 
 # Project's name
 project(libhandlegraph)
+find_package(Threads REQUIRED)
 # We build using c++14
 set(CMAKE_CXX_STANDARD 14)
 
@@ -109,6 +110,7 @@ add_library(handlegraph_objs OBJECT
 
 # Use the include directory when building the objects.
 # It can't be picked up via dependency by the other libraries even if it's public.
+target_link_libraries(handlegraph_objs PRIVATE Threads::Threads)
 target_include_directories(handlegraph_objs PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 # Build objects position-independent to allow a shared library
@@ -122,6 +124,8 @@ add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_shared INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
+target_link_libraries(handlegraph_shared PUBLIC Threads::Threads)
+target_link_libraries(handlegraph_static INTERFACE Threads::Threads)
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_static INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 

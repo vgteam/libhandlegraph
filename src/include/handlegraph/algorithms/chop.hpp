@@ -87,6 +87,12 @@ void chop(MutablePathDeletableHandleGraph& graph, const std::vector<std::pair<ni
  */
 void unchop(MutablePathDeletableHandleGraph& graph);
 
+/** Unchop with parallel read-only neighbor analysis and serial graph edits.
+ * A thread count greater than one requires the graph backend to support
+ * concurrent calls to its const path and edge traversal methods.
+ */
+void unchop(MutablePathDeletableHandleGraph& graph, size_t num_threads);
+
 }
 }
 
