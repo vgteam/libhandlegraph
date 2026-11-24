@@ -688,26 +688,6 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
         node_rank[graph.get_id(h)] = rank++;
     });
     
-    // if possible, don't hold these in memory
-    // meanwhile, we exploit the it for parallelizing the paths' validation
-    std::vector<std::string> path_names;
-    path_names.resize(graph.get_path_count());
-    
-    std::vector<std::string> path_sequences;
-    path_sequences.resize(graph.get_path_count());
-    
-    rank = 0;
-    graph.for_each_path_handle([&](const path_handle_t& p) {
-        path_names[rank] = graph.get_path_name(p);
-        
-        auto& seq = path_sequences[rank];
-        graph.for_each_step_in_path(p, [&](const step_handle_t& s) {
-            seq.append(graph.get_sequence(graph.get_handle_of_step(s)));
-        });
-        
-        ++rank;
-    });
-    
     auto components = simple_components(graph, 2);
     std::unordered_set<nid_t> to_merge;
     for (auto& comp : components) {
