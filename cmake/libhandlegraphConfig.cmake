@@ -1,5 +1,9 @@
-include(CMakeFindDependencyMacro)
-find_dependency(Threads)
-
+if("@OpenMP_CXX_FOUND@")
+    include("${CMAKE_CURRENT_LIST_DIR}/HandlegraphOpenMP.cmake")
+    if(NOT OpenMP_CXX_FOUND)
+        set(libhandlegraph_FOUND FALSE)
+        set(libhandlegraph_NOT_FOUND_MESSAGE "This libhandlegraph build requires C++ OpenMP")
+        return()
+    endif()
+endif()
 include("${CMAKE_CURRENT_LIST_DIR}/libhandlegraphTargets.cmake")
-
