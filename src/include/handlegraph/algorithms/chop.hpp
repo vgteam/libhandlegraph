@@ -84,6 +84,10 @@ void chop(MutablePathDeletableHandleGraph& graph, const std::vector<std::pair<ni
  * nodes.
  *
  * Invalidates handles into the graph.
+ *
+ * OpenMP can parallelize read-only edge and path traversal. Graph edits
+ * are serial. When using multiple threads the backend must permit
+ * concurrent const traversal.
  */
 void unchop(MutablePathDeletableHandleGraph& graph);
 

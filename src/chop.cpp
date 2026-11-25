@@ -16,6 +16,10 @@
 #include <cassert>
 #include <algorithm>
 #include <stdexcept>
+#include <exception>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace handlegraph {
 namespace algorithms {
@@ -340,7 +344,8 @@ bool nodes_are_perfect_path_neighbors(const PathHandleGraph& graph, handle_t lef
     
 }
 
-vector<deque<handle_t>> simple_components(const PathHandleGraph& graph, int min_size = 1) {
+vector<deque<handle_t>> simple_components(const PathHandleGraph& graph, int min_size = 1,
+    const std::function<bool(handle_t, handle_t)>* neighbor_check = nullptr) {
     
     // go around and establish groupings
     unordered_set<nid_t> seen;
@@ -391,7 +396,7 @@ vector<deque<handle_t>> simple_components(const PathHandleGraph& graph, int min_
                 // Move over left to that node
                 l = prev.front();
                 // avoid merging if it breaks stored paths
-                if (!nodes_are_perfect_path_neighbors(graph, l, last)) {
+                if (!(neighbor_check ? (*neighbor_check)(l, last) : nodes_are_perfect_path_neighbors(graph, l, last))) {
 #ifdef debug
                     cerr << "\tNot perfect neighbors!" << endl;
 #endif
@@ -454,7 +459,7 @@ vector<deque<handle_t>> simple_components(const PathHandleGraph& graph, int min_
                 // Move over right to that node
                 r = next.front();
                 // avoid merging if it breaks stored paths
-                if (!nodes_are_perfect_path_neighbors(graph, last, r)) {
+                if (!(neighbor_check ? (*neighbor_check)(last, r) : nodes_are_perfect_path_neighbors(graph, last, r))) {
 #ifdef debug
                     cerr << "\tNot perfect neighbors!" << endl;
 #endif
@@ -681,13 +686,74 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
 #ifdef debug
     std::cerr << "Running unchop" << std::endl;
 #endif
-    
+
     std::unordered_map<nid_t, uint64_t> node_rank;
     uint64_t rank = 0;
     graph.for_each_handle([&](const handle_t& h) {
         node_rank[graph.get_id(h)] = rank++;
     });
-    
+
+    std::vector<uint64_t> perfect_neighbors;
+    std::function<bool(handle_t, handle_t)> neighbor_check;
+#ifdef _OPENMP
+    std::vector<handle_t> original_handles;
+    const auto* ranked = dynamic_cast<const RankedHandleGraph*>(&graph);
+    const auto& ranks = node_rank;
+    auto cache_index = [&](handle_t h) {
+        return ranked ? ranked->handle_to_rank(h) - 1
+                      : 2 * ranks.at(graph.get_id(h)) + graph.get_is_reverse(h);
+    };
+    if (omp_get_max_threads() > 1 && !omp_in_parallel() && graph.get_node_count() != 0) {
+        if (!ranked) {
+            original_handles.resize(graph.get_node_count());
+            graph.for_each_handle([&](const handle_t& h) {
+                original_handles[ranks.at(graph.get_id(h))] = h;
+            });
+        }
+
+        // Store only the canonical direction of each edge. A worker writes one
+        // complete word, even if the other orientation ranks in another block.
+        const size_t orientations = 2 * graph.get_node_count();
+        constexpr size_t word_bits = 64;
+        perfect_neighbors.resize((orientations - 1) / word_bits + 1);
+        std::exception_ptr failure;
+#pragma omp parallel for schedule(dynamic, 8)
+        for (size_t word = 0; word < perfect_neighbors.size(); ++word) {
+            try {
+                uint64_t bits = 0;
+                size_t start = word * word_bits;
+                size_t end = std::min(start + word_bits, orientations);
+                for (size_t i = start; i < end; ++i) {
+                    handle_t left = ranked ? ranked->rank_to_handle(i + 1)
+                        : (i % 2 ? graph.flip(original_handles[i / 2]) : original_handles[i / 2]);
+                    if (graph.get_degree(left, false) != 1) continue;
+                    handle_t right;
+                    graph.follow_edges(left, false, [&](const handle_t& h) {
+                        right = h;
+                        return false;
+                    });
+                    if (graph.get_degree(right, true) != 1) continue;
+                    if (as_integer(left) > as_integer(graph.flip(right))) continue;
+                    if (nodes_are_perfect_path_neighbors(graph, left, right)) {
+                        bits |= uint64_t{1} << (i - start);
+                    }
+                }
+                perfect_neighbors[word] = bits;
+            } catch (...) {
+#pragma omp critical(handlegraph_unchop_failure)
+                {
+                    if (!failure) failure = std::current_exception();
+                }
+            }
+        }
+        if (failure) std::rethrow_exception(failure);
+        neighbor_check = [&](handle_t left, handle_t right) {
+            handle_t opposite = graph.flip(right);
+            size_t i = cache_index(as_integer(left) <= as_integer(opposite) ? left : opposite);
+            return ((perfect_neighbors[i / word_bits] >> (i % word_bits)) & 1) != 0;
+        };
+    }
+#endif
     // if possible, don't hold these in memory
     // meanwhile, we exploit the it for parallelizing the paths' validation
     std::vector<std::string> path_names;
@@ -708,7 +774,14 @@ void unchop(MutablePathDeletableHandleGraph& graph) {
         ++rank;
     });
     
-    auto components = simple_components(graph, 2);
+    auto components = simple_components(graph, 2, neighbor_check ? &neighbor_check : nullptr);
+    // No parallel reader may survive into graph mutation.
+    perfect_neighbors.clear();
+    perfect_neighbors.shrink_to_fit();
+#ifdef _OPENMP
+    original_handles.clear();
+    original_handles.shrink_to_fit();
+#endif
     std::unordered_set<nid_t> to_merge;
     for (auto& comp : components) {
         for (auto& handle : comp) {

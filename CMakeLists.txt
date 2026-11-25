@@ -6,6 +6,7 @@ include(GNUInstallDirs)
 
 # Project's name
 project(libhandlegraph)
+include(cmake/HandlegraphOpenMP.cmake)
 # We build using c++14
 set(CMAKE_CXX_STANDARD 14)
 
@@ -109,6 +110,13 @@ add_library(handlegraph_objs OBJECT
 
 # Use the include directory when building the objects.
 # It can't be picked up via dependency by the other libraries even if it's public.
+if(OpenMP_CXX_FOUND)
+  separate_arguments(HANDLEGRAPH_OPENMP_FLAGS NATIVE_COMMAND "${OpenMP_CXX_FLAGS}")
+  target_compile_options(handlegraph_objs PRIVATE ${HANDLEGRAPH_OPENMP_FLAGS})
+  if(OpenMP_CXX_INCLUDE_DIRS)
+    target_include_directories(handlegraph_objs SYSTEM PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
+  endif()
+endif()
 target_include_directories(handlegraph_objs PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 # Build objects position-independent to allow a shared library
@@ -122,6 +130,10 @@ add_library(handlegraph_shared SHARED $<TARGET_OBJECTS:handlegraph_objs>)
 set_target_properties(handlegraph_shared PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_shared INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 add_library(handlegraph_static STATIC $<TARGET_OBJECTS:handlegraph_objs>)
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(handlegraph_shared PRIVATE OpenMP::OpenMP_CXX)
+  target_link_libraries(handlegraph_static INTERFACE OpenMP::OpenMP_CXX)
+endif()
 set_target_properties(handlegraph_static PROPERTIES OUTPUT_NAME handlegraph)
 target_include_directories(handlegraph_static INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include> $<INSTALL_INTERFACE:include>)
 
@@ -160,7 +172,10 @@ export(EXPORT libhandlegraphTargets
 # We don't use configure_package_config_file because we *only* provide targets, not any variables.
 configure_file(cmake/libhandlegraphConfig.cmake
   "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphConfig.cmake"
-  COPYONLY
+  @ONLY
+)
+configure_file(cmake/HandlegraphOpenMP.cmake
+  "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/HandlegraphOpenMP.cmake" COPYONLY
 )
 
 set(ConfigPackageLocation lib/cmake/libhandlegraph)
@@ -175,7 +190,8 @@ install(EXPORT libhandlegraphTargets
 )
 install(
   FILES
-    cmake/libhandlegraphConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphConfig.cmake"
+    cmake/HandlegraphOpenMP.cmake
     "${CMAKE_CURRENT_BINARY_DIR}/libhandlegraph/libhandlegraphConfigVersion.cmake"
   DESTINATION
     ${ConfigPackageLocation}
